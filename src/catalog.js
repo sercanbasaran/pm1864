@@ -1,3 +1,4 @@
+export const variantUnits=['Adet','Kilogram','Gram','Porsiyon','Kutu','Paket','Litre','Mililitre'];
 export const slugify = value => value.toLocaleLowerCase('tr').replaceAll('ı','i').replaceAll('ğ','g').replaceAll('ü','u').replaceAll('ş','s').replaceAll('ö','o').replaceAll('ç','c').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 export const normalizeName = value => value.trim().replace(/\s+/g,' ').toLocaleLowerCase('tr');
 export function nextCategoryCode(categories){const used=new Set(categories.map(c=>c.code));return Array.from({length:9},(_,i)=>String((i+1)*100)).find(c=>!used.has(c))||Array.from({length:899},(_,i)=>String(i+101)).find(c=>!used.has(c))||''}
@@ -22,6 +23,7 @@ export function validateProduct(product,categories){
  const names=product.variants.map(v=>normalizeName(v.size));
  if(names.some(n=>!n)||new Set(names).size!==names.length)return {tab:'Varyant & fiyat',message:'Varyant adları dolu ve birbirinden farklı olmalı.'};
  if(product.variants.some(v=>!Number.isFinite(v.price)||v.price<=0||Math.abs(v.price*100-Math.round(v.price*100))>0.00001||!Number.isFinite(v.weight)||v.weight<=0||!Number.isInteger(v.slices)||v.slices<0))return {tab:'Varyant & fiyat',message:'Her varyant için en fazla iki ondalıklı pozitif fiyat, pozitif gramaj ve sıfır veya pozitif tam dilim sayısı girin.'};
+ if(product.variants.some(v=>(v.unit!==undefined&&!variantUnits.includes(v.unit))||(v.packaging!==undefined&&(typeof v.packaging!=='string'||v.packaging.length>120))))return {tab:'Varyant & fiyat',message:'Geçerli bir birim seçin. Ambalaj bilgisi en fazla 120 karakter olabilir.'};
  return null;
 }
 

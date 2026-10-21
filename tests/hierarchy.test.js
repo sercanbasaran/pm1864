@@ -42,3 +42,15 @@ test('viewers cannot create categories or mutate variant collections',async()=>{
 test('deep legacy category paths flatten without dropping the product or changing its category id',async()=>{
  const {upgradeHierarchy}=await import('../src/hierarchy.js');const doc={categories:[{id:'r',name:'Baklava',code:'100',slug:'baklava',active:true,parentId:''},{id:'a',name:'Fıstıklı',code:'101',slug:'fistikli',active:true,parentId:'r'},{id:'b',name:'Özel',code:'102',slug:'ozel',active:true,parentId:'a'}],products:[{id:1,sku:'HM-100-0001',category:'Özel',variants:[variant()]}]};upgradeHierarchy(doc);assert.equal(doc.categories[2].parentId,'r');assert.equal(doc.categories[2].name,'Fıstıklı / Özel');assert.equal(doc.products[0].categoryId,'b');const before=JSON.stringify(doc);upgradeHierarchy(doc);assert.equal(JSON.stringify(doc),before);
 });
+test('variant weight, sales unit and packaging persist and invalid metadata is rejected',async()=>{
+ const f=await fixture();try{
+ const child=await sub(f,(await f.call('/catalog')).catalog.categories[0]);
+ let r=await save(f,child.id,[{...variant(),weight:900,unit:'Kutu',packaging:'Kırmızı metal kutu'}]);assert.equal(r.status,200);
+ let p=r.catalog.products[0];assert.equal(p.variants[0].unit,'Kutu');assert.equal(p.variants[0].packaging,'Kırmızı metal kutu');assert.equal(p.variants[0].weight,900);
+ const legacy={...p.variants[0]};delete legacy.unit;delete legacy.packaging;
+ r=await save(f,child.id,[],{...p,variants:[legacy]});assert.equal(r.catalog.products[0].variants[0].packaging,'Kırmızı metal kutu');
+ for(const patch of [{unit:'invalid'},{packaging:'x'.repeat(121)}])assert.equal((await save(f,child.id,[],{...p,variants:[{...p.variants[0],...patch}]})).status,422);
+ p=(await f.call('/catalog')).catalog.products[0];assert.equal(p.variants[0].unit,'Kutu');
+ r=await save(f,child.id,[],{...p,variants:[{...p.variants[0],unit:'Porsiyon',packaging:''}]});assert.equal(r.status,200);assert.equal(r.catalog.products[0].variants[0].packaging,'');assert.equal(r.catalog.products[0].variants[0].sku,p.variants[0].sku);
+ }finally{await f.app.close()}
+});
