@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.sites/
+.openai/
+.env
+.env.*
+!.env.example
+*.log
+restore-offline.cjs
