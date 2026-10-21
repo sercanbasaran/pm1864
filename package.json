@@ -4,16 +4,22 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev": "node scripts/dev.mjs",
     "build": "vite build",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "setup": "node scripts/setup.mjs"
   },
   "dependencies": {
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "@phosphor-icons/react": "2.1.10"
+    "@phosphor-icons/react": "2.1.10",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "vite": "8.0.3"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
