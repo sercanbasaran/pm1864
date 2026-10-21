@@ -24,3 +24,9 @@ export function validateProduct(product,categories){
  if(product.variants.some(v=>!Number.isFinite(v.price)||v.price<=0||Math.abs(v.price*100-Math.round(v.price*100))>0.00001||!Number.isFinite(v.weight)||v.weight<=0||!Number.isInteger(v.slices)||v.slices<0))return {tab:'Varyant & fiyat',message:'Her varyant için en fazla iki ondalıklı pozitif fiyat, pozitif gramaj ve sıfır veya pozitif tam dilim sayısı girin.'};
  return null;
 }
+
+export function duplicateVariant(variant,variants){
+ const names=new Set(variants.map(v=>normalizeName(v.size)));let count=1,size;
+ do{const suffix=count===1?' Kopya':` Kopya ${count}`;size=(variant.size.trim()||'Varyant').slice(0,30-suffix.length)+suffix;count++}while(names.has(normalizeName(size)));
+ const {id,sku,...fields}=variant;return {...fields,size};
+}
