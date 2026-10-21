@@ -15,7 +15,7 @@ export const MaterialInput=forwardRef(function MaterialInput({type='text',classN
  return <InputBase inputRef={ref} type={type} className={'material-input '+className} inputProps={{'aria-label':label,min,max,step,pattern,maxLength,minLength}} {...rest}/>;
 });
 export const MaterialSelect=forwardRef(function MaterialSelect({'aria-label':label,className='',children,...props},ref){return <NativeSelect inputRef={ref} className={'material-select '+className} disableUnderline inputProps={{'aria-label':label}} {...props}>{children}</NativeSelect>});
-export const MaterialTextarea=forwardRef(function MaterialTextarea({'aria-label':label,...props},ref){return <InputBase multiline inputRef={ref} className="material-input" inputProps={{'aria-label':label}} {...props}/>});
+export const MaterialTextarea=forwardRef(function MaterialTextarea({'aria-label':label,maxLength,minLength,...props},ref){return <InputBase multiline inputRef={ref} className="material-input" inputProps={{'aria-label':label,maxLength,minLength}} {...props}/>});
 export const MaterialTable=Table;
 export const MaterialTableHead=TableHead;
 export const MaterialTableBody=TableBody;

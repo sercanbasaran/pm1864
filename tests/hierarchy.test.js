@@ -54,3 +54,13 @@ test('variant weight, sales unit and packaging persist and invalid metadata is r
  r=await save(f,child.id,[],{...p,variants:[{...p.variants[0],unit:'Porsiyon',packaging:''}]});assert.equal(r.status,200);assert.equal(r.catalog.products[0].variants[0].packaging,'');assert.equal(r.catalog.products[0].variants[0].sku,p.variants[0].sku);
  }finally{await f.app.close()}
 });
+test('product nutrition and storage text persists, preserves omitted fields and supports explicit clearing',async()=>{
+ const f=await fixture();try{
+ const child=await sub(f,(await f.call('/catalog')).catalog.categories[0]);
+ const info={nutrition:'100 g için: Enerji 400 kcal / 1674 kJ; Yağ 20 g.',storageConditions:'Serin ve kuru yerde saklayın.',allergens:'Buğday ve fıstık içerir.',longTermStorage:'Üreticinin muhafaza talimatını izleyin.'};
+ let r=await save(f,child.id,[variant()]);assert.equal(r.status,200);r=await save(f,child.id,[],{...r.catalog.products[0],...info});assert.equal(r.status,200);let p=r.catalog.products[0];for(const key of Object.keys(info))assert.equal(p[key],info[key]);
+ const legacy={...p};for(const key of Object.keys(info))delete legacy[key];r=await save(f,child.id,[],legacy);assert.equal(r.status,200);p=r.catalog.products[0];for(const key of Object.keys(info))assert.equal(p[key],info[key]);
+ for(const patch of [{nutrition:'x'.repeat(4001)},{storageConditions:{}},{allergens:'x'.repeat(1001)},{longTermStorage:null}])assert.equal((await save(f,child.id,[],{...p,...patch})).status,422);
+ r=await save(f,child.id,[],{...p,nutrition:'',storageConditions:'',allergens:'',longTermStorage:''});assert.equal(r.status,200);for(const key of Object.keys(info))assert.equal(r.catalog.products[0][key],'');assert.equal(r.catalog.products[0].sku,p.sku);
+ }finally{await f.app.close()}
+});

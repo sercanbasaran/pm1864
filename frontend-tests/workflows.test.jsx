@@ -79,3 +79,12 @@ test('primary modules follow requested order and media uploads can be renamed an
 test('code module exposes immutable identifiers and viewer sees no media or code write controls',async()=>{
  await show();await navigate('Ürün kodu ve SKU yönetimi');expect(await screen.findByText('P000001')).toBeTruthy();expect(screen.getByText('HM-100-0001')).toBeTruthy();cleanup();window.history.replaceState(null,'','/#media');const {catalog}=await(await fetch('/api/catalog')).json();render(<App user={{...user,role:'viewer'}} snapshot={catalog} onLogout={vi.fn()} onUserUpdated={vi.fn()}/>);await screen.findByRole('heading',{name:'Medya',level:1});await screen.findByRole('heading',{name:'Medya kütüphanesi'});expect(screen.queryByRole('button',{name:'Görsel yükle'})).toBeNull();await navigate('Ürün kodu ve SKU yönetimi');expect(screen.queryByLabelText('Yeni ürünler için SKU öneki')).toBeNull();
 });
+test('product nutrition, storage and allergen fields save and reopen through the real API',async()=>{
+ await show();await navigate('Ürün kataloğu');await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));
+ let dialog=screen.getByRole('dialog',{name:'Ürün düzenle'});await click.click(within(dialog).getByRole('button',{name:'Besin ve saklama'}));
+ const fields=[['Besin değerleri (100 g için)','100 g için: Enerji 400 kcal / 1674 kJ; Yağ 20 g.','nutrition'],['Saklama koşulları','Serin ve kuru yerde saklayın.','storageConditions'],['Alerjen uyarısı','Buğday ve fıstık içerir.','allergens'],['Uzun süreli muhafaza','Üreticinin muhafaza talimatını izleyin.','longTermStorage']];
+ for(const [label,value] of fields)await click.type(within(dialog).getByLabelText(label),value);
+ await click.click(within(dialog).getByRole('button',{name:'Değişiklikleri kaydet'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());
+ const p=(await(await fetch('/api/catalog')).json()).catalog.products[0];for(const [,value,key] of fields)expect(p[key]).toBe(value);
+ await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));dialog=screen.getByRole('dialog',{name:'Ürün düzenle'});await click.click(within(dialog).getByRole('button',{name:'Besin ve saklama'}));for(const [label,value] of fields)expect(within(dialog).getByLabelText(label).value).toBe(value);
+});
