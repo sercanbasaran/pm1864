@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {Plus,X,Check,UsersThree,ShieldCheck,PencilSimple,Key,ArrowsClockwise} from '@phosphor-icons/react';
-import {roles,permissionLabels} from './permissions.js';
-import {request} from './api.js';
+import {roles,permissionLabels} from '../../permissions.js';
+import {request} from '../../api.js';
 export default function UserManagement({user,onChanged}){
  const [users,setUsers]=useState([]),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[draft,setDraft]=useState(null),[reset,setReset]=useState(null),[password,setPassword]=useState(''),[query,setQuery]=useState(''),[notice,setNotice]=useState('');
  async function load(){setLoading(true);setError('');try{setUsers((await request('/users')).users)}catch(e){setError(e.message)}finally{setLoading(false)}}

@@ -1,4 +1,4 @@
-import {duplicateVariant} from './catalog.js';
+import {duplicateVariant} from '../../catalog.js';
 import React from 'react';
 import {Plus,X,ArrowUp,ArrowDown,Copy} from '@phosphor-icons/react';
 export function newVariant(){return {size:'',weight:500,price:0,slices:0,active:true}}

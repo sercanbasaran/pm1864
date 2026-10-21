@@ -24,6 +24,7 @@ export async function migrate(db,seed){
   if(tx.dialect==='postgres')await tx.query('SELECT pg_advisory_xact_lock(18641864)');
   await tx.query('CREATE TABLE IF NOT EXISTS app_catalog (id INTEGER PRIMARY KEY, revision INTEGER NOT NULL, document TEXT NOT NULL)');
   await tx.query('CREATE TABLE IF NOT EXISTS app_sessions (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at BIGINT NOT NULL)');
+  await tx.query('CREATE TABLE IF NOT EXISTS app_media (id TEXT PRIMARY KEY,name TEXT NOT NULL,mime_type TEXT NOT NULL,size INTEGER NOT NULL,data TEXT NOT NULL,version INTEGER NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)');
   await tx.query('CREATE TABLE IF NOT EXISTS app_users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, active INTEGER NOT NULL, must_change_password INTEGER NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
   await tx.query('INSERT INTO app_catalog (id, revision, document) VALUES (1, 0, ?) ON CONFLICT (id) DO NOTHING',[JSON.stringify({...seed,schemaVersion:2})]);
   const row=(await tx.query('SELECT revision, document FROM app_catalog WHERE id=1'+(tx.dialect==='postgres'?' FOR UPDATE':''))).rows[0];const doc=JSON.parse(row.document);if(doc.schemaVersion!==2){upgradeHierarchy(doc);await tx.query('UPDATE app_catalog SET revision=?,document=? WHERE id=1',[Number(row.revision)+1,JSON.stringify(doc)])}

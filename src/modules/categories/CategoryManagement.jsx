@@ -1,7 +1,7 @@
 import React,{useState} from 'react';
 import {Plus,X,Check,PencilSimple,FolderSimple,ArrowRight,MagnifyingGlass} from '@phosphor-icons/react';
-import {slugify,nextCategoryCode,validateCategory} from './catalog.js';
-import {roots,categoryMatches} from './hierarchy.js';
+import {slugify,nextCategoryCode,validateCategory} from '../../catalog.js';
+import {roots,categoryMatches} from '../../hierarchy.js';
 export default function CategoryManager({categories,products,onSave,onProducts,onNewProduct,readOnly=false,canCreateProduct=true,skuPrefix='HM'}){
  const [draft,setDraft]=useState(null),[query,setQuery]=useState(''),[error,setError]=useState(''),[saving,setSaving]=useState(false);
  const main=roots(categories);

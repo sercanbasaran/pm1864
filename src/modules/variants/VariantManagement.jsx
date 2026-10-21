@@ -1,7 +1,7 @@
 import React,{useState} from 'react';
 import {Plus,Stack,MagnifyingGlass,PencilSimple} from '@phosphor-icons/react';
-import {roots,categoryOf,rootOf,categoryPath} from './hierarchy.js';
-import {money,downloadCSV} from './catalog-tools.js';
+import {roots,categoryOf,rootOf,categoryPath} from '../../hierarchy.js';
+import {money,downloadCSV} from '../../catalog-tools.js';
 export default function VariantManager({products,categories,canWrite,onEdit}){
  const [query,setQuery]=useState(''),[root,setRoot]=useState(''),[sub,setSub]=useState(''),[status,setStatus]=useState(''),[productId,setProductId]=useState('');
  const rows=products.flatMap(p=>p.variants.map(v=>({p,v,c:categoryOf(p,categories)}))).filter(({p,v,c})=>(!root||rootOf(c,categories)?.id===root)&&(!sub||c?.id===sub)&&(!productId||String(p.id)===productId)&&(!status||(v.active!==false)===(status==='active'))&&`${p.name} ${p.sku} ${v.size} ${v.sku}`.toLocaleLowerCase('tr').includes(query.toLocaleLowerCase('tr')));

@@ -1,6 +1,6 @@
 import React,{useState,useEffect} from 'react';
-import {request} from './api.js';
-import PasswordForm from './PasswordForm.jsx';
+import {request} from '../api.js';
+import PasswordForm from '../modules/account/PasswordForm.jsx';
 import {LockKey,ArrowRight,WarningCircle,ArrowsClockwise} from '@phosphor-icons/react';
 export default function BackendGate({children}){
  const [user,setUser]=useState(null),[catalog,setCatalog]=useState(null),[loading,setLoading]=useState(true),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[error,setError]=useState(''),[setup,setSetup]=useState(false),[busy,setBusy]=useState(false);

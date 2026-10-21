@@ -1,0 +1,3 @@
+import {request} from '../../api.js';
+export const MAX_FILE_SIZE=2*1024*1024;
+export async function uploadFile(file){if(!file||file.size>MAX_FILE_SIZE||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type))throw new Error('PNG, JPEG, WEBP veya GIF biçiminde en fazla 2 MB görsel seçin.');const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('Dosya okunamadı.'));reader.readAsDataURL(file)});return request('/media',{method:'POST',body:{name:file.name,mimeType:file.type,data}})}

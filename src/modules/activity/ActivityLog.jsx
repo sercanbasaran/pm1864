@@ -1,6 +1,6 @@
 import React,{useState} from 'react';
 import {MagnifyingGlass,ClockCounterClockwise,DownloadSimple} from '@phosphor-icons/react';
-import {dateTime,downloadCSV} from './catalog-tools.js';
+import {dateTime,downloadCSV} from '../../catalog-tools.js';
 export default function ActivityLog({logs}) {
  const [query,setQuery]=useState(''),[actor,setActor]=useState(''),[from,setFrom]=useState(''),[to,setTo]=useState(''),[page,setPage]=useState(1);
  const actors=[...new Set(logs.map(l=>l.actor).filter(Boolean))];

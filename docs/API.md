@@ -74,3 +74,21 @@ Kategori `parentId: ''` ise ana kategoridir; alt kategori `parentId` ile bir ana
 Ürün `categoryId` alanı ile alt kategoriye atanır. `category` geriye uyumluluk için alt kategori adını taşır; ilişkiler ve filtreler ID üzerinden çözülür. Doğrudan bir ana kategori ID’si veya geçersiz ID ile ürün oluşturmak 422 döndürür. Yeni atamalarda hem ana hem alt kategori aktif olmalıdır. Eski kategori adı payload’ları otomatik Genel alt kategorisi ile desteklenir.
 
 Varyantlar mevcut `POST /products` ve `PUT /products/:id` üzerinden atomik kaydedilir. `variants` dizisindeki mevcut varyantlar `id` değerini korumalıdır; yeni varyantta `id` / `sku` gönderilmez. Sunucu SKU ve ID üretir. `active` varsayılanı `true`dur. Başka ürüne ait veya aynı payload’da tekrar kullanılan varyant ID’si reddedilir. Ad değişikliği / sıralama mevcut SKU’yu korur; diziden çıkarılan varyant silinir. En az 1, en fazla 50 varyant gereklidir. Varyant `sku` ve ürün `nextVariantNumber` alanları sunucu yönetimindedir.
+
+## Medya API’si
+
+| Metot | Yol | İzin / Gövde |
+|---|---|---|
+| GET | `/media` | `catalog.read`; `{assets}` metadata listesi |
+| POST | `/media` | `media.write`; `{name,mimeType,data}`; data saf base64, data URL değil; 201 |
+| GET | `/media/:id/content` | `catalog.read`; görsel baytları |
+| PATCH | `/media/:id` | `media.write`; `{name,expectedVersion}` |
+| DELETE | `/media/:id` | `media.write`; JSON `{expectedVersion}` |
+
+Dosya sınırı 2 MB. Desteklenen türler PNG, JPEG, WEBP, GIF; MIME ve dosya imzası doğrulanır. Medya yüklemesinde JSON sınırı 2.900.000 bayt, diğer API isteklerinde 262.144 bayttır. SVG ve diğer türler reddedilir. Yanlış veri 422; eski medya sürümü 409; bağlı dosya silme `409 MEDIA_IN_USE` döndürür. Liste ve katalog yanıtları dosya verisini içermez.
+
+Ürün oluşturma / güncellemede `mediaId` gönderilebilir. Sunucu kaydı doğrular ve `customImage` alanını `/api/media/:id/content` olarak belirler. Bağlantıyı kaldırmak için `mediaId: ''`, `customImage: ''` gönderilir. Harici görsel URL’si alternatifi korunur. Medya işlemleri katalog revizyonunu ve işlem geçmişini günceller.
+
+## Ürün kodu
+
+Katalog ürünlerinde `productCode` (`P000001`), ürün `sku` ve varyant `sku` ayrı alanlardır. Ürün kodu ve SKU istemciden gelen değerlerle değiştirilemez. Önceki kayıtların ürün kodları ID’den tutarlı biçimde türetilir. SKU öneki mevcut `/settings` API’siyle yalnızca `settings.write` izni tarafından değiştirilebilir.

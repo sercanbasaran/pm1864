@@ -1,0 +1,2 @@
+import React from 'react';
+export default function Pagination({total,page,pageSize=8,onChange}){const pages=Math.max(1,Math.ceil(total/pageSize)),current=Math.min(page,pages);return <div className="pagination"><span>{total} kayıt · Sayfa {current} / {pages}</span><div><button disabled={current<=1} onClick={()=>onChange(current-1)}>Önceki</button><button disabled={current>=pages} onClick={()=>onChange(current+1)}>Sonraki</button></div></div>}

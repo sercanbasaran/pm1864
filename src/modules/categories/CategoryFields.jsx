@@ -1,5 +1,5 @@
 import React from 'react';
-import {roots,categoryOf,rootOf,selectable} from './hierarchy.js';
+import {roots,categoryOf,rootOf,selectable} from '../../hierarchy.js';
 export default function CategoryFields({product,categories,onChange}){
  const c=categoryOf(product,categories),parent=product.mainCategoryId||rootOf(c,categories)?.id||'',children=categories.filter(c=>c.parentId===parent);
  function choose(id){const leaf=categories.find(c=>c.id===id);onChange({...product,categoryId:id,category:leaf?.name||'',mainCategoryId:parent})}

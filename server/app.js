@@ -1,3 +1,4 @@
+import {createMediaService} from './media-service.js';
 import {openDatabase,migrate} from './db.js';
 import {createCatalogService,seedCatalog,ApiError} from './catalog-service.js';
 import {checkPassword,cookie,digest,newSessionToken,readCookie} from './security.js';
@@ -6,7 +7,7 @@ import {can} from '../src/permissions.js';
 const json=(value,status=200,headers={})=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff',...headers}});
 const dummyHash='scrypt:'+('0'.repeat(32))+':'+('0'.repeat(128));
 export async function createApp({env=process.env,database}={}){
- const db=database||await openDatabase(env);await migrate(db,seedCatalog());const service=createCatalogService(db),users=createUserService(db,env);await users.initialize();
+ const db=database||await openDatabase(env);await migrate(db,seedCatalog());const media=createMediaService(db),service=createCatalogService(db),users=createUserService(db,env);await users.initialize();
  async function session(request){const token=readCookie(request);if(!token)return null;const row=(await db.query('SELECT email, expires_at FROM app_sessions WHERE token_hash=?',[digest(token)])).rows[0];if(!row||Number(row.expires_at)<=Date.now())return null;const user=await users.findEmail(row.email);return user?.active?publicUser(user):null}
  async function issueSession(user){const token=newSessionToken();await db.transaction(async tx=>{await tx.query('SELECT revision FROM app_catalog WHERE id=1'+(tx.dialect==='postgres'?' FOR UPDATE':''));const current=(await tx.query('SELECT active,version FROM app_users WHERE id=?',[user.id])).rows[0];if(!current?.active||Number(current.version)!==user.version)throw new ApiError(401,'Hesap bilgileri değişti. Yeniden giriş yapın.','UNAUTHORIZED');await tx.query('DELETE FROM app_sessions WHERE expires_at<?',[Date.now()]);await tx.query('INSERT INTO app_sessions (token_hash,email,expires_at) VALUES (?,?,?)',[digest(token),user.email,Date.now()+28800000])});return token}
  async function handle(request){
@@ -14,7 +15,7 @@ export async function createApp({env=process.env,database}={}){
    if(route==='/api/health'&&method==='GET')return json({ok:true,service:'pm1864',database:db.dialect});
    if(!await users.configured())throw new ApiError(503,'İlk yönetici hesabı yapılandırılmadı. ADMIN_EMAIL ve ADMIN_PASSWORD_HASH değerlerini tamamlayın.','NOT_CONFIGURED');
    if(['POST','PUT','PATCH','DELETE'].includes(method)&&request.headers.get('origin')!==(env.APP_ORIGIN||url.origin))throw new ApiError(403,'İstek kaynağı doğrulanamadı.','ORIGIN_REJECTED');
-   let body={};if(['POST','PUT','PATCH'].includes(method)){if(!request.headers.get('content-type')?.includes('application/json'))throw new ApiError(415,'JSON içerik gerekli.');const raw=await request.text();if(Buffer.byteLength(raw)>262144)throw new ApiError(413,'İstek boyutu sınırı aşıldı.');try{body=JSON.parse(raw)}catch{throw new ApiError(400,'Geçersiz JSON.')}if(!body||Array.isArray(body)||typeof body!=='object')throw new ApiError(400,'JSON nesnesi gerekli.')}
+   let body={};if(['POST','PUT','PATCH','DELETE'].includes(method)){if(!request.headers.get('content-type')?.includes('application/json'))throw new ApiError(415,'JSON içerik gerekli.');const raw=await request.text();if(Buffer.byteLength(raw)>(route==='/api/media'&&method==='POST'?2900000:262144))throw new ApiError(413,'İstek boyutu sınırı aşıldı.');try{body=JSON.parse(raw)}catch{throw new ApiError(400,'Geçersiz JSON.')}if(!body||Array.isArray(body)||typeof body!=='object')throw new ApiError(400,'JSON nesnesi gerekli.')}
    const secure=url.protocol==='https:';
    if(route==='/api/login'&&method==='POST'){
     const row=await users.findEmail(body.email),passwordOkay=await checkPassword(body.password,row?.password_hash||dummyHash);if(!row?.active||!passwordOkay)throw new ApiError(401,'E-posta veya parola hatalı.','INVALID_CREDENTIALS');const user=publicUser(row),token=await issueSession(user);return json({user},200,{'set-cookie':cookie(token,secure)})
@@ -28,6 +29,10 @@ export async function createApp({env=process.env,database}={}){
    if(route==='/api/catalog'&&method==='GET'){requirePermission('catalog.read');return json({catalog:await service.read()})}
    if(route==='/api/users'&&method==='GET'){requirePermission('users.manage');return json(await users.list())}
    if(route==='/api/users'&&method==='POST'){requirePermission('users.manage');return json({user:await users.save(body,null,user)},201)}
+   if(route==='/api/media'&&method==='GET'){requirePermission('catalog.read');return json(await media.list())}
+   if(route==='/api/media'&&method==='POST'){requirePermission('media.write');return json(await media.upload(body,user.email),201)}
+   let assetRoute=route.match(/^\/api\/media\/([a-zA-Z0-9-]+)(\/content)?$/);
+   if(assetRoute){const id=assetRoute[1];if(assetRoute[2]&&method==='GET'){requirePermission('catalog.read');return await media.content(id)}if(!assetRoute[2]&&method==='PATCH'){requirePermission('media.write');return json(await media.rename(id,body,user.email))}if(!assetRoute[2]&&method==='DELETE'){requirePermission('media.write');return json(await media.remove(id,body,user.email))}}
    let match;if((match=route.match(/^\/api\/users\/([^/]+)$/))&&method==='PUT'){requirePermission('users.manage');return json({user:await users.save(body,decodeURIComponent(match[1]),user)})}
    if((match=route.match(/^\/api\/users\/([^/]+)\/password$/))&&method==='POST'){requirePermission('users.manage');return json(await users.reset(body,decodeURIComponent(match[1]),user))}
    if(route==='/api/profile'&&method==='PATCH')return json({user:await users.profile(body,user)});
@@ -43,7 +48,7 @@ export async function createApp({env=process.env,database}={}){
    return json({catalog});
   }catch(e){if(e instanceof ApiError)return json({error:{code:e.code,message:e.message}},e.status);console.error('pm1864 API error:',e.code||e.name);return json({error:{code:'INTERNAL_ERROR',message:'Sunucu işlemi tamamlayamadı. Yeniden deneyin.'}},500)}
  }
- return {handle,service,users,db,close:()=>db.close()};
+ return {handle,service,media,users,db,close:()=>db.close()};
 }
 let instance;
 export async function getApp(){if(!instance)instance=createApp().catch(e=>{instance=null;throw e});return instance}

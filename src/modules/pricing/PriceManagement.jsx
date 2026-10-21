@@ -1,7 +1,7 @@
-import {categoryMatches,categoryOf,categoryPath} from './hierarchy.js';
+import {categoryMatches,categoryOf,categoryPath} from '../../hierarchy.js';
 import React,{useState} from 'react';
 import {MagnifyingGlass,Check,X,PencilSimple,Tag} from '@phosphor-icons/react';
-import {money,dateTime,downloadCSV} from './catalog-tools.js';
+import {money,dateTime,downloadCSV} from '../../catalog-tools.js';
 export default function PriceManager({products,categories,canWrite,onSave,onBulk,busy}) {
  const [query,setQuery]=useState(''),[category,setCategory]=useState(''),[status,setStatus]=useState(''),[draft,setDraft]=useState(null),[error,setError]=useState('');
  const visible=products.filter(p=>categoryMatches(p,category,categories)&&(!status||p.status===status)&&`${p.name} ${p.sku}`.toLocaleLowerCase('tr').includes(query.toLocaleLowerCase('tr')));

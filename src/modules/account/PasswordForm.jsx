@@ -1,6 +1,6 @@
 import React,{useState} from 'react';
 import {LockKey,Check} from '@phosphor-icons/react';
-import {request} from './api.js';
+import {request} from '../../api.js';
 export default function PasswordForm({user,onChanged,required=false,onLogout}){
  const [current,setCurrent]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[done,setDone]=useState(false);
  async function save(e){e.preventDefault();setError('');setDone(false);if(password!==confirm){setError('Yeni parolalar eşleşmiyor.');return}setBusy(true);try{const response=await request('/password',{method:'POST',body:{currentPassword:current,newPassword:password}});setCurrent('');setPassword('');setConfirm('');setDone(true);await onChanged?.(response.user)}catch(e){setError(e.message)}finally{setBusy(false)}}

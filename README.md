@@ -61,7 +61,7 @@ Gerekli veritabanı veya ilk hesap ayarları eksikse kurulum ekranı gösterilir
 
 ## Kayıt ve güvenlik modeli
 
-Katalog, ayarlar ve işlem geçmişi sürümlenmiş SQL belgesinde saklanır. `app_users` ve `app_sessions` ayrı tablolardır. PostgreSQL satır kilidi / SQLite transaction’ı ve `expectedRevision` katalog değişikliklerini atomik tutar. Ürün ID’si ve SKU sunucuda üretilir; isim veya fiyat değişince mevcut SKU korunur. Kullanıcı güncellemeleri ayrıca `expectedVersion` kontrolü kullanır.
+Katalog, ayarlar ve işlem geçmişi sürümlenmiş SQL belgesinde saklanır. `app_users`, `app_sessions` ve `app_media` ayrı tablolardır. PostgreSQL satır kilidi / SQLite transaction’ı ve `expectedRevision` katalog değişikliklerini atomik tutar. Ürün ID’si ve SKU sunucuda üretilir; isim veya fiyat değişince mevcut SKU korunur. Kullanıcı güncellemeleri ayrıca `expectedVersion` kontrolü kullanır.
 
 Parolalar scrypt ile özetlenir. Oturum token’larının yalnızca SHA-256 özeti saklanır. Cookie `HttpOnly`, `SameSite=Strict` ve HTTPS’te `Secure` kullanır; oturum sekiz saat geçerlidir. Oturumlar ve yetkiler her API isteğinde doğrulanır. Yazma isteklerinde origin kontrolü uygulanır. Giriş denemeleri için uygulama düzeyinde bekleme süresi uygulanmaz. Hesap / parola işlemleri işlem geçmişine yazılır; parolalar yazılmaz.
 
@@ -69,7 +69,7 @@ Parolalar scrypt ile özetlenir. Oturum token’larının yalnızca SHA-256 öze
 
 ## Arayüz ve doğrulama
 
-Referans: `https://hm1864.netlify.app/`. Kırmızı `#A50000`, altın `#CBA052`, siyah `#171512`, krem `#F8F5EF`, Avenir ve Phosphor Icons kullanılır. Logo / fontlar referans siteden yüklenir. Görseller URL olarak kaydedilir.
+Referans: `https://hm1864.netlify.app/`. Kırmızı `#A50000`, altın `#CBA052`, siyah `#171512`, krem `#F8F5EF`, Avenir ve Phosphor Icons kullanılır. Logo / fontlar referans siteden yüklenir. Görseller medya kütüphanesinden seçilebilir veya harici URL olarak kaydedilebilir.
 
 `npm test`: rol bazlı izinler, ilk giriş parola değişimi, kullanıcı / parola yönetimi, oturum iptali, eşzamanlılık, SKU, kategori / varyant doğrulama ve platform yollarının kaldırılmasını SQLite üzerinde test eder.
 
@@ -91,7 +91,7 @@ Bağlantı adresi eksikse 503, bağlantı başarısızsa 500, GET dışındaki i
 - Hesabım: kalıcı profil adı ve parola güncelleme. Baş harfler hesap bilgilerinden üretilir.
 - Yardım merkezi: aranabilir kullanım rehberi ve yetkiye uygun ekran bağlantıları.
 
-Sabit demo fotoğrafları kullanılmaz. Görseli olmayan veya yüklenemeyen üründe açık bir yer tutucu gösterilir. Görseller HTTP(S) URL olarak eklenir; dosya depolama / yükleme servisi bu sürümün parçası değildir.
+Sabit demo fotoğrafları kullanılmaz. Görseli olmayan veya yüklenemeyen üründe açık bir yer tutucu gösterilir. Medya modülünden yüklenen dosyalar kalıcı PostgreSQL kaydında saklanır; harici HTTP(S) görsel URL’leri de desteklenir.
 
 `npm run test:ui`, DOM ortamında gerçek uygulama API’sine bağlı giriş, kategori / ürün oluşturma, fiyat düzenleme, toplu önizleme, profil, bildirim, filtre, dışa aktarma ve görüntüleyici erişimi akışlarını doğrular. Üretim Supabase verileri testlerde kullanılmaz.
 
@@ -104,3 +104,13 @@ Varyant yönetimi ekranı kategori, alt kategori, ürün, aktiflik ve SKU aramas
 Her varyantın kalıcı `id` ve otomatik `sku` değeri bulunur (`HM-100-0001-V0001`). İsim, sıra veya kategori değişikliği mevcut ürün / varyant SKU’sunu değiştirmez. Silinen varyantın sıra numarası yeni varyantta tekrar kullanılmaz. Varyantlar aynı ürün içinde benzersiz adlandırılır.
 
 Mevcut katalog ilk çalışmada sürüm 2 yapısına transaction içinde geçirilir: ana kategoriye doğrudan bağlı ürünler aynı ana kategorinin **Genel** alt kategorisine alınır; ürün, kullanıcı, fiyat ve SKU verileri korunur. Daha derin eski kategori yolları, kimlikler korunarak iki seviyeye indirilir; eski ara yol alt kategori adına yansır. Önceki API istemcilerinin kategori adıyla gönderdiği kayıtlar için Genel alt kategorisi uyumluluğu korunmuştur; yeni arayüz `categoryId` gönderir. Ek ortam değişkeni veya elle SQL kurulumu gerekmez.
+
+## Modüler uygulama yapısı
+
+Ana menü sırası: Kategori yönetimi → Ürün yönetimi → Varyant yönetimi → Ürün kodu ve SKU yönetimi → Kullanıcı yönetimi → Medya. Alt kategoriler Kategori yönetimi içinden eklenir. Genel bakış, fiyat, işlem geçmişi, hesap ve yardım araçları ayrı çalışma alanında kalır. Yetkisiz modüller menüde gösterilmez ve API erişimi sunucuda engellenir.
+
+`src/main.jsx` yalnızca uygulamayı başlatır. `src/app/` uygulama çatısı, modül kaydı ve merkezi katalog durumunu; `src/components/` ortak bileşenleri; `src/modules/` iş alanlarına göre ekranları içerir. Modüller ayrı JavaScript parçaları olarak gerektiğinde yüklenir. Teknik rehber: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+Ürün kodu (`P000001`), ürün SKU’su ve varyant SKU’su ayrı alanlardır. Kod modülü arama, listeleme, CSV ve yeni ürünler için SKU öneki yönetimi sunar; mevcut kodlar değişmez.
+
+Medya modülü gerçek dosya yükleme, önizleme, yeniden adlandırma, arama, ürüne bağlama ve kullanılmayan dosyayı onayla silme işlemleri içerir. PNG / JPEG / WEBP / GIF, en fazla 2 MB desteklenir. Dosyalar `app_media` tablosunda saklanır; katalog yalnızca medya kimliği ve URL’sini taşır. Görsel içeriği yetkili oturumla okunur. Yönetici ve editör yükleyebilir / düzenleyebilir; görüntüleyici okuyabilir. Kullanımdaki dosya sunucuda da silinemez. Yeni ortam değişkeni gerekmez; tablo uygulama açılışında oluşturulur.
