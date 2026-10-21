@@ -1,6 +1,25 @@
-# pm1864 — Hafız Mustafa 1864 ürün yönetimi
+# pm1864 — Ürün ve ekip yönetimi
 
-React arayüzü, Node.js API, yönetici oturumu, kalıcı katalog ve platform gönderim kuyruğu. Netlify’da frontend + Functions olarak çalışır.
+Hafız Mustafa 1864 için React + Node.js katalog yönetimi. İlk etapta kategori, ürün, varyant, fiyat, kullanıcı ve yetki yönetimi bulunur. Platform bağlantıları, yayın adımları, gönderim kuyruğu ve zamanlanmış gönderim görevleri bu sürümden kaldırılmıştır. Uygulama dış platformlara veri göndermez.
+
+## Roller ve yetkiler
+
+| İşlem | Yönetici | Editör | Görüntüleyici |
+|---|---|---|---|
+| Katalog, kategori ve işlem geçmişini görüntüleme | ✓ | ✓ | ✓ |
+| Kategori ekleme / düzenleme | ✓ | ✓ | — |
+| Ürün / varyant ekleme / düzenleme | ✓ | ✓ | — |
+| Fiyat ve toplu fiyat düzenleme | ✓ | ✓ | — |
+| SKU öneki ayarı | ✓ | — | — |
+| Kullanıcı oluşturma, rol / durum düzenleme | ✓ | — | — |
+| Başka kullanıcının parolasını sıfırlama | ✓ | — | — |
+| Kendi parolasını değiştirme | ✓ | ✓ | ✓ |
+
+Roller `src/permissions.js` dosyasında merkezi olarak tanımlıdır. Arayüz izin verilmeyen buton ve bölümleri göstermez; API her istekte veritabanındaki güncel kullanıcı ve rolü doğrular. İstemciden gönderilen rol bilgisi yetkilendirme için kullanılmaz.
+
+Yönetici **Kullanıcılar ve yetkiler** ekranından hesap açar; varsayılan yeni kullanıcı rolü Görüntüleyicidir. Genel kullanıma açık kayıt yoktur. Yeni hesaplar ve yönetici tarafından parolası sıfırlanan hesaplar ilk girişte geçici parolayı değiştirmek zorundadır. Bu işlem tamamlanana kadar katalog ve yönetim API’leri erişime kapalıdır.
+
+Rol değişikliği, pasifleştirme, e-posta değişikliği veya parola sıfırlama kullanıcının açık oturumlarını kapatır. Kişisel parola değişikliği diğer oturumları kapatır ve mevcut tarayıcıya yeni oturum verir. Kendi yönetici rolünü düşürmek / kendi hesabını pasifleştirmek engellenir; son aktif yönetici korunur. Kullanıcı güncellemeleri sürüm kontrolüyle yapılır.
 
 ## Yerel kurulum
 
@@ -12,7 +31,9 @@ npm run setup
 npm run dev
 ```
 
-`setup` e-posta ve gizli parola ister; yalnızca scrypt parola özetini `.env` içine kaydeder. Parolayı kod, komut satırı argümanı veya GitHub’a yazmayın. Vite’ın gösterdiği adresi açın. API `127.0.0.1:8787` üzerinde çalışır. Yerel veriler Git tarafından dışlanan `data/pm1864.sqlite` dosyasındadır.
+İlk kurulumda `setup` e-posta ve gizli parola ister; scrypt parola özetini `.env` içine kaydeder. İlk açılışta bu bilgilerle veritabanında bir yönetici oluşturulur. Kullanıcı tablosu oluşturulduktan sonra ortam değişkenleri kullanıcı parolalarını değiştirmez; hesapları uygulama içinden yönetin. Parola unutulursa başka bir yönetici geçici parola atayabilir. E-posta ile otomatik parola kurtarma bu sürümde yoktur.
+
+Vite’ın gösterdiği adresi açın. API `127.0.0.1:8787` üzerinde çalışır. Yerel veriler Git tarafından dışlanan `data/pm1864.sqlite` dosyasındadır. Parolalar ve `.env` GitHub’a yüklenmez.
 
 ```bash
 npm test
@@ -21,59 +42,34 @@ npm run build
 
 ## Netlify kurulumu
 
-Repository `sercanbasaran/pm1864`, branch `main`. `netlify.toml` build komutunu, `dist` dizinini ve Functions dizinini tanımlar.
+Repository `sercanbasaran/pm1864`, branch `main`. `netlify.toml` build komutunu, `dist` ve Functions dizinini tanımlar. Otomatik platform yayını veya zamanlanmış fonksiyon tanımı bulunmaz.
 
-1. Kalıcı bir PostgreSQL veritabanı oluşturun. Serverless kullanım için sağlayıcının **pooled connection URL** adresini tercih edin; sağlayıcının TLS ayarlarını koruyun. Üretimde SQLite kullanılmaz.
-2. Netlify proje ortam değişkenlerine aşağıdakileri ekleyin ve yeniden deploy edin:
+Kalıcı PostgreSQL oluşturun ve Functions çalışma ortamında şu değişkenleri tanımlayın:
 
 | Değişken | Değer |
 |---|---|
-| `DATABASE_URL` | PostgreSQL bağlantı adresi; sunucu sırrıdır |
-| `ADMIN_EMAIL` | Yönetici giriş e-postası |
-| `ADMIN_PASSWORD_HASH` | `npm run setup` sonrası yerel `.env` içindeki `scrypt:…` değeri; çevreleyen çift tırnakları kaldırın |
-| `APP_ORIGIN` | İsteğe bağlı, ör. `https://siteniz.netlify.app`; sondaki `/` olmadan. Boşsa isteğin origin’i kullanılır |
+| `DATABASE_URL` | PostgreSQL bağlantısı; sağlayıcının TLS ve bağlantı havuzu ayarlarını koruyun |
+| `ADMIN_EMAIL` | İlk yönetici hesabının e-postası |
+| `ADMIN_PASSWORD_HASH` | `npm run setup` ile üretilen `scrypt:…` değeri; dıştaki tırnaklar olmadan |
+| `ADMIN_NAME` | İsteğe bağlı ilk yönetici adı |
+| `APP_ORIGIN` | İsteğe bağlı kanonik uygulama adresi; sondaki `/` olmadan |
 
-Bu değerler Functions çalışma ortamında erişilebilir olmalıdır; `VITE_` öneki eklemeyin. Örnek değişken listesi `.env.example` içindedir. `.env` dosyasını yüklemeyin.
+Bu değerlere `VITE_` öneki eklemeyin. `.env.example` örnek ayarları içerir. İlk yönetici oluşturulduktan sonra `ADMIN_*` alanları yalnızca boş veritabanının ilk kurulumu için kullanılır.
 
-3. `/api/health` ile API/veritabanı erişimini kontrol edin. Yönetici girişi sonrası kategoriler ve ürünler sunucudan yüklenir.
+Gerekli veritabanı veya ilk hesap ayarları eksikse kurulum ekranı gösterilir. PostgreSQL hesabı ve Netlify ortam değişkenleri repo tarafından otomatik oluşturulmaz. Canlı PostgreSQL bağlantısı dağıtım ortamında ayrıca doğrulanmalıdır.
 
-Gerekli ayarlar yoksa uygulama **Sunucu kurulumu gerekli** ekranı gösterir. PostgreSQL hesabı veya Netlify ortam değişkenleri bu repository tarafından otomatik oluşturulmaz. Kaynak kodun GitHub’a yüklenmesi, canlı veritabanının hazırlanmış olduğu anlamına gelmez.
+## Kayıt ve güvenlik modeli
 
-## Veri ve eşzamanlılık
+Katalog, ayarlar ve işlem geçmişi sürümlenmiş SQL belgesinde saklanır. `app_users`, `app_sessions` ve `app_login_limits` ayrı tablolardır. PostgreSQL satır kilidi / SQLite transaction’ı ve `expectedRevision` katalog değişikliklerini atomik tutar. Ürün ID’si ve SKU sunucuda üretilir; isim veya fiyat değişince mevcut SKU korunur. Kullanıcı güncellemeleri ayrıca `expectedVersion` kontrolü kullanır.
 
-İlk açılışta beş başlangıç kategorisi oluşturulur; ürün kataloğu boştur. Önceki frontend demosundaki `localStorage` ürünleri otomatik olarak sunucuya aktarılmaz veya silinmez.
+Parolalar scrypt ile özetlenir. Oturum token’larının yalnızca SHA-256 özeti saklanır. Cookie `HttpOnly`, `SameSite=Strict` ve HTTPS’te `Secure` kullanır; oturum sekiz saat geçerlidir. Oturumlar ve yetkiler her API isteğinde doğrulanır. Yazma isteklerinde origin kontrolü, girişte IP bazlı deneme sınırı uygulanır. Hesap / parola işlemleri işlem geçmişine yazılır; parolalar yazılmaz.
 
-Katalog, ayarlar, iş kuyruğu ve denetim kayıtları sürümlenmiş bir SQL katalog belgesinde saklanır. Bu ilk sürüm, küçük / orta hacimli bir merkez katalog için tasarlanmıştır. PostgreSQL satır kilidi veya SQLite transaction’ı değişiklikleri atomik tutar. `expectedRevision` kontrolü eşzamanlı düzenlemelerde veri kaybını önler. Çakışma durumunda arayüz verileri yeniler; açık formu kontrol edip yeniden kaydedin.
+Önceki katalog kayıtları korunur. Eski platform alanları API yanıtlarından çıkarılır ve eski gönderim işleri çalıştırılmaz. Önceki frontend demosunun `localStorage` kayıtları otomatik aktarılmaz veya silinmez.
 
-Ürün ID’si ve SKU sunucuda üretilir. Ürün / kategori adı veya fiyat değiştiğinde mevcut SKU korunur. Varyantlar ürünle birlikte atomik olarak kaydedilir. Kategori kodu, isim ve bağlantı adı benzersizdir; üst kategori döngüleri reddedilir.
+## Arayüz ve doğrulama
 
-Oturumlar ayrı SQL tablosunda, rastgele token’ın yalnızca SHA-256 özeti ile tutulur. Cookie `HttpOnly`, `SameSite=Strict` ve HTTPS’te `Secure` kullanır; sekiz saat geçerlidir. Çıkış oturumu sunucuda iptal eder. Değişiklik isteklerinde origin doğrulanır. Giriş denemeleri IP bazında veritabanında sınırlandırılır. Bu sürüm tek yönetici hesabı kullanır; rol / ekip yönetimi içermez.
+Referans: `https://hm1864.netlify.app/`. Kırmızı `#A50000`, altın `#CBA052`, siyah `#171512`, krem `#F8F5EF`, Avenir ve Phosphor Icons kullanılır. Logo / fontlar referans siteden yüklenir. Görseller URL olarak kaydedilir.
 
-## Platform yayınları
+`npm test`: rol bazlı izinler, ilk giriş parola değişimi, kullanıcı / parola yönetimi, oturum iptali, eşzamanlılık, SKU, kategori / varyant doğrulama ve platform yollarının kaldırılmasını SQLite üzerinde test eder.
 
-Manuel yayın ve otomatik yayın aynı kalıcı kuyruğu kullanır. Her ürün / platform / sürüm için ayrı iş oluşur. Netlify Scheduled Function dakikada bir en fazla iki işi işler; yerelde worker 30 saniyede bir çalışır. Platformlar ekranında **Kuyruğu işle** ile manuel çalıştırma da vardır.
-
-Gerçek platform API sözleşmeleri ve hesap anahtarları sağlanmadığı için dört kanal için **webhook adaptör sözleşmesi** hazırlanmıştır; bu kod doğrudan Ticimax, Trendyol, Yemeksepeti veya FineDine API entegrasyonu iddia etmez. O platformun API’sine dönüştürme yapan kendi adaptörünüz gerekir.
-
-| Kanal | Webhook ortam değişkenleri |
-|---|---|
-| Online Mağaza | `SYNC_ONLINE_URL`, `SYNC_ONLINE_TOKEN` |
-| Trendyol | `SYNC_TRENDYOL_URL`, `SYNC_TRENDYOL_TOKEN` |
-| Yemeksepeti | `SYNC_YEMEKSEPETI_URL`, `SYNC_YEMEKSEPETI_TOKEN` |
-| FineDine | `SYNC_FINEDINE_URL`, `SYNC_FINEDINE_TOKEN` |
-
-Webhook URL’si HTTPS olmalıdır. İstek `Authorization: Bearer <token>` ve değişmeyen `Idempotency-Key: <jobId>` başlıklarını taşır. Alıcı, aynı anahtarın tekrarlarını tek işlem olarak ele almalı ve işlemi kalıcı kabul ettikten sonra 2xx dönmelidir. Gövde örneği `docs/API.md` içindedir.
-
-Bağlantısı olmayan kanal `blocked` olur; ürün güncel kabul edilmez. Geçici ağ, 429 ve 5xx hatalarında en fazla üç deneme yapılır. Başarılı gönderim yalnızca ilgili kanalın **aynı ürün sürümünü** güncel işaretler. Eski sürüm gönderimi, daha yeni düzenlemeyi güncel göstermez. `failed` / `blocked` işler arayüzden yeniden denenebilir. Worker lease’i, çakışan çalıştırmalarda aynı işin eşzamanlı gönderilmesini önler; lease süresi aşılırsa güvenli tekrar için alıcının idempotency desteği gerekir.
-
-Yalnızca simülasyon isteniyorsa `SYNC_MODE=demo` açıkça tanımlanabilir. Sonuçlar arayüz ve işlem geçmişinde demo olarak etiketlenir. Varsayılan mod `webhook`tur.
-
-## Arayüz
-
-`https://hm1864.netlify.app/` referans alınarak `#A50000`, `#CBA052`, `#171512`, `#F8F5EF`, Avenir tipografisi ve köşeli bileşenler kullanılır. Logo / fontlar referans siteden yüklenir; erişim yoksa sistem fontlarına geçilir. İkonlar Phosphor Icons paketindendir. Görseller bu sürümde URL olarak kaydedilir; dosya yükleme ve medya depolama içermez.
-
-## Doğrulama
-
-`npm test` kategori doğrulaması, oturum / çıkış, giriş sınırı, origin kontrolü, sunucu SKU’su, eşzamanlı yazma çakışması, atomik fiyat değişimi, verinin yeniden başlatmada korunması, kuyruk engelleme / yeniden deneme ve eski sürüm gönderimi senaryolarını SQLite üzerinde doğrular. PostgreSQL adapter’ı eklenmiştir; canlı PostgreSQL bağlantısı ayrıca dağıtım ortamında test edilmelidir.
-
-API referansı: [docs/API.md](docs/API.md).
+API ve yetki referansı: [docs/API.md](docs/API.md).

@@ -20,6 +20,5 @@ export function validateProduct(product,categories){
  const names=product.variants.map(v=>normalizeName(v.size));
  if(names.some(n=>!n)||new Set(names).size!==names.length)return {tab:'Varyant & fiyat',message:'Varyant adları dolu ve birbirinden farklı olmalı.'};
  if(product.variants.some(v=>!Number.isFinite(v.price)||v.price<=0||!Number.isFinite(v.weight)||v.weight<=0||!Number.isInteger(v.slices)||v.slices<0))return {tab:'Varyant & fiyat',message:'Her varyant için pozitif fiyat / gramaj ve sıfır veya pozitif tam dilim sayısı girin.'};
- if(!product.channels.length)return {tab:'Platformlar',message:'En az bir yayın platformu seçin.'};
  return null;
 }

@@ -1,56 +1,54 @@
-# API
+# API ve erişim modeli
 
-Tüm yanıtlar JSON ve `Cache-Control: no-store` kullanır. `/api/health` ile `/api/login` dışındaki yollar geçerli oturum ister. Mutation istekleri aynı origin’den, `Content-Type: application/json` ile gönderilir.
+API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma istekleri aynı origin’den `Content-Type: application/json` ile gönderilir. Sunucu rolü her istekte veritabanından okur; istemciden gelen role güvenmez.
 
-| Metot | Yol | Gövde |
+| Metot | Yol | Yetki / gövde |
 |---|---|---|
-| GET | `/api/health` | API ve veritabanı durumu |
-| POST | `/api/login` | `{ "email": "…", "password": "…" }` |
-| GET | `/api/session` | Mevcut yönetici |
-| POST | `/api/logout` | `{}` |
-| GET | `/api/catalog` | `{catalog}`: kategoriler, ürünler, ayarlar, kuyruk, geçmiş, revision |
-| POST | `/api/categories` | `{expectedRevision, category}` |
-| PUT | `/api/categories/:id` | `{expectedRevision, category}` |
-| POST | `/api/products` | `{expectedRevision, product}` |
-| PUT | `/api/products/:id` | `{expectedRevision, product}` |
-| POST | `/api/prices/bulk` | `{expectedRevision, ids: [1], percent: 10, direction: "increase"}` |
-| PATCH | `/api/settings` | `{expectedRevision, settings: {autoSync: false, skuPrefix: "HM"}}` |
-| POST | `/api/sync` | `{expectedRevision, ids: [1], channels: [0,1]}` |
-| POST | `/api/jobs/retry` | `{expectedRevision, jobId: "…"}` |
-| POST | `/api/jobs/process` | `{}`; en fazla iki işi işler |
+| GET | `/health` | Açık; API / veritabanı durumu |
+| POST | `/login` | Açık; `{email,password}` |
+| GET | `/session` | Oturum; `{user}` |
+| POST | `/logout` | Oturum; `{}` |
+| POST | `/password` | Oturum; `{currentPassword,newPassword}` |
+| GET | `/catalog` | `catalog.read`; `{catalog}` |
+| POST | `/categories` | `categories.write`; `{expectedRevision,category}` |
+| PUT | `/categories/:id` | `categories.write`; `{expectedRevision,category}` |
+| POST | `/products` | `products.write`; `{expectedRevision,product}` |
+| PUT | `/products/:id` | `products.write`; `{expectedRevision,product}` |
+| POST | `/prices/bulk` | `prices.write`; `{expectedRevision,ids,percent,direction}` |
+| PATCH | `/settings` | `settings.write`; `{expectedRevision,settings:{skuPrefix}}` |
+| GET | `/users` | `users.manage`; `{users,roles}` |
+| POST | `/users` | `users.manage`; `{user:{name,email,role,active,password}}` |
+| PUT | `/users/:id` | `users.manage`; `{expectedVersion,user:{name,email,role,active}}` |
+| POST | `/users/:id/password` | `users.manage`; `{expectedVersion,password}` |
 
-Kanal kimlikleri: 0 Online Mağaza, 1 Trendyol, 2 Yemeksepeti, 3 FineDine.
+Rol kimlikleri: `admin`, `editor`, `viewer`. Kullanıcı oluşturma 201 döner. Kullanıcı listesi / yanıtı parola veya parola özeti içermez. Yeni kullanıcı ve yönetici parola sıfırlaması `mustChangePassword: true` döndürür. Bu durumda yalnızca session, logout ve password yolları kullanılabilir; diğerleri `403 PASSWORD_CHANGE_REQUIRED` döner.
 
-## Kategori örneği
+`POST /password` başarılı olduğunda diğer oturumlar iptal edilir; mevcut tarayıcıya yeni cookie verilir ve `{user}` döner. Parolalar 12–512 karakter olmalıdır. Yeni parola mevcut paroladan farklı olmalıdır. Genel kayıt / otomatik e-posta kurtarma yolu yoktur.
+
+## Katalog örnekleri
 
 ```json
 {"expectedRevision":0,"category":{"name":"Pastalar","code":"500","slug":"pastalar","description":"Özel pasta çeşitleri","parentId":"","active":true}}
 ```
 
-Kategori güncellemesinde `id` URL’de verilir; kategori kodu değiştirilemez. Pasif kategoriye yeni ürün eklenmez; mevcut ürünler saklanır.
-
-## Ürün örneği
-
 ```json
-{"expectedRevision":1,"product":{"name":"Fıstıklı Pasta","category":"Pastalar","status":"Aktif","description":"Ürün açıklaması","allergens":"Süt, gluten, fıstık","customImage":"https://example.com/pasta.webp","channels":[0,3],"variants":[{"size":"Porsiyon","weight":180,"price":500,"slices":1}]}}
+{"expectedRevision":1,"product":{"name":"Fıstıklı Pasta","category":"Pastalar","status":"Aktif","description":"Ürün açıklaması","allergens":"Süt, gluten, fıstık","customImage":"https://example.com/pasta.webp","variants":[{"size":"Porsiyon","weight":180,"price":500,"slices":1}]}}
 ```
 
-`id`, `sku`, `version`, `channelVersions` ve tarihler sunucu tarafından yönetilir; istemciden gönderilerek değiştirilemez. Kayıt yanıtı en güncel `{catalog}` nesnesini içerir. Ürün fiyatı TRY cinsindedir. Bu sürümde silme yerine ürünün `Taslak`, kategorinin `active: false` yapılması kullanılır.
+`id`, `sku`, `version` ve tarihler sunucuda üretilir. SKU sabittir. Kategori kodu güncellemede korunur. Ürün durumları `Aktif` ve `Taslak`tır; dış platform yayın durumunu ifade etmez.
 
-## Webhook gövdesi
+## Kullanıcı örneği
 
 ```json
-{"event":"product.updated","jobId":"uuid","platform":"ONLINE","version":2,"product":{"id":1,"sku":"HM-500-0001","version":2,"name":"Fıstıklı Pasta","category":"Pastalar","status":"Aktif","variants":[{"size":"Porsiyon","weight":180,"price":500,"slices":1}],"channels":[0,3]}}
+{"user":{"name":"Katalog Editörü","email":"editor@example.com","role":"editor","active":true,"password":"en-az-12-karakterlik-gecici-parola"}}
 ```
 
-Gerçek ürün gövdesi açıklama, alerjen, görsel ve güncelleme tarihini de içerir. SKU ve varyant adı birlikte varyantı tanımlar. İstemci, varyant adlarının aynı ürün içinde benzersiz olmasını sağlamalıdır; sunucu bunu ayrıca doğrular.
+Parolayı URL’ye, uygulama loglarına veya GitHub’a yazmayın. Yönetici geçici parolayı kullanıcıya güvenli bir kanaldan iletir; uygulama mesaj / e-posta göndermez.
+
+Kullanıcı güncellemede `expectedVersion`, son `GET /users` yanıtındaki `version` değeridir. Kendi hesabını pasifleştirme veya kendi rolünü düşürme, son aktif yöneticiyi kaldırma ve yinelenen e-posta kullanımı engellenir. Rol / e-posta / aktiflik değişiklikleri ilgili oturumları kapatır. Kalıcı silme yolu yoktur; pasifleştirme kullanılır.
 
 ## Hatalar
 
-```json
-{"error":{"code":"REVISION_CONFLICT","message":"Katalog başka bir işlemde güncellendi. Verileri yenileyip yeniden deneyin."}}
-```
+`401`: geçersiz / sona ermiş / iptal edilmiş oturum; `403 FORBIDDEN`: yetki yok; `403 PASSWORD_CHANGE_REQUIRED`: geçici parola değiştirilmeli; `403 ORIGIN_REJECTED`: yanlış origin; `409`: katalog / kullanıcı sürüm çakışması veya yönetici koruması; `422`: veri doğrulama; `429`: giriş sınırı; `503`: kurulum eksikliği.
 
-`401`: oturum / giriş; `403`: origin; `409`: eski revision; `413`: büyük istek; `415`: yanlış içerik türü; `422`: veri doğrulama; `429`: giriş sınırı; `503`: veritabanı / yönetici kurulum eksikliği.
-
-API, veritabanı adresini, parola özetini, oturum token’ını veya platform erişim anahtarlarını katalog yanıtlarında döndürmez.
+Platform, sync ve jobs yolları bu sürümde yoktur; 404 döner. Zamanlanmış gönderim fonksiyonu bulunmaz.
