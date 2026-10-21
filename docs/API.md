@@ -8,12 +8,14 @@ API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma 
 | POST | `/login` | Açık; `{email,password}` |
 | GET | `/session` | Oturum; `{user}` |
 | POST | `/logout` | Oturum; `{}` |
+| PATCH | `/profile` | Oturum; `{expectedVersion,name}`; yalnızca kendi profil adı |
 | POST | `/password` | Oturum; `{currentPassword,newPassword}` |
 | GET | `/catalog` | `catalog.read`; `{catalog}` |
 | POST | `/categories` | `categories.write`; `{expectedRevision,category}` |
 | PUT | `/categories/:id` | `categories.write`; `{expectedRevision,category}` |
 | POST | `/products` | `products.write`; `{expectedRevision,product}` |
 | PUT | `/products/:id` | `products.write`; `{expectedRevision,product}` |
+| PATCH | `/prices/products/:id` | `prices.write`; `{expectedRevision,prices:[123.45,234.56]}`; varyant sırasına göre tüm fiyatlar |
 | POST | `/prices/bulk` | `prices.write`; `{expectedRevision,ids,percent,direction}` |
 | PATCH | `/settings` | `settings.write`; `{expectedRevision,settings:{skuPrefix}}` |
 | GET | `/users` | `users.manage`; `{users,roles}` |
@@ -58,3 +60,9 @@ Platform, sync ve jobs yolları bu sürümde yoktur; 404 döner. Zamanlanmış g
 `GET /.netlify/functions/db-test` bağımsız Netlify Function’ıdır; `/api` kökü altında değildir. Oturum gerektirmez, yalnızca veritabanı zamanını test eder. `DATABASE_URL` Netlify Functions ortamında tanımlı olmalıdır. Yanıtlar: 200 başarı + zaman; 503 yapılandırma eksik; 500 bağlantı hatası; 405 yanlış metot. Yanıtlar önbelleğe alınmaz.
 
 Giriş denemelerinde uygulama düzeyinde sayı sınırı veya 15 dakikalık bekleme süresi yoktur. Yanlış e-posta / parola 401 döndürür; sonraki doğru giriş engellenmez.
+
+## Fiyat ve profil güncellemeleri
+
+Varyant fiyat güncellemesi ürünün diğer alanlarını değiştirmez. Tüm varyantlar için sıra korunarak en fazla iki ondalıklı, 0’dan büyük ve en fazla 100.000.000 TRY değer girilir. Varyant sayısı eşleşmeli, katalog revizyonu güncel olmalıdır. Toplu güncelleme de kuruş hassasiyetini korur, en az 0,01 TRY üretir ve üst sınırı aşan işlem bütünüyle reddedilir.
+
+Profil güncellemesi oturumdaki kullanıcının adını değiştirir. İstemciden gelen rol, e-posta ve aktiflik alanları kullanılmaz. Diğer kullanıcıların profili bu endpoint ile değiştirilemez. `expectedVersion` uyuşmazlığında 409 döner; değişiklik işlem geçmişine kaydedilir.

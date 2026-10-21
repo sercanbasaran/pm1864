@@ -30,12 +30,14 @@ export async function createApp({env=process.env,database}={}){
    if(route==='/api/users'&&method==='POST'){requirePermission('users.manage');return json({user:await users.save(body,null,user)},201)}
    let match;if((match=route.match(/^\/api\/users\/([^/]+)$/))&&method==='PUT'){requirePermission('users.manage');return json({user:await users.save(body,decodeURIComponent(match[1]),user)})}
    if((match=route.match(/^\/api\/users\/([^/]+)\/password$/))&&method==='POST'){requirePermission('users.manage');return json(await users.reset(body,decodeURIComponent(match[1]),user))}
+   if(route==='/api/profile'&&method==='PATCH')return json({user:await users.profile(body,user)});
    let catalog;
    if(route==='/api/categories'&&method==='POST'){requirePermission('categories.write');catalog=await service.saveCategory(body,null,user.email)}
    else if((match=route.match(/^\/api\/categories\/([^/]+)$/))&&method==='PUT'){requirePermission('categories.write');catalog=await service.saveCategory(body,decodeURIComponent(match[1]),user.email)}
    else if(route==='/api/products'&&method==='POST'){requirePermission('products.write');catalog=await service.saveProduct(body,null,user.email)}
    else if((match=route.match(/^\/api\/products\/(\d+)$/))&&method==='PUT'){requirePermission('products.write');catalog=await service.saveProduct(body,match[1],user.email)}
    else if(route==='/api/prices/bulk'&&method==='POST'){requirePermission('prices.write');catalog=await service.bulk(body,user.email)}
+   else if((match=route.match(/^\/api\/prices\/products\/(\d+)$/))&&method==='PATCH'){requirePermission('prices.write');catalog=await service.prices(body,match[1],user.email)}
    else if(route==='/api/settings'&&method==='PATCH'){requirePermission('settings.write');catalog=await service.settings(body,user.email)}
    else throw new ApiError(404,'API yolu veya metodu bulunamadı.','NOT_FOUND');
    return json({catalog});

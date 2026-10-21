@@ -1,0 +1,55 @@
+import React,{useState} from 'react';
+import {test,expect,beforeEach,afterEach,vi} from 'vitest';
+import {render,screen,within,waitFor,cleanup} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {createApp} from '../server/app.js';
+import {hashPassword} from '../server/security.js';
+import BackendGate from '../src/BackendGate.jsx';
+import {App} from '../src/main.jsx';
+const password='UI-test-only-password-1864';
+let api,cookie,user,click,requests;
+beforeEach(async()=>{
+ api=await createApp({env:{SQLITE_PATH:':memory:',ADMIN_EMAIL:'ui@example.test',ADMIN_PASSWORD_HASH:await hashPassword(password),ADMIN_NAME:'Arayüz Kontrol'}});cookie='';requests=[];
+ await api.service.saveProduct({expectedRevision:0,product:{name:'Kontrol Baklava',category:'Baklavalar',description:'',status:'Taslak',variants:[{size:'S',weight:500,price:100.25,slices:12},{size:'M',weight:900,price:200.75,slices:24}]}},null,'ui@example.test');
+ vi.stubGlobal('fetch',vi.fn(async(path,options={})=>{requests.push({path,options});const response=await api.handle(new Request('http://localhost'+path,{...options,headers:{...options.headers,origin:'http://localhost',cookie}}));if(response.headers.has('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];return response}));
+ click=userEvent.setup();URL.createObjectURL=vi.fn(()=> 'blob:test');URL.revokeObjectURL=vi.fn();
+ const login=await fetch('/api/login',{method:'POST',body:JSON.stringify({email:'ui@example.test',password}),headers:{'content-type':'application/json'}});user=(await login.json()).user;
+});
+afterEach(async()=>{cleanup();vi.unstubAllGlobals();await api.close()});
+async function show(){const {catalog}=await(await fetch('/api/catalog')).json();function Harness(){const [current,setCurrent]=useState(user),[snapshot,setSnapshot]=useState(catalog);async function update(next){setSnapshot((await(await fetch('/api/catalog')).json()).catalog);setCurrent(next)}return <App user={current} snapshot={snapshot} onLogout={vi.fn()} onUserUpdated={update}/>};render(<Harness/>);await screen.findByRole('heading',{name:'Genel bakış',level:1})}
+async function navigate(name){await click.click(within(screen.getByRole('navigation')).getByText(name,{exact:true}));await screen.findByRole('heading',{name,level:1})}
+test('overview and notifications navigate to real filtered catalog, search shortcut and product details work',async()=>{
+ await show();expect(screen.getByText('1 ürün, 2 varyant ve 5 aktif kategori. Bu panel kayıtlı verilerinizle güncellenir.')).toBeTruthy();
+ await click.click(screen.getByRole('button',{name:/Görseli olmayan ürünler/}));expect(screen.getByRole('combobox',{name:'İçerik eksikliği'}).value).toBe('image');expect(screen.getByRole('button',{name:/Kontrol Baklava.*HM-/})).toBeTruthy();
+ await click.keyboard('/');expect(document.activeElement).toBe(screen.getByRole('textbox',{name:'Ürün ara'}));
+ await click.click(screen.getByRole('button',{name:'Bildirimler'}));await click.click(within(screen.getByRole('dialog')).getByRole('button',{name:/Taslak ürünler/}));expect(screen.getByRole('combobox',{name:'Durum filtresi'}).value).toBe('Taslak');
+ await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));const dialog=screen.getByRole('dialog',{name:'Ürün düzenle'});expect(within(dialog).getByLabelText('Ürün adı').value).toBe('Kontrol Baklava');await click.click(within(dialog).getByRole('button',{name:'Varyant & fiyat'}));expect(within(dialog).getAllByRole('spinbutton').some(input=>input.value==='100.25')).toBe(true);
+});
+test('category and product forms create persistent records with generated SKU and validation',async()=>{
+ await show();await navigate('Kategoriler');await click.click(screen.getByRole('button',{name:'Kategori ekle'}));let dialog=screen.getByRole('dialog',{name:'Kategori ekle'});await click.type(within(dialog).getByLabelText('Kategori adı'),'Pastalar');await click.click(within(dialog).getByRole('button',{name:'Kategoriyi oluştur'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());
+ let catalog=(await(await fetch('/api/catalog')).json()).catalog;expect(catalog.categories.some(c=>c.name==='Pastalar'&&c.slug==='pastalar')).toBe(true);
+ await click.click(screen.getAllByRole('button',{name:'Ürün ekle',exact:true})[0]);dialog=screen.getByRole('dialog',{name:'Ürün düzenle'});await click.type(within(dialog).getByLabelText('Ürün adı'),'Yeni Pasta');await click.selectOptions(within(dialog).getByLabelText('Kategori'),'Pastalar');await click.click(within(dialog).getByRole('button',{name:'Ürünü oluştur'}));expect(await within(dialog).findByRole('alert')).toBeTruthy();
+ const price=within(dialog).getByLabelText(/Fiyat/);await click.clear(price);await click.type(price,'325.50');await click.click(within(dialog).getByRole('button',{name:'Ürünü oluştur'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());catalog=(await(await fetch('/api/catalog')).json()).catalog;const product=catalog.products.find(p=>p.name==='Yeni Pasta');expect(product.variants[0].price).toBe(325.5);expect(product.sku).toMatch(/^HM-500-\d{4}$/);
+ await navigate('Ürün kataloğu');expect(await screen.findByText('Yeni Pasta')).toBeTruthy();
+});
+test('variant prices and previewed bulk prices save through real API and survive refresh',async()=>{
+ await show();await navigate('Fiyat yönetimi');await click.click(screen.getByRole('button',{name:'Fiyat düzenle'}));let dialog=screen.getByRole('dialog',{name:'Varyant fiyatlarını düzenle'});const price=within(dialog).getByRole('spinbutton',{name:'S fiyatı'});await click.clear(price);await click.type(price,'123.45');await click.click(within(dialog).getByRole('button',{name:'Fiyatları kaydet'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());expect(screen.getByText('₺123,45')).toBeTruthy();
+ await click.click(screen.getByRole('button',{name:'Toplu güncelle'}));dialog=screen.getByRole('dialog',{name:'Toplu fiyat güncelleme'});expect(within(dialog).getByText('Değişiklik önizlemesi')).toBeTruthy();expect(within(dialog).getByText('₺135,80')).toBeTruthy();await click.click(within(dialog).getByRole('button',{name:'Fiyatları güncelle'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());
+ await click.click(screen.getByRole('button',{name:'Kataloğu yenile'}));await waitFor(()=>expect(screen.getByText('₺135,80')).toBeTruthy());const catalog=(await(await fetch('/api/catalog')).json()).catalog;expect(catalog.products[0].variants[0].price).toBe(135.8);
+});
+test('profile changes update avatar and audit log; history filters, export and help links work',async()=>{
+ await show();await navigate('Hesabım');const name=screen.getByLabelText('Ad soyad');await click.clear(name);await click.type(name,'Test Kullanıcı');await click.click(screen.getByRole('button',{name:'Profilimi kaydet'}));await waitFor(()=>expect(screen.getByRole('heading',{name:'Test Kullanıcı'})).toBeTruthy());expect(screen.getByRole('button',{name:'Hesabımı aç'}).textContent).toBe('TK');
+ await navigate('İşlem geçmişi');await click.type(screen.getByRole('textbox',{name:'İşlem geçmişinde ara'}),'Profil güncellendi');expect(screen.getByText('Profil güncellendi')).toBeTruthy();expect(screen.queryByText('Ürün oluşturuldu')).toBeNull();
+ const anchor=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});await click.click(screen.getByRole('button',{name:'Dışa aktar'}));expect(URL.createObjectURL).toHaveBeenCalled();anchor.mockRestore();
+ await click.click(screen.getByRole('button',{name:/Yardım merkezi/}));await click.type(screen.getByRole('textbox',{name:'Yardımda ara'}),'Fiyatları güncelleme');await click.click(screen.getByText('Fiyatları güncelleme'));await click.click(screen.getByRole('button',{name:'Fiyat yönetimi bölümünü aç'}));expect(screen.getByRole('heading',{name:'Varyant fiyatları'})).toBeTruthy();
+});
+test('login and logout use backend sessions and viewer cannot see write controls',async()=>{
+ cookie='';render(<BackendGate>{({user,catalog,onLogout,onUserUpdated})=><App user={user} snapshot={catalog} onLogout={onLogout} onUserUpdated={onUserUpdated}/>}</BackendGate>);await screen.findByRole('heading',{name:'Hesabınıza giriş yapın'});await click.type(screen.getByLabelText('E-posta adresi'),'ui@example.test');await click.type(screen.getByLabelText('Parola'),password);await click.click(screen.getByRole('button',{name:'Giriş yap'}));await screen.findByRole('heading',{name:'Genel bakış',level:1});await click.click(screen.getByRole('button',{name:'Oturumu kapat'}));await screen.findByRole('heading',{name:'Hesabınıza giriş yapın'});expect((await(await fetch('/api/session')).json()).error.code).toBe('UNAUTHORIZED');
+ cleanup();const catalog=(await api.service.read());render(<App user={{...user,role:'viewer'}} snapshot={catalog} onLogout={vi.fn()} onUserUpdated={vi.fn()}/>);await navigate('Fiyat yönetimi');expect(screen.queryByRole('button',{name:'Fiyat düzenle'})).toBeNull();expect(screen.queryByRole('button',{name:'Toplu güncelle'})).toBeNull();expect(screen.queryByRole('button',{name:'Kullanıcılar ve yetkiler'})).toBeNull();
+});
+test('user creation, role editing and SKU settings are persisted by management screens',async()=>{
+ await show();await navigate('Kullanıcılar ve yetkiler');await click.click(await screen.findByRole('button',{name:'Kullanıcı ekle'}));let dialog=screen.getByRole('dialog',{name:'Kullanıcı ekle'});await click.type(within(dialog).getByLabelText('Ad soyad'),'Ekip Üyesi');await click.type(within(dialog).getByLabelText('E-posta adresi'),'staff@example.test');await click.type(within(dialog).getByLabelText(/^Geçici parola/),'Staff-test-only-1864');await click.selectOptions(within(dialog).getByLabelText(/^Rol/),'editor');await click.click(within(dialog).getByRole('button',{name:'Kullanıcıyı kaydet'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());expect(await screen.findByText('staff@example.test')).toBeTruthy();
+ const staff=(await(await fetch('/api/users')).json()).users.find(u=>u.email==='staff@example.test');expect(staff.role).toBe('editor');expect(staff.mustChangePassword).toBe(true);
+ const row=screen.getByText('staff@example.test').closest('tr');await click.click(within(row).getByRole('button',{name:'Düzenle'}));dialog=screen.getByRole('dialog',{name:'Kullanıcı düzenle'});await click.selectOptions(within(dialog).getByLabelText(/^Rol/),'viewer');await click.click(within(dialog).getByRole('button',{name:'Kullanıcıyı kaydet'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());expect((await(await fetch('/api/users')).json()).users.find(u=>u.id===staff.id).role).toBe('viewer');
+ await click.click(screen.getByRole('button',{name:'Ayarlar',exact:true}));const prefix=screen.getByLabelText('Yeni ürünler için SKU öneki');await click.clear(prefix);await click.type(prefix,'HM64');await click.click(screen.getByRole('button',{name:'Ayarları kaydet'}));await waitFor(async()=>expect((await(await fetch('/api/catalog')).json()).catalog.settings.skuPrefix).toBe('HM64'));
+});

@@ -4,7 +4,7 @@ import {roles,permissionLabels} from './permissions.js';
 import {request} from './api.js';
 export default function UserManagement({user,onChanged}){
  const [users,setUsers]=useState([]),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[draft,setDraft]=useState(null),[reset,setReset]=useState(null),[password,setPassword]=useState(''),[query,setQuery]=useState(''),[notice,setNotice]=useState('');
- async function load(){setLoading(true);try{setUsers((await request('/users')).users)}catch(e){setError(e.message)}finally{setLoading(false)}}
+ async function load(){setLoading(true);setError('');try{setUsers((await request('/users')).users)}catch(e){setError(e.message)}finally{setLoading(false)}}
  useEffect(()=>{load()},[]);
  useEffect(()=>{const close=e=>{if(e.key==='Escape'&&!busy){setDraft(null);setReset(null)}};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close)},[busy]);
  function edit(value){setError('');setNotice('');setDraft(value?{...value,password:''}:{name:'',email:'',role:'viewer',active:true,password:''})}

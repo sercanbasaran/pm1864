@@ -16,9 +16,10 @@ export function validateCategory(draft,categories){
 export function validateProduct(product,categories){
  if(!product.name.trim())return {tab:'Genel bilgiler',message:'Ürün adı gerekli.'};
  if(!categories.some(c=>c.name===product.category&&(!product.isNew||c.active)))return {tab:'Genel bilgiler',message:'Aktif bir kategori seçin.'};
+ if(product.variants.length>50)return {tab:'Varyant & fiyat',message:'Bir üründe en fazla 50 varyant olabilir.'};
  if(!product.variants.length)return {tab:'Varyant & fiyat',message:'En az bir varyant gerekli.'};
  const names=product.variants.map(v=>normalizeName(v.size));
  if(names.some(n=>!n)||new Set(names).size!==names.length)return {tab:'Varyant & fiyat',message:'Varyant adları dolu ve birbirinden farklı olmalı.'};
- if(product.variants.some(v=>!Number.isFinite(v.price)||v.price<=0||!Number.isFinite(v.weight)||v.weight<=0||!Number.isInteger(v.slices)||v.slices<0))return {tab:'Varyant & fiyat',message:'Her varyant için pozitif fiyat / gramaj ve sıfır veya pozitif tam dilim sayısı girin.'};
+ if(product.variants.some(v=>!Number.isFinite(v.price)||v.price<=0||Math.abs(v.price*100-Math.round(v.price*100))>0.00001||!Number.isFinite(v.weight)||v.weight<=0||!Number.isInteger(v.slices)||v.slices<0))return {tab:'Varyant & fiyat',message:'Her varyant için en fazla iki ondalıklı pozitif fiyat, pozitif gramaj ve sıfır veya pozitif tam dilim sayısı girin.'};
  return null;
 }

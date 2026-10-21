@@ -37,6 +37,7 @@ Vite’ın gösterdiği adresi açın. API `127.0.0.1:8787` üzerinde çalışı
 
 ```bash
 npm test
+npm run test:ui
 npm run build
 ```
 
@@ -79,3 +80,17 @@ API ve yetki referansı: [docs/API.md](docs/API.md).
 Netlify Functions ortamına `DATABASE_URL` ekleyip deploy ettikten sonra `https://<site-adresi>/.netlify/functions/db-test` adresini açın. `postgres` paketiyle TLS üzerinden `SELECT NOW()` çalıştırır; başarı durumunda `{success: true, message: "Supabase bağlantısı başarılı!", time: "…"}` döner.
 
 Bağlantı adresi eksikse 503, bağlantı başarısızsa 500, GET dışındaki isteklerde 405 döner. Veritabanı bağlantı adresi ve sürücünün ham hata mesajı istemciye gönderilmez. Bu endpoint yalnızca bağlantı testidir; ana uygulamanın oturum veya rol kontrollerini değiştirmez. Canlı bağlantının doğrulanması için Netlify ortamında gerçek `DATABASE_URL` gerekir.
+
+## Çalışan ekranlar
+
+- Genel bakış: gerçek kategori / varyant adetleri, eksik içerik listeleri ve son işlemler. Kartlar ilgili katalog filtresini açar.
+- Katalog: kategori, durum, eksik görsel / açıklama filtreleri; ad ve fiyat sıralaması; `/` ile arama odağı; liste / kart görünümü; kategori, ürün ve varyant ekleme / güncelleme.
+- Fiyat yönetimi: ürün varyant fiyatlarını ayrı API üzerinden düzenleme, filtreli toplu fiyat önizlemesi, kuruş hassasiyetinde kayıt ve CSV indirme.
+- İşlem geçmişi: kullanıcı, metin ve İstanbul tarih aralığı filtreleri, sayfalama ve CSV.
+- Bildirimler: taslak ve görseli eksik ürünlere bağlantılar; değerler güncel katalogdan hesaplanır.
+- Hesabım: kalıcı profil adı ve parola güncelleme. Baş harfler hesap bilgilerinden üretilir.
+- Yardım merkezi: aranabilir kullanım rehberi ve yetkiye uygun ekran bağlantıları.
+
+Sabit demo fotoğrafları kullanılmaz. Görseli olmayan veya yüklenemeyen üründe açık bir yer tutucu gösterilir. Görseller HTTP(S) URL olarak eklenir; dosya depolama / yükleme servisi bu sürümün parçası değildir.
+
+`npm run test:ui`, DOM ortamında gerçek uygulama API’sine bağlı giriş, kategori / ürün oluşturma, fiyat düzenleme, toplu önizleme, profil, bildirim, filtre, dışa aktarma ve görüntüleyici erişimi akışlarını doğrular. Üretim Supabase verileri testlerde kullanılmaz.
