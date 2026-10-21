@@ -64,3 +64,14 @@ test('product nutrition and storage text persists, preserves omitted fields and 
  r=await save(f,child.id,[],{...p,nutrition:'',storageConditions:'',allergens:'',longTermStorage:''});assert.equal(r.status,200);for(const key of Object.keys(info))assert.equal(r.catalog.products[0][key],'');assert.equal(r.catalog.products[0].sku,p.sku);
  }finally{await f.app.close()}
 });
+test('sales switches persist with parent gating, draft/inactive overrides, and backward-compatible updates',async()=>{
+ const f=await fixture();try{
+ const child=await sub(f,(await f.call('/catalog')).catalog.categories[0]);let r=await save(f,child.id,[variant('S'),variant('M')]);let p=r.catalog.products[0];assert.deepEqual(p.salesAvailability,{store:false,online:false,foodDelivery:false});
+ r=await save(f,child.id,[],{...p,salesAvailability:{store:true,online:true,foodDelivery:true},variants:[{...p.variants[0],salesAvailability:{online:false}},{...p.variants[1],active:false}]});assert.equal(r.status,200);p=r.catalog.products[0];assert.deepEqual(p.variants[0].effectiveSales,{store:true,online:false,foodDelivery:true});assert.deepEqual(p.variants[1].effectiveSales,{store:false,online:false,foodDelivery:false});
+ r=await save(f,child.id,[],{...p,salesAvailability:{store:false,online:false,foodDelivery:false}});p=r.catalog.products[0];assert.equal(p.variants[0].salesAvailability.store,true);assert.equal(p.variants[0].effectiveSales.store,false);
+ const legacy={...p};delete legacy.salesAvailability;legacy.variants=legacy.variants.map(v=>{const copy={...v};delete copy.salesAvailability;return copy});r=await save(f,child.id,[],legacy);assert.equal(r.catalog.products[0].salesAvailability.store,false);assert.equal(r.catalog.products[0].variants[0].salesAvailability.online,false);
+ r=await save(f,child.id,[],{...r.catalog.products[0],status:'Taslak',salesAvailability:{store:true}});p=r.catalog.products[0];assert.equal(p.effectiveSales.store,false);assert.equal(p.variants[0].effectiveSales.store,false);
+ const before=(await f.call('/catalog')).catalog;for(const value of [null,[],{online:'true'},{unknown:true}])assert.equal((await save(f,child.id,[],{...p,salesAvailability:value})).status,422);
+ assert.equal((await save(f,child.id,[],{...p,variants:[{...p.variants[0],salesAvailability:{store:1}}]})).status,422);assert.deepEqual((await f.call('/catalog')).catalog,before);
+ }finally{await f.app.close()}
+});

@@ -1,3 +1,4 @@
+import {validateSalesAvailability} from './sales-availability.js';
 import {validateProductInformation} from './product-information.js';
 export const variantUnits=['Adet','Kilogram','Gram','Porsiyon','Kutu','Paket','Litre','Mililitre'];
 export const slugify = value => value.toLocaleLowerCase('tr').replaceAll('ı','i').replaceAll('ğ','g').replaceAll('ü','u').replaceAll('ş','s').replaceAll('ö','o').replaceAll('ç','c').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -19,6 +20,7 @@ export function validateCategory(draft,categories){
 export function validateProduct(product,categories){
  if(!product.name.trim())return {tab:'Genel bilgiler',message:'Ürün adı gerekli.'};
  if(!categories.some(c=>(product.categoryId?c.id===product.categoryId:c.name===product.category)&&(!product.isNew||(c.active&&(!c.parentId||categories.find(r=>r.id===c.parentId)?.active)))))return {tab:'Genel bilgiler',message:'Aktif bir kategori seçin.'};
+ const salesError=validateSalesAvailability(product.salesAvailability)||product.variants.map(v=>validateSalesAvailability(v.salesAvailability)).find(Boolean);if(salesError)return {tab:'Genel bilgiler',message:salesError};
  const informationError=validateProductInformation(product);if(informationError)return {tab:'Besin ve saklama',message:informationError};
  if(product.variants.length>50)return {tab:'Varyant & fiyat',message:'Bir üründe en fazla 50 varyant olabilir.'};
  if(!product.variants.length)return {tab:'Varyant & fiyat',message:'En az bir varyant gerekli.'};

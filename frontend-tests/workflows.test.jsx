@@ -88,3 +88,13 @@ test('product nutrition, storage and allergen fields save and reopen through the
  const p=(await(await fetch('/api/catalog')).json()).catalog.products[0];for(const [,value,key] of fields)expect(p[key]).toBe(value);
  await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));dialog=screen.getByRole('dialog',{name:'Ürün düzenle'});await click.click(within(dialog).getByRole('button',{name:'Besin ve saklama'}));for(const [label,value] of fields)expect(within(dialog).getByLabelText(label).value).toBe(value);
 });
+test('product and variant sales switches persist and inherit product channel restrictions',async()=>{
+ await show();await navigate('Ürün kataloğu');await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));let dialog=screen.getByRole('dialog',{name:'Ürün düzenle'});
+ await click.selectOptions(within(dialog).getByLabelText('Ürün durumu'),'Aktif');await click.click(within(dialog).getByRole('switch',{name:'Mağaza satışı'}));await click.click(within(dialog).getByRole('switch',{name:'Online satış'}));
+ await click.click(within(dialog).getByRole('button',{name:'Varyant & fiyat'}));const first=within(dialog).getAllByRole('switch',{name:'Online satış'})[0];expect(first.checked).toBe(true);await click.click(first);
+ expect(within(dialog).getAllByRole('switch',{name:'Yemek sipariş platformu satışı'}).every(input=>input.disabled)).toBe(true);
+ await click.click(within(dialog).getByRole('button',{name:'Değişiklikleri kaydet'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());
+ let p=(await(await fetch('/api/catalog')).json()).catalog.products[0];expect(p.salesAvailability.store).toBe(true);expect(p.variants[0].effectiveSales.online).toBe(false);expect(p.variants[1].effectiveSales.online).toBe(true);
+ await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));dialog=screen.getByRole('dialog',{name:'Ürün düzenle'});await click.click(within(dialog).getByRole('switch',{name:'Online satış'}));await click.click(within(dialog).getByRole('button',{name:'Varyant & fiyat'}));expect(within(dialog).getAllByRole('switch',{name:'Online satış'}).every(input=>input.disabled&&!input.checked)).toBe(true);
+ await click.click(within(dialog).getByRole('button',{name:'Değişiklikleri kaydet'}));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());p=(await(await fetch('/api/catalog')).json()).catalog.products[0];expect(p.variants[1].salesAvailability.online).toBe(true);expect(p.variants[1].effectiveSales.online).toBe(false);
+});

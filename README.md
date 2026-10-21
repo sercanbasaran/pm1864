@@ -118,3 +118,7 @@ Medya modülü gerçek dosya yükleme, önizleme, yeniden adlandırma, arama, ü
 ### Material UI arayüzü
 
 Arayüz, React için Material UI ve Emotion kullanır. Marka renkleri, tipografi ve ortak bileşen ayarları `src/theme/MaterialTheme.jsx` içinde tanımlıdır. Menü ve üst çubuk Drawer/AppBar, pencereler Dialog, tablolamalar Table, durumlar Chip, bildirimler Snackbar/Alert bileşenleriyle çalışır. Modüllerdeki ortak düğme, giriş, seçim ve tablo bileşenleri `src/components/ui/Material.jsx` üzerinden yönetilir. `src/material.css`, modül yerleşimlerini Material tema ile uyumlu hale getirir. Bu değişiklik ek ortam değişkeni veya veritabanı geçişi gerektirmez.
+
+### Ürün ve varyant satış kanalları
+
+Ürün ve varyant formlarındaki Material UI anahtarları mağaza, online ve yemek sipariş platformu satışını ayrı ayrı yönetir. Ürün kanal tercihi, varyant kanal tercihi, ürünün aktif durumu ve varyantın aktif durumu birlikte değerlendirilir. Üründe kapalı bir kanal bütün varyantlarda kapalıdır; yeniden açıldığında varyant tercihleri korunur. Kanal bilgisi bulunmayan ürünler kapalı başlar; varyant tercihleri varsayılan olarak ürünü takip eder. API katalog yanıtında `salesAvailability` tercihler, `effectiveSales` ise geçerli satış durumudur. Eski istemciler bu alanları göndermediğinde mevcut tercihler korunur. İşlemler mevcut ürün düzenleme yetkisini ve katalog sürüm kontrolünü kullanır. Bu ayarlar dış platform entegrasyonu veya otomatik yayınlama yapmaz; ek ortam değişkeni veya SQL geçişi gerekmez.
