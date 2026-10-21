@@ -1,4 +1,5 @@
 import React from 'react';
+import MaterialTheme from './theme/MaterialTheme.jsx';
 import {createRoot} from 'react-dom/client';
 import BackendGate from './app/BackendGate.jsx';
 import {App} from './app/App.jsx';
@@ -9,6 +10,7 @@ import './management.css';
 import './functional.css';
 import './hierarchy.css';
 import './modules.css';
+import './material.css';
 export {App} from './app/App.jsx';
 const root=document.getElementById('root');
-if(root)createRoot(root).render(<BackendGate>{({user,catalog,onLogout,onUserUpdated})=><App key={user.id} snapshot={catalog} user={user} onLogout={onLogout} onUserUpdated={onUserUpdated}/>}</BackendGate>);
+if(root)createRoot(root).render(<MaterialTheme><BackendGate>{({user,catalog,onLogout,onUserUpdated})=><App key={user.id} snapshot={catalog} user={user} onLogout={onLogout} onUserUpdated={onUserUpdated}/>}</BackendGate></MaterialTheme>);

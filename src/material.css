@@ -1,0 +1,40 @@
+/* Material UI owns controls; feature CSS retains only module-specific layouts. */
+body{background:#f6f5f2;font-family:Avenir,"Segoe UI",sans-serif}
+.MuiButton-root{font-family:inherit;text-transform:none;border-radius:8px;box-shadow:none;letter-spacing:0;font-size:13px;line-height:1.6;gap:8px}
+.MuiButton-root.btn{border:1px solid #e8e4de;padding:8px 16px;background:#fff;color:#4a403a;min-height:38px}
+.MuiButton-root.btn.dark,.MuiButton-root.btn.primary{background:#a50000;color:white;border-color:#a50000}
+.MuiButton-root.Mui-disabled{opacity:.45;pointer-events:none}
+.MuiButton-root:hover{background-color:#f5eeeb}
+.MuiButton-root.btn.dark:hover{background:#800000}
+.MuiIconButton-root{border-radius:50%;background:transparent;color:inherit;min-width:36px;width:36px;height:36px;padding:8px}
+.MuiButton-root.product-cell{text-align:left;justify-content:flex-start;color:inherit;font-weight:400}
+.MuiButton-root.product-card{display:flex;align-items:stretch;text-align:left;color:inherit}
+.MuiInputBase-root.material-input,.MuiInputBase-root.material-select{border:1px solid #d5d0c9;border-radius:8px;background:#fff;width:100%;min-height:42px;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
+.MuiInputBase-root.material-input.Mui-focused,.MuiInputBase-root.material-select:focus-within{border-color:#a50000;box-shadow:0 0 0 2px #a5000010}
+.MuiInputBase-root.material-input input,.MuiInputBase-root.material-input textarea{font:inherit;color:inherit;padding:10px 12px;margin:0;border:0!important;background:transparent;box-shadow:none!important;min-height:0;width:100%;box-sizing:border-box}
+.MuiInputBase-root.material-input textarea{resize:vertical;line-height:1.6}
+.MuiInputBase-root.material-select select{font:inherit;padding:10px 30px 10px 12px;margin:0;border:0!important;box-shadow:none!important;background:transparent;min-height:0;width:100%}
+label .material-input,label .material-select{margin-top:6px}
+.search .material-input{border:0;background:transparent;min-width:140px}
+.toolbar .material-select,.filter-panel .material-select{width:auto;min-width:150px}
+.MuiCheckbox-root{padding:8px;color:#999}
+.MuiCheckbox-root.Mui-checked{color:#a50000}
+.MuiCheckbox-root input{width:100%;height:100%;padding:0;margin:0}
+.MuiTable-root{border-collapse:collapse;font-size:13px}
+.MuiTableCell-root{font:inherit;padding:16px;border-bottom:1px solid #e8e4de}
+.MuiTableCell-head{font-size:11px;font-weight:700;color:#706b65;background:#faf9f7}
+.MuiTableRow-root:hover>.MuiTableCell-body{background:#fdfbf8}
+.MuiDialog-paper{border:1px solid #e8e4de;border-radius:16px;background:#fff}
+.material-dialog,.material-editor{padding-top:24px!important}
+.material-editor .editor-footer,.material-dialog .editor-footer{position:static;border-radius:0;padding:20px 0 0;margin-top:20px}
+.MuiListItemButton-root{font-family:inherit;text-align:left;justify-content:flex-start;line-height:1.5}
+.MuiListItemButton-root:hover{background:#f6f0eb}
+.MuiChip-root{font-family:inherit;font-size:12px}
+.panel,.catalog,.module-intro,.category-group,.variant-product-card,.media-card{border-radius:12px;box-shadow:0 1px 3px #29201805;border-color:#e8e4de}
+.tabs{border-bottom:1px solid #e8e4de;gap:4px;overflow-x:auto}
+.tabs .MuiButton-root{border-radius:0;padding:13px 18px;white-space:nowrap;color:#706b65;border-bottom:2px solid transparent}
+.tabs .MuiButton-root.selected{color:#a50000;border-bottom-color:#a50000;background:transparent}
+.login-page{background:radial-gradient(ellipse at top,#f1e7da,#f6f5f2 65%);min-height:100vh}
+.login-card{border-radius:20px;border:1px solid #e8e4de;box-shadow:0 12px 50px #5337180a}
+.MuiSnackbar-root .MuiAlert-root{border-radius:12px}
+@media(max-width:600px){.MuiTableCell-root{padding:12px}.toolbar{gap:12px;flex-wrap:wrap}.toolbar-right{flex-wrap:wrap}.MuiButton-root.btn{padding:8px 12px}.material-editor{padding:16px!important}}

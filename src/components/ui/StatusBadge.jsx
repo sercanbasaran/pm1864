@@ -1,2 +1,3 @@
 import React from 'react';
-export default function StatusBadge({status}){return <span className={'badge '+(status==='Aktif'?'green':'gray')}><i/>{status}</span>}
+import {Chip} from '@mui/material';
+export default function StatusBadge({status}){return <Chip size="small" label={status} color={status==='Aktif'?'success':'default'} variant="outlined"/>}

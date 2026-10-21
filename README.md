@@ -114,3 +114,7 @@ Ana menü sırası: Kategori yönetimi → Ürün yönetimi → Varyant yönetim
 Ürün kodu (`P000001`), ürün SKU’su ve varyant SKU’su ayrı alanlardır. Kod modülü arama, listeleme, CSV ve yeni ürünler için SKU öneki yönetimi sunar; mevcut kodlar değişmez.
 
 Medya modülü gerçek dosya yükleme, önizleme, yeniden adlandırma, arama, ürüne bağlama ve kullanılmayan dosyayı onayla silme işlemleri içerir. PNG / JPEG / WEBP / GIF, en fazla 2 MB desteklenir. Dosyalar `app_media` tablosunda saklanır; katalog yalnızca medya kimliği ve URL’sini taşır. Görsel içeriği yetkili oturumla okunur. Yönetici ve editör yükleyebilir / düzenleyebilir; görüntüleyici okuyabilir. Kullanımdaki dosya sunucuda da silinemez. Yeni ortam değişkeni gerekmez; tablo uygulama açılışında oluşturulur.
+
+### Material UI arayüzü
+
+Arayüz, React için Material UI ve Emotion kullanır. Marka renkleri, tipografi ve ortak bileşen ayarları `src/theme/MaterialTheme.jsx` içinde tanımlıdır. Menü ve üst çubuk Drawer/AppBar, pencereler Dialog, tablolamalar Table, durumlar Chip, bildirimler Snackbar/Alert bileşenleriyle çalışır. Modüllerdeki ortak düğme, giriş, seçim ve tablo bileşenleri `src/components/ui/Material.jsx` üzerinden yönetilir. `src/material.css`, modül yerleşimlerini Material tema ile uyumlu hale getirir. Bu değişiklik ek ortam değişkeni veya veritabanı geçişi gerektirmez.
