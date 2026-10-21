@@ -4,8 +4,9 @@ import {can} from './permissions.js';
 export default function HelpCenter({user,onNavigate}) {
  const [query,setQuery]=useState('');
  const entries=[
-  ['Kategori oluşturma','Kategoriler','categories.write','Kategori ekle ile ad, benzersiz üç haneli kod ve üst kategori belirleyin. Bağlantı alanı otomatik önerilir. Kodu oluşturduktan sonra değiştiremezsiniz. Pasif kategorilere yeni ürün eklenmez.'],
-  ['Ürün ve varyant yönetimi','Ürün kataloğu','catalog.read','Ürüne tıklayın. Genel bilgilerde ad, kategori, açıklama, alerjen, görsel URL’si ve durumu düzenleyin. Varyant & fiyat sekmesinde boyut, gramaj, fiyat ve dilim sayısını girin. En az bir varyant gerekir. SKU kayıtta otomatik oluşur.'],
+  ['Kategori oluşturma','Kategoriler','categories.write','Ana kategori oluşturun; Alt kategori ekle ile ürün alt gruplarını bağlayın. Yapı iki kategori seviyesiyle sınırlıdır. Bağlantı alanı otomatik önerilir. Kodu oluşturduktan sonra değiştiremezsiniz. Pasif kategorilere yeni ürün eklenmez.'],
+  ['Ürün ve varyant yönetimi','Ürün kataloğu','catalog.read','Ürüne tıklayın. Genel bilgilerde ad, ana kategori, alt kategori, açıklama, alerjen, görsel URL’si ve durumu düzenleyin. Varyant & fiyat sekmesinde boyut, gramaj, fiyat ve dilim sayısını girin. En az bir varyant gerekir. SKU kayıtta otomatik oluşur.'],
+  ['Varyant yönetimi','Varyant yönetimi','catalog.read','Varyantları ana kategori, alt kategori, ürün ve durum bazında filtreleyin. Ürün seçip Varyant ekle ile ad, gramaj, dilim sayısı, fiyat ve aktiflik belirleyin. Yönet düğmesiyle sıralayın, çoğaltın veya silin. Son varyant silinemez. Varyant SKU kodları otomatik oluşur ve değişikliklerde korunur.'],
   ['Fiyatları güncelleme','Fiyat yönetimi','catalog.read','Fiyat düzenle ile bir ürünün varyant fiyatlarını birlikte kaydedin. Toplu güncelle ile filtrelediğiniz ürünlere yüzde artış veya indirim uygulayın. Onaylamadan önce eski ve yeni fiyatları inceleyin.'],
   ['Kayıtları dışa aktarma','Ürün kataloğu','catalog.read','Katalogdaki Dışa aktar düğmesi seçili filtrelerle eşleşen tüm ürünlerin varyantlarını CSV olarak indirir. Fiyat yönetimi ve işlem geçmişinde ayrı dışa aktarma seçenekleri bulunur.'],
   ['Yapılan değişiklikleri izleme','İşlem geçmişi','catalog.read','İşlem, açıklama, kullanıcı veya tarih aralığıyla arama yapın. Kayıtlardaki saatler İstanbul saatidir. Son 1.000 işlem saklanır.'],

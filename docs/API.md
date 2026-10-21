@@ -66,3 +66,11 @@ Giriş denemelerinde uygulama düzeyinde sayı sınırı veya 15 dakikalık bekl
 Varyant fiyat güncellemesi ürünün diğer alanlarını değiştirmez. Tüm varyantlar için sıra korunarak en fazla iki ondalıklı, 0’dan büyük ve en fazla 100.000.000 TRY değer girilir. Varyant sayısı eşleşmeli, katalog revizyonu güncel olmalıdır. Toplu güncelleme de kuruş hassasiyetini korur, en az 0,01 TRY üretir ve üst sınırı aşan işlem bütünüyle reddedilir.
 
 Profil güncellemesi oturumdaki kullanıcının adını değiştirir. İstemciden gelen rol, e-posta ve aktiflik alanları kullanılmaz. Diğer kullanıcıların profili bu endpoint ile değiştirilemez. `expectedVersion` uyuşmazlığında 409 döner; değişiklik işlem geçmişine kaydedilir.
+
+## Ana kategori / Alt kategori / Ürün / Varyant
+
+Kategori `parentId: ''` ise ana kategoridir; alt kategori `parentId` ile bir ana kategoriye bağlanır. İki seviyeden derin yapı ve döngü reddedilir. İsimler aynı ebeveyn içinde benzersizdir; kod ve slug katalog genelinde benzersiz kalır. Ürün bağlı alt kategori doğrudan ana kategoriye dönüştürülemez.
+
+Ürün `categoryId` alanı ile alt kategoriye atanır. `category` geriye uyumluluk için alt kategori adını taşır; ilişkiler ve filtreler ID üzerinden çözülür. Doğrudan bir ana kategori ID’si veya geçersiz ID ile ürün oluşturmak 422 döndürür. Yeni atamalarda hem ana hem alt kategori aktif olmalıdır. Eski kategori adı payload’ları otomatik Genel alt kategorisi ile desteklenir.
+
+Varyantlar mevcut `POST /products` ve `PUT /products/:id` üzerinden atomik kaydedilir. `variants` dizisindeki mevcut varyantlar `id` değerini korumalıdır; yeni varyantta `id` / `sku` gönderilmez. Sunucu SKU ve ID üretir. `active` varsayılanı `true`dur. Başka ürüne ait veya aynı payload’da tekrar kullanılan varyant ID’si reddedilir. Ad değişikliği / sıralama mevcut SKU’yu korur; diziden çıkarılan varyant silinir. En az 1, en fazla 50 varyant gereklidir. Varyant `sku` ve ürün `nextVariantNumber` alanları sunucu yönetimindedir.

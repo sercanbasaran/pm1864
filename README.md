@@ -94,3 +94,13 @@ Bağlantı adresi eksikse 503, bağlantı başarısızsa 500, GET dışındaki i
 Sabit demo fotoğrafları kullanılmaz. Görseli olmayan veya yüklenemeyen üründe açık bir yer tutucu gösterilir. Görseller HTTP(S) URL olarak eklenir; dosya depolama / yükleme servisi bu sürümün parçası değildir.
 
 `npm run test:ui`, DOM ortamında gerçek uygulama API’sine bağlı giriş, kategori / ürün oluşturma, fiyat düzenleme, toplu önizleme, profil, bildirim, filtre, dışa aktarma ve görüntüleyici erişimi akışlarını doğrular. Üretim Supabase verileri testlerde kullanılmaz.
+
+## Kategori ve varyant hiyerarşisi
+
+Katalog yapısı **Ana kategori → Alt kategori → Ürün → Varyant** şeklindedir. Kategoriler ekranında ana kategori kartının içinden alt kategori eklenir. Ürün formu iki ayrı kategori seçimi kullanır; ürünler `categoryId` ile bir alt kategoriye bağlanır. Aynı alt kategori adı farklı ana kategorilerde kullanılabilir; kod ve bağlantı benzersizdir. Ana kategori veya alt kategori pasifse yeni ürün ataması yapılmaz. Üçüncü kategori seviyesi oluşturulamaz.
+
+Varyant yönetimi ekranı kategori, alt kategori, ürün, aktiflik ve SKU araması sunar. Ürün seçip varyant ekleyebilir; mevcut varyantları düzenleyebilir, çoğaltabilir, sıralayabilir, pasifleştirebilir ve silebilirsiniz. Değişiklikler ürün düzenleyicisindeki **Değişiklikleri kaydet** ile birlikte kaydedilir. Son varyant silinemez; ürün başına en fazla 50 varyant vardır.
+
+Her varyantın kalıcı `id` ve otomatik `sku` değeri bulunur (`HM-100-0001-V0001`). İsim, sıra veya kategori değişikliği mevcut ürün / varyant SKU’sunu değiştirmez. Silinen varyantın sıra numarası yeni varyantta tekrar kullanılmaz. Varyantlar aynı ürün içinde benzersiz adlandırılır.
+
+Mevcut katalog ilk çalışmada sürüm 2 yapısına transaction içinde geçirilir: ana kategoriye doğrudan bağlı ürünler aynı ana kategorinin **Genel** alt kategorisine alınır; ürün, kullanıcı, fiyat ve SKU verileri korunur. Daha derin eski kategori yolları, kimlikler korunarak iki seviyeye indirilir; eski ara yol alt kategori adına yansır. Önceki API istemcilerinin kategori adıyla gönderdiği kayıtlar için Genel alt kategorisi uyumluluğu korunmuştur; yeni arayüz `categoryId` gönderir. Ek ortam değişkeni veya elle SQL kurulumu gerekmez.

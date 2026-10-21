@@ -6,16 +6,17 @@ export function validateCategory(draft,categories){
  if(!/^\d{3}$/.test(draft.code)||Number(draft.code)<100)return 'Kategori kodu 100–999 arasında üç rakam olmalı.';
  if(!slugify(draft.slug))return 'Geçerli bir kategori bağlantısı gerekli.';
  const others=categories.filter(c=>c.id!==draft.id);
- if(others.some(c=>normalizeName(c.name)===normalizeName(draft.name)))return 'Bu kategori adı zaten kullanılıyor.';
+ if(others.some(c=>(c.parentId||'')===(draft.parentId||'')&&normalizeName(c.name)===normalizeName(draft.name)))return 'Bu kategori adı zaten kullanılıyor.';
  if(others.some(c=>c.code===draft.code))return 'Bu kategori kodu zaten kullanılıyor.';
  if(others.some(c=>c.slug===slugify(draft.slug)))return 'Bu kategori bağlantısı zaten kullanılıyor.';
  let parent=draft.parentId;const seen=new Set([draft.id]);
  while(parent){if(seen.has(parent))return 'Üst kategori seçimi döngü oluşturamaz.';seen.add(parent);const found=categories.find(c=>c.id===parent);if(!found)return 'Üst kategori bulunamadı.';parent=found.parentId}
+ if(draft.parentId){const parent=categories.find(c=>c.id===draft.parentId);if(parent?.parentId)return 'Alt kategori yalnızca ana kategoriye bağlanabilir.';if(categories.some(c=>c.parentId===draft.id))return 'Alt kategorisi olan ana kategori taşınamaz.';}
  return '';
 }
 export function validateProduct(product,categories){
  if(!product.name.trim())return {tab:'Genel bilgiler',message:'Ürün adı gerekli.'};
- if(!categories.some(c=>c.name===product.category&&(!product.isNew||c.active)))return {tab:'Genel bilgiler',message:'Aktif bir kategori seçin.'};
+ if(!categories.some(c=>(product.categoryId?c.id===product.categoryId:c.name===product.category)&&(!product.isNew||(c.active&&(!c.parentId||categories.find(r=>r.id===c.parentId)?.active)))))return {tab:'Genel bilgiler',message:'Aktif bir kategori seçin.'};
  if(product.variants.length>50)return {tab:'Varyant & fiyat',message:'Bir üründe en fazla 50 varyant olabilir.'};
  if(!product.variants.length)return {tab:'Varyant & fiyat',message:'En az bir varyant gerekli.'};
  const names=product.variants.map(v=>normalizeName(v.size));

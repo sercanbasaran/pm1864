@@ -1,3 +1,4 @@
+import {roots,categoryMatches} from './hierarchy.js';
 export const money = value => new Intl.NumberFormat('tr-TR', {style:'currency', currency:'TRY', minimumFractionDigits:2, maximumFractionDigits:2}).format(value);
 export const bulkPrice=(price,percent,direction)=>Math.max(0.01,Math.round((price*(1+(direction==='increase'?1:-1)*percent/100)+Number.EPSILON)*100)/100);
 export function dateTime(value) {
@@ -14,5 +15,5 @@ export function downloadCSV(rows,filename) {
  const link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export function catalogSummary(products,categories) {
- return {variants:products.reduce((count,p)=>count+p.variants.length,0),drafts:products.filter(p=>p.status==='Taslak'),withoutImages:products.filter(p=>!p.customImage),withoutDescriptions:products.filter(p=>!p.description?.trim()),groups:categories.map(c=>({...c,count:products.filter(p=>p.category===c.name).length}))};
+ return {variants:products.reduce((count,p)=>count+p.variants.length,0),drafts:products.filter(p=>p.status==='Taslak'),withoutImages:products.filter(p=>!p.customImage),withoutDescriptions:products.filter(p=>!p.description?.trim()),groups:roots(categories).map(c=>({...c,count:products.filter(p=>categoryMatches(p,c.id,categories)).length}))};
 }
