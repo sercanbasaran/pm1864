@@ -60,9 +60,9 @@ Gerekli veritabanı veya ilk hesap ayarları eksikse kurulum ekranı gösterilir
 
 ## Kayıt ve güvenlik modeli
 
-Katalog, ayarlar ve işlem geçmişi sürümlenmiş SQL belgesinde saklanır. `app_users`, `app_sessions` ve `app_login_limits` ayrı tablolardır. PostgreSQL satır kilidi / SQLite transaction’ı ve `expectedRevision` katalog değişikliklerini atomik tutar. Ürün ID’si ve SKU sunucuda üretilir; isim veya fiyat değişince mevcut SKU korunur. Kullanıcı güncellemeleri ayrıca `expectedVersion` kontrolü kullanır.
+Katalog, ayarlar ve işlem geçmişi sürümlenmiş SQL belgesinde saklanır. `app_users` ve `app_sessions` ayrı tablolardır. PostgreSQL satır kilidi / SQLite transaction’ı ve `expectedRevision` katalog değişikliklerini atomik tutar. Ürün ID’si ve SKU sunucuda üretilir; isim veya fiyat değişince mevcut SKU korunur. Kullanıcı güncellemeleri ayrıca `expectedVersion` kontrolü kullanır.
 
-Parolalar scrypt ile özetlenir. Oturum token’larının yalnızca SHA-256 özeti saklanır. Cookie `HttpOnly`, `SameSite=Strict` ve HTTPS’te `Secure` kullanır; oturum sekiz saat geçerlidir. Oturumlar ve yetkiler her API isteğinde doğrulanır. Yazma isteklerinde origin kontrolü, girişte IP bazlı deneme sınırı uygulanır. Hesap / parola işlemleri işlem geçmişine yazılır; parolalar yazılmaz.
+Parolalar scrypt ile özetlenir. Oturum token’larının yalnızca SHA-256 özeti saklanır. Cookie `HttpOnly`, `SameSite=Strict` ve HTTPS’te `Secure` kullanır; oturum sekiz saat geçerlidir. Oturumlar ve yetkiler her API isteğinde doğrulanır. Yazma isteklerinde origin kontrolü uygulanır. Giriş denemeleri için uygulama düzeyinde bekleme süresi uygulanmaz. Hesap / parola işlemleri işlem geçmişine yazılır; parolalar yazılmaz.
 
 Önceki katalog kayıtları korunur. Eski platform alanları API yanıtlarından çıkarılır ve eski gönderim işleri çalıştırılmaz. Önceki frontend demosunun `localStorage` kayıtları otomatik aktarılmaz veya silinmez.
 

@@ -49,10 +49,12 @@ Kullanıcı güncellemede `expectedVersion`, son `GET /users` yanıtındaki `ver
 
 ## Hatalar
 
-`401`: geçersiz / sona ermiş / iptal edilmiş oturum; `403 FORBIDDEN`: yetki yok; `403 PASSWORD_CHANGE_REQUIRED`: geçici parola değiştirilmeli; `403 ORIGIN_REJECTED`: yanlış origin; `409`: katalog / kullanıcı sürüm çakışması veya yönetici koruması; `422`: veri doğrulama; `429`: giriş sınırı; `503`: kurulum eksikliği.
+`401`: geçersiz / sona ermiş / iptal edilmiş oturum; `403 FORBIDDEN`: yetki yok; `403 PASSWORD_CHANGE_REQUIRED`: geçici parola değiştirilmeli; `403 ORIGIN_REJECTED`: yanlış origin; `409`: katalog / kullanıcı sürüm çakışması veya yönetici koruması; `422`: veri doğrulama; `503`: kurulum eksikliği.
 
 Platform, sync ve jobs yolları bu sürümde yoktur; 404 döner. Zamanlanmış gönderim fonksiyonu bulunmaz.
 
 ## Bağlantı testi
 
 `GET /.netlify/functions/db-test` bağımsız Netlify Function’ıdır; `/api` kökü altında değildir. Oturum gerektirmez, yalnızca veritabanı zamanını test eder. `DATABASE_URL` Netlify Functions ortamında tanımlı olmalıdır. Yanıtlar: 200 başarı + zaman; 503 yapılandırma eksik; 500 bağlantı hatası; 405 yanlış metot. Yanıtlar önbelleğe alınmaz.
+
+Giriş denemelerinde uygulama düzeyinde sayı sınırı veya 15 dakikalık bekleme süresi yoktur. Yanlış e-posta / parola 401 döndürür; sonraki doğru giriş engellenmez.

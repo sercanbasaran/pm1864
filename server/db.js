@@ -23,7 +23,6 @@ export async function migrate(db,seed){
   if(tx.dialect==='postgres')await tx.query('SELECT pg_advisory_xact_lock(18641864)');
   await tx.query('CREATE TABLE IF NOT EXISTS app_catalog (id INTEGER PRIMARY KEY, revision INTEGER NOT NULL, document TEXT NOT NULL)');
   await tx.query('CREATE TABLE IF NOT EXISTS app_sessions (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at BIGINT NOT NULL)');
-  await tx.query('CREATE TABLE IF NOT EXISTS app_login_limits (key_hash TEXT PRIMARY KEY, attempts INTEGER NOT NULL, reset_at BIGINT NOT NULL)');
   await tx.query('CREATE TABLE IF NOT EXISTS app_users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, active INTEGER NOT NULL, must_change_password INTEGER NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
   await tx.query('INSERT INTO app_catalog (id, revision, document) VALUES (1, 0, ?) ON CONFLICT (id) DO NOTHING',[JSON.stringify(seed)]);
  });
