@@ -73,3 +73,9 @@ Referans: `https://hm1864.netlify.app/`. Kırmızı `#A50000`, altın `#CBA052`,
 `npm test`: rol bazlı izinler, ilk giriş parola değişimi, kullanıcı / parola yönetimi, oturum iptali, eşzamanlılık, SKU, kategori / varyant doğrulama ve platform yollarının kaldırılmasını SQLite üzerinde test eder.
 
 API ve yetki referansı: [docs/API.md](docs/API.md).
+
+## Supabase / PostgreSQL bağlantı testi
+
+Netlify Functions ortamına `DATABASE_URL` ekleyip deploy ettikten sonra `https://<site-adresi>/.netlify/functions/db-test` adresini açın. `postgres` paketiyle TLS üzerinden `SELECT NOW()` çalıştırır; başarı durumunda `{success: true, message: "Supabase bağlantısı başarılı!", time: "…"}` döner.
+
+Bağlantı adresi eksikse 503, bağlantı başarısızsa 500, GET dışındaki isteklerde 405 döner. Veritabanı bağlantı adresi ve sürücünün ham hata mesajı istemciye gönderilmez. Bu endpoint yalnızca bağlantı testidir; ana uygulamanın oturum veya rol kontrollerini değiştirmez. Canlı bağlantının doğrulanması için Netlify ortamında gerçek `DATABASE_URL` gerekir.
