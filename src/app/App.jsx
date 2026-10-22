@@ -2,7 +2,7 @@ import EditorPage from '../components/layout/EditorPage.jsx';
 import MaterialTheme from '../theme/MaterialTheme.jsx';
 import {Snackbar,Alert} from '@mui/material';
 import {MaterialButton} from '../components/ui/Material.jsx';
-import React,{lazy,Suspense,useEffect,useState} from 'react';
+import React,{lazy,Suspense,useEffect,useRef,useState} from 'react';
 import {Info,X} from '@phosphor-icons/react';
 import {CatalogProvider,useCatalog} from './CatalogContext.jsx';
 import {modules,legacyPages} from './modules.js';
@@ -31,6 +31,7 @@ export function App({snapshot,user,onLogout,onUserUpdated}){
  const [toast,setToast]=useState('');useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(''),5000);return()=>clearTimeout(timer)},[toast]);
  return <MaterialTheme><CatalogProvider snapshot={snapshot} notify={setToast}><Workspace user={user} onLogout={onLogout} onUserUpdated={onUserUpdated}/><Snackbar open={!!toast} autoHideDuration={5000} onClose={()=>setToast('')} anchorOrigin={{vertical:'bottom',horizontal:'right'}}><Alert severity="info" variant="filled" onClose={()=>setToast('')}>{toast}</Alert></Snackbar></CatalogProvider></MaterialTheme>;
 }
+function ProfileSection({focused,children}){const ref=useRef(null);useEffect(()=>{if(focused)ref.current?.focus()},[focused]);return <section ref={ref} id="profile-information" tabIndex={-1} aria-label="Profil bilgileri">{children}</section>}
 function Workspace({user,onLogout,onUserUpdated}){
  const catalog=useCatalog(),{products,categories,logs,settings,busy,mutate,notify}=catalog;
  const allowed=id=>modules.some(m=>m.id===id&&can(user,m.permission));
@@ -58,7 +59,7 @@ function Workspace({user,onLogout,onUserUpdated}){
   codes:<CodeManagement user={user}/>,users:<UserManagement route={route} onNavigate={navigate} onClose={closeEditor} user={user} onChanged={async()=>onUserUpdated((await request('/session')).user)}/>,media:<MediaManagement user={user}/>,
   prices:<PriceManagement products={products} categories={categories} canWrite={can(user,'prices.write')} onSave={savePrices} onBulk={onBulk} busy={busy}/>,
   overview:<Overview products={products} categories={categories} logs={logs} onBrowse={browse} onActivity={()=>navigate('activity')} onNewProduct={create} canCreate={can(user,'products.write')}/>,activity:<ActivityLog logs={logs}/>,help:<HelpCenter user={user} onNavigate={navigate}/>,
-  account:<section className="panel account-panel"><div className="panel-title"><div><h2>{user.name}</h2><p className="muted">{user.email}</p></div><span className="role-badge">{roleFor(user.role)?.name}</span></div><ProfileForm user={user} onChanged={onUserUpdated}/><PasswordForm user={user} onChanged={onUserUpdated}/></section>
+  account:<section className="panel account-panel"><div className="panel-title"><div><h2>{user.name}</h2><p className="muted">{user.email}</p></div><span className="role-badge">{roleFor(user.role)?.name}</span></div><ProfileSection focused={params.get('section')==='profile'}><ProfileForm user={user} onChanged={onUserUpdated}/></ProfileSection><PasswordForm user={user} onChanged={onUserUpdated}/></section>
  };
  return <AppShell user={user} page={page} onNavigate={navigate} onLogout={onLogout} onNotifications={()=>setNotifications(true)}><ModuleBoundary module={page}><Suspense fallback={<section className="panel" role="status">Bölüm yükleniyor…</section>}>{allowed(page)?(['products','variants'].includes(page)&&record?(editing&&!(record==='new'&&!can(user,'products.write'))?<ProductEditor key={route} product={editing.product} tab={editing.tab} readOnly={!can(user,'products.write')} onClose={closeEditor}/>:<EditorPage title="Kayıt bulunamadı" onClose={closeEditor}><p>Bu kayıt bulunamadı veya işlem için yetkiniz yok.</p></EditorPage>):content[page]):null}</Suspense></ModuleBoundary>{bulk&&<BulkPriceDialog ids={bulk} onClose={()=>setBulk(null)}/>} {notifications&&<Modal title="Katalog bildirimleri" onClose={()=>setNotifications(false)}><div className="notification-items"><p>Güncel kayıtlardan hesaplanan tamamlanacak işler.</p><MaterialButton className="overview-task" onClick={()=>{setNotifications(false);browse({status:'Taslak'})}}><span>Taslak ürünler</span><strong>{products.filter(p=>p.status==='Taslak').length}</strong></MaterialButton><MaterialButton className="overview-task" onClick={()=>{setNotifications(false);browse({quality:'image'})}}><span>Görseli olmayanlar</span><strong>{products.filter(p=>!p.customImage).length}</strong></MaterialButton><MaterialButton className="btn full" onClick={()=>{setNotifications(false);navigate('activity')}}>İşlem geçmişini aç</MaterialButton></div></Modal>}</AppShell>;
 }
