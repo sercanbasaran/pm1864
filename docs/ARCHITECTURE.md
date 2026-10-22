@@ -44,3 +44,9 @@ Modüller katalog verisine `useCatalog()` ile erişir. `mutate()` kayıtları re
 5. API iznini, backend davranışını ve gerçek API’ye bağlı arayüz akışını test edin.
 
 Kontroller: `npm test`, `npm run test:ui`, `npm run build`.
+
+## Public ürün kartları
+
+`src/product-card.js` açık alan projeksiyonunu, yayın uygunluğu kontrolünü ve kalıcı `/p/:productCode` adresini tanımlar. `ProductDetails.jsx` yönetim önizlemesi ve public sayfa arasında ortak görünüm bileşenidir. `ProductCardManagement.jsx` yayın anahtarı, kopyalama ve QR PNG indirmeyi yönetir. `PublicProductPage.jsx` yalnızca anonim public API’yi çağırır; `RootApp` bu adresleri oturum kapısından ayırır. Netlify `/p/*` isteklerini SPA girişine yönlendirir. Yönetim kartları `#products/:id/card` adresinden doğrudan açılabilir.
+
+Sunucu, mevcut katalog JSON belgesinde `publicCardEnabled` saklar; mevcut kayıtlarda eksik değer kapalı sayılır. Yeni tablo/SQL migration gerekmez. Katalog yazma işlemleri yayın durumunu korur; yayın anahtarı ayrı bir `products.write` endpoint’i ile değiştirilir. Açık API ve görsel erişimi her istekte yayın ve ürün/kategori/varyant durumunu doğrular. QR oluşturma/çözme ve indirilen PNG’nin tekrar okunması gerçek Canvas ile arayüz testlerinde kontrol edilir.

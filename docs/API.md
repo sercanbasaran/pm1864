@@ -15,6 +15,9 @@ API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma 
 | PUT | `/categories/:id` | `categories.write`; `{expectedRevision,category}` |
 | POST | `/products` | `products.write`; `{expectedRevision,product}` |
 | PUT | `/products/:id` | `products.write`; `{expectedRevision,product}` |
+| PATCH | `/products/:id/card` | `products.write`; `{expectedRevision,enabled:boolean}` |
+| GET | `/public/products/:productCode` | Açık; yalnızca yayınlanmış ürün kartı, `{product}` |
+| GET | `/public/products/:productCode/image` | Açık; yalnızca yayınlanmış ürüne bağlı görsel baytları |
 | PATCH | `/prices/products/:id` | `prices.write`; `{expectedRevision,prices:[123.45,234.56]}`; varyant sırasına göre tüm fiyatlar |
 | POST | `/prices/bulk` | `prices.write`; `{expectedRevision,ids,percent,direction}` |
 | PATCH | `/settings` | `settings.write`; `{expectedRevision,settings:{skuPrefix}}` |
@@ -92,3 +95,11 @@ Dosya sınırı 2 MB. Desteklenen türler PNG, JPEG, WEBP, GIF; MIME ve dosya im
 ## Ürün kodu
 
 Katalog ürünlerinde `productCode` (`P000001`), ürün `sku` ve varyant `sku` ayrı alanlardır. Ürün kodu ve SKU istemciden gelen değerlerle değiştirilemez. Önceki kayıtların ürün kodları ID’den tutarlı biçimde türetilir. SKU öneki mevcut `/settings` API’siyle yalnızca `settings.write` izni tarafından değiştirilebilir.
+
+## Public ürün kartları ve QR
+
+Kart adresi `/p/P000001` biçimindedir ve ürünün kalıcı koduna dayanır. `publicCardEnabled` varsayılan olarak kapalıdır; yalnızca `/products/:id/card` üzerinden değiştirilebilir. Ürün oluşturma/güncelleme payload’ı bu izni değiştiremez. Yayınlama için ürün, ana ve alt kategori aktif; en az bir varyant aktif olmalıdır. Taslak ürün, pasif kategori, aktif varyantı olmayan ürün ve yayınlanmamış kart, public JSON/görsel endpoint’lerinde 404 döndürür.
+
+Açık JSON alanları: `productCode`, `sku`, `name`, kategori yolu `category`, `description`, `customImage`, `nutrition`, `storageConditions`, `allergens`, `longTermStorage`, `variants`. Yalnızca aktif varyantların `sku`, `size`, `weight`, `unit`, `packaging`, `slices`, `price` alanları gösterilir. Katalog revizyonu, işlem geçmişi, kullanıcılar, medya metadata’sı ve satış kanalı ayarları paylaşılmaz. Yüklenen görseller ayrı public ürün endpoint’inden, her istekte yayın durumu kontrol edilerek sunulur; özel medya API’si oturum istemeye devam eder. Yanıtlar önbelleğe alınmaz.
+
+Kart yayından kaldırılıp yeniden yayınlandığında ürün adresi ve QR değişmez. Güncel ürün ve fiyat verileri aynı bağlantıdan alınır. QR kod Shoelace `sl-qr-code` ile tarayıcıda üretilir; PNG dosyasına beyaz güvenli kenar payı eklenir. Dış QR servisine ürün bilgisi gönderilmez. Kartı yayınlama/kapatma işlemi revizyon kontrolüne ve işlem geçmişine tabidir.

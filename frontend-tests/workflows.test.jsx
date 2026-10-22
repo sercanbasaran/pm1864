@@ -7,7 +7,9 @@ import userEvent from '@testing-library/user-event';
 import {createApp} from '../server/app.js';
 import {hashPassword} from '../server/security.js';
 import BackendGate from '../src/app/BackendGate.jsx';
-import {App} from '../src/main.jsx';
+import {App,RootApp} from '../src/main.jsx';
+import jsQR from 'jsqr';
+import {createCanvas,loadImage} from '@napi-rs/canvas';
 const password='UI-test-only-password-1864';
 let api,cookie,user,click,requests;
 beforeEach(async()=>{
@@ -118,4 +120,30 @@ test('profile dropdown replaces sidebar account links and supports keyboard focu
  await click.keyboard('{Escape}');await waitFor(()=>expect(screen.queryByRole('menu')).toBeNull());expect(focused()).toBe(trigger);
  await click.click(trigger);await click.click(screen.getByRole('menuitem',{name:'Profil bilgileri'}));await screen.findByRole('heading',{name:'Hesabım',level:1});expect(window.location.hash).toBe('#account?section=profile');const profile=await screen.findByRole('region',{name:'Profil bilgileri'});await waitFor(()=>expect(focused()).toBe(profile));expect(screen.queryByRole('menu')).toBeNull();
  await click.click(screen.getByRole('button',{name:'Profil menüsünü aç'}));await click.click(screen.getByRole('menuitem',{name:'Yardım merkezi'}));await screen.findByRole('heading',{name:'Yardım merkezi',level:1});expect(window.location.hash).toBe('#help');
+});
+
+test('product cards publish with a stable decodable QR, download PNG and restrict publication to editors',async()=>{
+ const before=await api.service.read();await api.service.saveProduct({expectedRevision:before.revision,product:{...before.products[0],status:'Aktif'}},before.products[0].id,user.email);
+ await show();await navigate('Ürün yönetimi');await click.click(screen.getByRole('button',{name:'Kontrol Baklava ürün kartı ve QR'}));
+ await screen.findByRole('region',{name:'Ürün kartı ve QR'});await settle();expect(window.location.hash).toBe('#products/1/card');expect(screen.getByText('Yayınlanmadı',{exact:true})).toBeTruthy();
+ const host=document.querySelector('sl-qr-code');await host.updateComplete;expect(host.value).toBe(window.location.origin+'/p/P000001');
+ const canvas=host.shadowRoot.querySelector('canvas'),pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
+ expect(jsQR(pixels.data,pixels.width,pixels.height)?.data).toBe(host.value);
+ await click.click(screen.getByRole('switch',{name:'Ürün kartını yayınla'}));await screen.findByText('Yayında',{exact:true});
+ let response=await api.handle(new Request('http://localhost/api/public/products/P000001'));expect(response.status).toBe(200);expect((await response.json()).product.name).toBe('Kontrol Baklava');
+ const anchor=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});await click.click(screen.getByRole('button',{name:'QR kodu indir'}));expect(URL.createObjectURL.mock.calls.at(-1)[0].type).toBe('image/png');expect(anchor.mock.instances.at(-1).download).toBe('P000001-QR.png');anchor.mockRestore();
+ const png=URL.createObjectURL.mock.calls.at(-1)[0],dataUrl=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsDataURL(png)}),image=await loadImage(dataUrl),exported=createCanvas(image.width,image.height),context=exported.getContext('2d');context.drawImage(image,0,0);const exportedPixels=context.getImageData(0,0,image.width,image.height);expect(jsQR(exportedPixels.data,image.width,image.height)?.data).toBe(host.value);expect([...exportedPixels.data.slice(0,4)]).toEqual([255,255,255,255]);
+ await click.click(screen.getByRole('button',{name:'Bağlantıyı kopyala'}));expect(await navigator.clipboard.readText()).toBe(host.value);
+ await click.click(screen.getByRole('switch',{name:'Ürün kartını yayınla'}));await screen.findByText('Yayınlanmadı',{exact:true});response=await api.handle(new Request('http://localhost/api/public/products/P000001'));expect(response.status).toBe(404);expect(document.querySelector('sl-qr-code').value).toBe(host.value);
+ cleanup();const catalog=await api.service.read();render(<App user={{...user,role:'viewer'}} snapshot={catalog} onLogout={vi.fn()} onUserUpdated={vi.fn()}/>);await screen.findByRole('region',{name:'Ürün kartı ve QR'});await settle();expect(screen.queryByRole('switch',{name:'Ürün kartını yayınla'})).toBeNull();
+});
+
+test('public product page reads only the anonymous API and handles withdrawn cards without a login wall',async()=>{
+ let catalog=await api.service.read();catalog=await api.service.saveProduct({expectedRevision:catalog.revision,product:{...catalog.products[0],status:'Aktif',description:'Public ürün açıklaması',allergens:'Fıstık içerir.'}},catalog.products[0].id,user.email);
+ catalog=await api.service.publishCard({expectedRevision:catalog.revision,enabled:true},catalog.products[0].id,user.email);
+ window.history.replaceState(null,'','/p/P000001');const calls=[];
+ vi.stubGlobal('fetch',vi.fn(async(path,options)=>{calls.push({path,options});return api.handle(new Request('http://localhost'+path))}));
+ render(<RootApp/>);await screen.findByRole('heading',{name:'Kontrol Baklava',level:2});expect(screen.getByText('Public ürün açıklaması')).toBeTruthy();expect(screen.getByText('Fıstık içerir.')).toBeTruthy();expect(screen.queryByRole('button',{name:'Giriş yap'})).toBeNull();expect(screen.queryByRole('navigation',{name:'Yönetim modülleri'})).toBeNull();
+ const apiCalls=calls.filter(call=>call.path.startsWith('/api/'));expect(apiCalls).toHaveLength(1);expect(apiCalls[0].path).toBe('/api/public/products/P000001');expect(apiCalls[0].options.credentials).toBe('omit');
+ cleanup();await api.service.publishCard({expectedRevision:catalog.revision,enabled:false},catalog.products[0].id,user.email);render(<RootApp/>);await screen.findByText('Ürün kartı bulunamadı veya yayından kaldırıldı.');expect(screen.queryByRole('heading',{name:'Kontrol Baklava',level:2})).toBeNull();expect(screen.queryByRole('button',{name:'Giriş yap'})).toBeNull();
 });

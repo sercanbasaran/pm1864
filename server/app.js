@@ -13,6 +13,14 @@ export async function createApp({env=process.env,database}={}){
  async function handle(request){
   try{const url=new URL(request.url),route=url.pathname.replace(/^\/\.netlify\/functions\/api/,'/api').replace(/\/$/,''),method=request.method.toUpperCase();
    if(route==='/api/health'&&method==='GET')return json({ok:true,service:'pm1864',database:db.dialect});
+   const publicRoute=route.match(/^\/api\/public\/products\/(P[0-9]{6,})(\/image)?$/);
+   if(publicRoute&&method==='GET'){
+    if(!publicRoute[2])return json({product:await service.publicCard(publicRoute[1])});
+    const product=await service.publishedProduct(publicRoute[1]);
+    if(!product.mediaId)throw new ApiError(404,'Görsel bulunamadı.','NOT_FOUND');
+    return await media.content(product.mediaId);
+   }
+   if(route.startsWith('/api/public/')&&method==='GET')throw new ApiError(404,'Ürün kartı bulunamadı veya yayından kaldırıldı.','NOT_FOUND');
    if(!await users.configured())throw new ApiError(503,'İlk yönetici hesabı yapılandırılmadı. ADMIN_EMAIL ve ADMIN_PASSWORD_HASH değerlerini tamamlayın.','NOT_CONFIGURED');
    if(['POST','PUT','PATCH','DELETE'].includes(method)&&request.headers.get('origin')!==(env.APP_ORIGIN||url.origin))throw new ApiError(403,'İstek kaynağı doğrulanamadı.','ORIGIN_REJECTED');
    let body={};if(['POST','PUT','PATCH','DELETE'].includes(method)){if(!request.headers.get('content-type')?.includes('application/json'))throw new ApiError(415,'JSON içerik gerekli.');const raw=await request.text();if(Buffer.byteLength(raw)>(route==='/api/media'&&method==='POST'?2900000:262144))throw new ApiError(413,'İstek boyutu sınırı aşıldı.');try{body=JSON.parse(raw)}catch{throw new ApiError(400,'Geçersiz JSON.')}if(!body||Array.isArray(body)||typeof body!=='object')throw new ApiError(400,'JSON nesnesi gerekli.')}
@@ -41,6 +49,7 @@ export async function createApp({env=process.env,database}={}){
    else if((match=route.match(/^\/api\/categories\/([^/]+)$/))&&method==='PUT'){requirePermission('categories.write');catalog=await service.saveCategory(body,decodeURIComponent(match[1]),user.email)}
    else if(route==='/api/products'&&method==='POST'){requirePermission('products.write');catalog=await service.saveProduct(body,null,user.email)}
    else if((match=route.match(/^\/api\/products\/(\d+)$/))&&method==='PUT'){requirePermission('products.write');catalog=await service.saveProduct(body,match[1],user.email)}
+   else if((match=route.match(/^\/api\/products\/(\d+)\/card$/))&&method==='PATCH'){requirePermission('products.write');catalog=await service.publishCard(body,match[1],user.email)}
    else if(route==='/api/prices/bulk'&&method==='POST'){requirePermission('prices.write');catalog=await service.bulk(body,user.email)}
    else if((match=route.match(/^\/api\/prices\/products\/(\d+)$/))&&method==='PATCH'){requirePermission('prices.write');catalog=await service.prices(body,match[1],user.email)}
    else if(route==='/api/settings'&&method==='PATCH'){requirePermission('settings.write');catalog=await service.settings(body,user.email)}

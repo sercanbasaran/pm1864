@@ -21,3 +21,9 @@
   [headers.values]
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Public product cards must also load when opened directly from a QR code.
+[[redirects]]
+  from = "/p/*"
+  to = "/index.html"
+  status = 200

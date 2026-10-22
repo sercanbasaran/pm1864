@@ -130,3 +130,12 @@ Arayüz testleri Shadow DOM sorguları ve gerçek API kullanır. Vitest, @lit/re
 ### Tam sayfa kayıt işlemleri
 
 Ürün, varyant, kategori, alt kategori ve kullanıcı ekleme/düzenleme işlemleri yönetim alanı içinde ayrı sayfalarda açılır. Örnek adresler `#products/new`, `#products/1/edit`, `#categories/new` ve `#users/new` biçimindedir. Mevcut kayıtların bağlantıları sayfa yenilendiğinde tekrar açılır. Listeye dön ve Vazgeç ilgili listeye döner; Kaydet başarılı olduğunda da liste açılır. Kaydetme başarısızsa taslak ve hata mesajı sayfada kalır. Üst ve alt aksiyonlar aynı formu kullanır. Netlify yönlendirmeleri, veritabanı ve ortam değişkenleri için ek ayar gerekmez.
+
+## Ürün kartı ve QR kullanımı
+
+1. **Ürün yönetimi** listesindeki ürünün QR ikonuna veya kart görünümündeki **Ürün kartı ve QR** düğmesine tıklayın.
+2. Kart önizlemesinde görsel, açıklama, aktif varyantların fiyat/gramaj/birim/ambalaj bilgileri ve girilmiş besin/alerjen/saklama alanlarını kontrol edin.
+3. Yönetici veya editör hesabıyla **Ürün kartını yayınla** anahtarını açın. Ürün ve kategoriler aktif, en az bir varyant aktif olmalıdır. Kartlar başlangıçta yayınlanmaz.
+4. Bağlantıyı kopyalayın veya **QR kodu indir** ile PNG indirin. Okutulduğunda `/p/P000001` gibi bir public adres açılır; giriş gerekmez. Adres, QR oluşturduğunuz ortamın alan adını kullanır; basılı kullanım için production adresinden indirin.
+
+Ürün güncellemeleri aynı QR bağlantısına yansır. Anahtarı kapatmak public kartı ve bağlı görselini erişime kapatır. Taslak ürünler, pasif kategoriler ve aktif varyantı olmayan ürünler gösterilmez. Public sayfa kullanıcı/işlem geçmişi gibi yönetim verilerini paylaşmaz. Netlify’da `/p/*` yönlendirmesi tanımlıdır; ek ortam değişkeni veya manuel SQL kurulumu gerekmez. Bağlantının çalışması için güncel frontend ve API birlikte deploy edilmelidir.
