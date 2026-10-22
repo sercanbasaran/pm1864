@@ -46,7 +46,7 @@ export default function ProductCardManagement({product,user,onClose}){
     {!eligible&&<SlAlert open variant="neutral">Yayınlamak için ürün, ana kategori ve alt kategori aktif olmalı; en az bir aktif varyant bulunmalıdır.</SlAlert>}
     {error&&<SlAlert open variant="danger">{error}</SlAlert>}
     <div className="product-qr-frame"><SlQrCode ref={qr} value={url} label={product.name+' ürün kartı QR kodu'} size={200} errorCorrection="H" fill="#000000" background="#ffffff" radius={0}/></div>
-    <label>Ürün kartı bağlantısı<Input aria-label="Ürün kartı bağlantısı" value={url} readOnly/></label>
+    <div><Input label="Ürün kartı bağlantısı" aria-label="Ürün kartı bağlantısı" value={url} readOnly/></div>
     <div className="product-card-share-actions">
      <Button type="button" onClick={copy}><Copy size={18}/>Bağlantıyı kopyala</Button>
      <Button type="button" disabled={downloading} onClick={download}><DownloadSimple size={18}/>QR kodu indir</Button>

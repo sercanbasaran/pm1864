@@ -50,3 +50,9 @@ Kontroller: `npm test`, `npm run test:ui`, `npm run build`.
 `src/product-card.js` açık alan projeksiyonunu, yayın uygunluğu kontrolünü ve kalıcı `/p/:productCode` adresini tanımlar. `ProductDetails.jsx` yönetim önizlemesi ve public sayfa arasında ortak görünüm bileşenidir. `ProductCardManagement.jsx` yayın anahtarı, kopyalama ve QR PNG indirmeyi yönetir. `PublicProductPage.jsx` yalnızca anonim public API’yi çağırır; `RootApp` bu adresleri oturum kapısından ayırır. Netlify `/p/*` isteklerini SPA girişine yönlendirir. Yönetim kartları `#products/:id/card` adresinden doğrudan açılabilir.
 
 Sunucu, mevcut katalog JSON belgesinde `publicCardEnabled` saklar; mevcut kayıtlarda eksik değer kapalı sayılır. Yeni tablo/SQL migration gerekmez. Katalog yazma işlemleri yayın durumunu korur; yayın anahtarı ayrı bir `products.write` endpoint’i ile değiştirilir. Açık API ve görsel erişimi her istekte yayın ve ürün/kategori/varyant durumunu doğrular. QR oluşturma/çözme ve indirilen PNG’nin tekrar okunması gerçek Canvas ile arayüz testlerinde kontrol edilir.
+
+## Shoelace varsayılan arayüzü
+
+Tema, Shoelace light CSS ve Türkçe yerelleştirmeden oluşur. `src/theme/primary.css` yalnızca #DA291C temelindeki primary paleti tanımlar; nötr ve semantik renkler framework'ten gelir. `src/layout.css` grid, flex, sayfa boşlukları, duyarlı yerleşim ve yerel HTML tablo düzenini içerir. Bileşenlerin shadow part, border, radius, shadow, hover, yazı tipi veya animasyonları özelleştirilmez. Önceki dokuz marka/modül CSS dosyası kaldırılmıştır.
+
+Ortak kontrol adaptörleri yalnızca React olaylarını, görünür Shoelace etiketlerini, erişilebilir adları ve fieldset disabled aktarımını yönetir. Butonlar standart medium boyutundadır; ikonlar resmi prefix/suffix slotlarında gösterilir. Form uyarıları, rol/durum etiketleri, kategori/medya/varyant kartları framework bileşenleridir. Profil menüsü ve mobil menü Shoelace dropdown/drawer kullanır.

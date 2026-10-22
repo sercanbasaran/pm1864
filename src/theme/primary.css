@@ -1,0 +1,15 @@
+/* The only brand override: Shoelace primary colors derived from #DA291C. */
+:root,
+.sl-theme-light {
+ --sl-color-primary-50:#fff3f1;
+ --sl-color-primary-100:#ffe4df;
+ --sl-color-primary-200:#ffc5bd;
+ --sl-color-primary-300:#ff9a8e;
+ --sl-color-primary-400:#f16b5b;
+ --sl-color-primary-500:#e84636;
+ --sl-color-primary-600:#DA291C;
+ --sl-color-primary-700:#b72117;
+ --sl-color-primary-800:#901b13;
+ --sl-color-primary-900:#68140f;
+ --sl-color-primary-950:#400c08;
+}

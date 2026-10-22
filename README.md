@@ -69,7 +69,7 @@ Parolalar scrypt ile özetlenir. Oturum token’larının yalnızca SHA-256 öze
 
 ## Arayüz ve doğrulama
 
-Referans: `https://hm1864.netlify.app/`. Kırmızı `#A50000`, altın `#CBA052`, siyah `#171512`, krem `#F8F5EF`, Avenir ve Phosphor Icons kullanılır. Logo / fontlar referans siteden yüklenir. Görseller medya kütüphanesinden seçilebilir veya harici URL olarak kaydedilebilir.
+Arayüz Shoelace’in standart light temasını kullanır. Tek marka özelleştirmesi primary `#DA291C` ve bu rengin primary tonlarıdır. Yazı tipi, bileşen boyutları, kenarlıklar, gölgeler, hover ve animasyonlar Shoelace varsayılanlarıdır. İkonlarda Phosphor Icons korunur. Görseller medya kütüphanesinden seçilebilir veya harici URL olarak kaydedilebilir.
 
 `npm test`: rol bazlı izinler, ilk giriş parola değişimi, kullanıcı / parola yönetimi, oturum iptali, eşzamanlılık, SKU, kategori / varyant doğrulama ve platform yollarının kaldırılmasını SQLite üzerinde test eder.
 
@@ -117,7 +117,7 @@ Medya modülü gerçek dosya yükleme, önizleme, yeniden adlandırma, arama, ü
 
 ### Shoelace arayüzü
 
-Arayüz bileşenleri Shoelace 2.20.1 ile çalışır. Ana renk #DA291C, ikinci renk #CBA052, üçüncü renk #000000 olarak src/shoelace.css içindeki ortak değişkenlerde tanımlıdır. React bileşenleri düğme, giriş, seçim, metin alanı, checkbox, switch, kart, menü, diyalog, mobil çekmece, uyarı, etiket, tooltip ve accordion için Shoelace kullanır. Veri tabloları semantik HTML ile sunulur. Ortak kontroller src/components/ui/Controls.jsx içindedir. Tema ve Türkçe yerelleştirme src/theme/ShoelaceTheme.jsx üzerinden yüklenir.
+Arayüz bileşenleri Shoelace 2.20.1 ile çalışır. Yalnızca primary renk sistemi `src/theme/primary.css` içinde #DA291C temelinde tanımlanır. `src/layout.css` sayfa yerleşimini ve Shoelace’in sunmadığı semantik tabloları düzenler; bileşenlerin shadow part’larına veya durum stillerine müdahale etmez. Önceki marka CSS dosyaları kaldırılmıştır. React bileşenleri düğme, giriş, seçim, metin alanı, checkbox, switch, kart, menü, diyalog, mobil çekmece, uyarı, etiket, tooltip ve accordion için Shoelace kullanır. Veri tabloları semantik HTML ile sunulur. Ortak kontroller src/components/ui/Controls.jsx içindedir. Tema ve Türkçe yerelleştirme src/theme/ShoelaceTheme.jsx üzerinden yüklenir.
 
 Shoelace paketinin sürümü sabittir; resmi proje aktif geliştirmeyi sonlandırmıştır. Geçiş, kullanıcının Shoelace tercihi doğrultusunda yapılmıştır. Kontrol ikonları build sırasında yerel public/shoelace/assets klasörüne kopyalanır; Netlify dağıtımında CDN gerektirmez. npm install ve npm run build yeterlidir; ek ortam değişkeni veya veritabanı geçişi yoktur.
 
