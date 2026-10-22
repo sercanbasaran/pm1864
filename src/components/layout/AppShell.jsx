@@ -7,7 +7,7 @@ import SlDivider from "@shoelace-style/shoelace/dist/react/divider/index.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
 import { List as Menu, ArrowsClockwise, Bell } from "@phosphor-icons/react";
 import { Button } from "../ui/Controls.jsx";
-import Card from "../ui/Card.jsx";
+import BrandLogo from "../ui/BrandLogo.jsx";
 import ProfileMenu from "./ProfileMenu.jsx";
 import {
   primaryModules,
@@ -49,8 +49,8 @@ export default function AppShell({
   const sidebar = (
     <div className="workspace-sidebar-content">
       <div className="workspace-brand">
-        <strong>PM1864</strong>
-        <small>Hafız Mustafa 1864</small>
+        <BrandLogo className="workspace-logo"/>
+        <small>USTA · Ürün yönetimi</small>
       </div>
       <ProfileMenu
         user={user}
@@ -74,7 +74,7 @@ export default function AppShell({
   return (
     <div className="pm-workspace">
       <aside className="workspace-sidebar">
-        <Card className="workspace-sidebar-card">{sidebar}</Card>
+        {sidebar}
       </aside>
       {mobile && (
         <SlDrawer

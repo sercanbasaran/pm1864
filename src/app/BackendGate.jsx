@@ -1,3 +1,4 @@
+import BrandLogo from '../components/ui/BrandLogo.jsx';
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import { Button, Input } from "../components/ui/Controls.jsx";
 import Card from "../components/ui/Card.jsx";
@@ -106,7 +107,7 @@ export default function BackendGate({ children }) {
       ) : (
         <main>
           <Card className="login-card">
-              <img src="/logo.png" alt="Hafız Mustafa 1864" className="login-logo"/>
+              <BrandLogo className="login-logo"/>
            {/*  <span className="login-lock">
               <LockKey size={25} />
             </span>

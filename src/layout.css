@@ -92,13 +92,15 @@ form,
   display: grid;
   grid-template-columns: 19rem minmax(0, 1fr);
   min-height: 100vh;
-  gap: var(--sl-spacing-large);
-  padding: var(--sl-spacing-large);
+  gap: 0;
+  padding: 0;
 }
 .workspace-sidebar {
   position: sticky;
-  top: var(--sl-spacing-large);
+  top: 0;
   align-self: start;
+  padding: var(--sl-spacing-large);
+  border-right: 1px solid var(--sl-color-neutral-200);
   min-width: 0;
 }
 .workspace-sidebar-content {
@@ -107,7 +109,16 @@ form,
 }
 .workspace-brand {
   display: grid;
-  gap: var(--sl-spacing-2x-small);
+  justify-items: center;
+  gap: var(--sl-spacing-small);
+  text-align: center;
+}
+.workspace-logo {
+  display: block;
+  width: min(10rem, 100%);
+  height: auto;
+  max-height: 9rem;
+  object-fit: contain;
 }
 .workspace-brand > strong {
   font-size: var(--sl-font-size-x-large);
@@ -127,6 +138,7 @@ form,
 }
 .workspace-main {
   min-width: 0;
+  padding: var(--sl-spacing-large);
 }
 .workspace-topbar {
   display: flex;
@@ -744,7 +756,7 @@ th {
   }
 }
 @media (max-width: 600px) {
-  .pm-workspace,
+  .workspace-main,
   .public-product-page {
     padding: var(--sl-spacing-medium);
   }
@@ -787,7 +799,8 @@ th {
   color: var(--sl-color-neutral-900);
 }
 .workspace-sidebar {
-  min-height: calc(100vh - 2 * var(--sl-spacing-large));
+  height: 100vh;
+  height: 100dvh;
 }
 .workspace-topbar {
   padding: var(--sl-spacing-medium);
@@ -831,7 +844,7 @@ body {
   max-width: min(22rem, calc(100vw - 3rem));
 }
 .workspace-sidebar {
-  max-height: calc(100dvh - 2 * var(--sl-spacing-large));
+  max-height: 100dvh;
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
@@ -1232,4 +1245,23 @@ sl-button::part(label) {
   width: min(120px, 100%);
   height: auto;
   margin-inline: auto;
+}
+/* Center SVG-only controls without the inline text baseline offset. */
+.control-icon-only::part(label) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.control-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.control-icon > svg,
+sl-button > svg[slot="prefix"],
+sl-button > svg[slot="suffix"] {
+  display: block;
+  flex: none;
 }
