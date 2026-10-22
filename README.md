@@ -86,7 +86,7 @@ Bağlantı adresi eksikse 503, bağlantı başarısızsa 500, GET dışındaki i
 - Genel bakış: gerçek kategori / varyant adetleri, eksik içerik listeleri ve son işlemler. Kartlar ilgili katalog filtresini açar.
 - Katalog: kategori, durum, eksik görsel / açıklama filtreleri; ad ve fiyat sıralaması; `/` ile arama odağı; liste / kart görünümü; kategori, ürün ve varyant ekleme / güncelleme.
 - Fiyat yönetimi: ürün varyant fiyatlarını ayrı API üzerinden düzenleme, filtreli toplu fiyat önizlemesi, kuruş hassasiyetinde kayıt ve CSV indirme.
-- İşlem geçmişi: kullanıcı, metin ve İstanbul tarih aralığı filtreleri, sayfalama ve CSV.
+- Profil menüsü → Ayarlar → İşlem geçmişi: kullanıcı, metin ve İstanbul tarih aralığı filtreleri, sayfalama ve CSV. Genel bakış, sidebar’daki ilk bağlantıdır.
 - Bildirimler: taslak ve görseli eksik ürünlere bağlantılar; değerler güncel katalogdan hesaplanır.
 - Hesabım: kalıcı profil adı ve parola güncelleme. Baş harfler hesap bilgilerinden üretilir.
 - Yardım merkezi: aranabilir kullanım rehberi ve yetkiye uygun ekran bağlantıları.
