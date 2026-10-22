@@ -2,17 +2,16 @@ import React,{useRef,useState} from 'react';
 import SlDropdown from '@shoelace-style/shoelace/dist/react/dropdown/index.js';
 import SlMenu from '@shoelace-style/shoelace/dist/react/menu/index.js';
 import SlMenuItem from '@shoelace-style/shoelace/dist/react/menu-item/index.js';
-import SlAvatar from '@shoelace-style/shoelace/dist/react/avatar/index.js';
+import UserAvatar from '../ui/UserAvatar.jsx';
 import SlDivider from '@shoelace-style/shoelace/dist/react/divider/index.js';
 import {UserCircle,IdentificationCard,Question,SignOut,Gear} from '@phosphor-icons/react';
 import {Button} from '../ui/Controls.jsx';
-import {initials} from '../../catalog-tools.js';
 import {roleFor} from '../../permissions.js';
 export default function ProfileMenu({user,onNavigate,onLogout,onError}){
  const ref=useRef(null),[busy,setBusy]=useState(false),[open,setOpen]=useState(false);
  async function select(e){const value=e.detail.item.value;await ref.current.hide();if(value==='logout'){setBusy(true);try{await onLogout()}catch(error){onError(error.message)}finally{setBusy(false)}}else onNavigate(value)}
  return <div className="profile-area">
-  <SlAvatar initials={initials(user)} label={user.name}/>
+  <UserAvatar user={user}/>
   <SlDropdown ref={ref} stayOpenOnSelect hoist placement="bottom-start" onSlShow={()=>setOpen(true)} onSlHide={()=>setOpen(false)}>
    <Button slot="trigger" type="button" caret className="profile-menu-trigger" aria-label="Profil menüsünü aç" aria-haspopup="menu" aria-expanded={open} disabled={busy}>{user.name}</Button>
    <SlMenu aria-label="Profil menüsü" onSlSelect={select}>
@@ -28,3 +27,4 @@ export default function ProfileMenu({user,onNavigate,onLogout,onError}){
   </SlDropdown>
  </div>;
 }
+

@@ -28,7 +28,11 @@ export async function migrate(db,seed){
   await tx.query('CREATE TABLE IF NOT EXISTS app_users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, active INTEGER NOT NULL, must_change_password INTEGER NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
   if(tx.dialect==='postgres')await tx.query("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'light'");
   else{const columns=(await tx.query("SELECT name FROM pragma_table_info('app_users')")).rows;if(!columns.some(column=>column.name==='theme'))await tx.query("ALTER TABLE app_users ADD COLUMN theme TEXT NOT NULL DEFAULT 'light'")}
+  if(tx.dialect==='postgres')await tx.query('ALTER TABLE app_users ADD COLUMN IF NOT EXISTS avatar_version INTEGER NOT NULL DEFAULT 0');
+  else{const columns=(await tx.query("SELECT name FROM pragma_table_info('app_users')")).rows;if(!columns.some(column=>column.name==='avatar_version'))await tx.query('ALTER TABLE app_users ADD COLUMN avatar_version INTEGER NOT NULL DEFAULT 0')}
+  await tx.query('CREATE TABLE IF NOT EXISTS app_user_avatars (user_id TEXT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,mime_type TEXT NOT NULL,data TEXT NOT NULL)');
   await tx.query('INSERT INTO app_catalog (id, revision, document) VALUES (1, 0, ?) ON CONFLICT (id) DO NOTHING',[JSON.stringify({...seed,schemaVersion:2})]);
   const row=(await tx.query('SELECT revision, document FROM app_catalog WHERE id=1'+(tx.dialect==='postgres'?' FOR UPDATE':''))).rows[0];const doc=JSON.parse(row.document);if(doc.schemaVersion!==2){upgradeHierarchy(doc);await tx.query('UPDATE app_catalog SET revision=?,document=? WHERE id=1',[Number(row.revision)+1,JSON.stringify(doc)])}
  });
 }
+

@@ -1,8 +1,9 @@
+import {decodeImageUpload} from './media-service.js';
 import {randomUUID} from 'node:crypto';
 import {roles,roleFor,can} from '../src/permissions.js';
 import {hashPassword,checkPassword} from './security.js';
 import {ApiError,audit} from './catalog-service.js';
-export const publicUser=row=>({id:row.id,email:row.email,name:row.name,role:row.role,theme:row.theme==='dark'?'dark':'light',active:!!row.active,mustChangePassword:!!row.must_change_password,version:Number(row.version),createdAt:row.created_at,updatedAt:row.updated_at,permissions:roleFor(row.role)?.permissions||[]});
+export const publicUser=row=>({id:row.id,email:row.email,name:row.name,role:row.role,theme:row.theme==='dark'?'dark':'light',avatarUrl:Number(row.avatar_version)>0?'/api/profile/avatar?user='+encodeURIComponent(row.id)+'&v='+Number(row.avatar_version):'',active:!!row.active,mustChangePassword:!!row.must_change_password,version:Number(row.version),createdAt:row.created_at,updatedAt:row.updated_at,permissions:roleFor(row.role)?.permissions||[]});
 const emailOf=value=>typeof value==='string'?value.trim().toLowerCase():'';
 const validEmail=email=>email.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validHash=hash=>/^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(hash||'');
@@ -40,5 +41,26 @@ export function createUserService(db,env){
   if(body.theme!==old.theme){await tx.query('UPDATE app_users SET theme=?,version=?,updated_at=? WHERE id=?',[body.theme,Number(old.version)+1,new Date().toISOString(),old.id]);await record(tx,'Görünüm tercihi güncellendi',body.theme==='dark'?'Koyu tema':'Açık tema',actor)}
   return publicUser((await tx.query('SELECT * FROM app_users WHERE id=?',[old.id])).rows[0]);
  })}
- return {initialize,findEmail,configured,list,save,reset,password,profile,preferences};
+ async function avatar(body,actor,remove=false){
+  if(!remove)decodeImageUpload(body);
+  return db.transaction(async tx=>{
+   await lock(tx);const old=(await tx.query('SELECT * FROM app_users WHERE id=?',[actor.id])).rows[0];
+   if(!old?.active)throw new ApiError(401,'Oturum açmanız gerekiyor.','UNAUTHORIZED');
+   if(body.expectedVersion!==Number(old.version))throw new ApiError(409,'Profiliniz başka bir işlemde güncellendi. Sayfayı yenileyin.','USER_CONFLICT');
+   if(remove&&!Number(old.avatar_version))return publicUser(old);
+   if(remove)await tx.query('DELETE FROM app_user_avatars WHERE user_id=?',[old.id]);
+   else await tx.query('INSERT INTO app_user_avatars (user_id,mime_type,data) VALUES (?,?,?) ON CONFLICT (user_id) DO UPDATE SET mime_type=excluded.mime_type,data=excluded.data',[old.id,body.mimeType,body.data]);
+   const version=Number(old.version)+1;
+   await tx.query('UPDATE app_users SET avatar_version=?,version=?,updated_at=? WHERE id=?',[remove?0:version,version,new Date().toISOString(),old.id]);
+   await record(tx,remove?'Profil fotoğrafı kaldırıldı':'Profil fotoğrafı güncellendi',old.name,actor);
+   return publicUser((await tx.query('SELECT * FROM app_users WHERE id=?',[old.id])).rows[0]);
+  });
+ }
+ async function avatarContent(actor){
+  const row=(await db.query('SELECT mime_type,data FROM app_user_avatars WHERE user_id=?',[actor.id])).rows[0];
+  if(!row)throw new ApiError(404,'Profil fotoğrafı bulunamadı.');
+  return new Response(Buffer.from(row.data,'base64'),{headers:{'Content-Type':row.mime_type,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
+ }
+ return {initialize,findEmail,configured,list,save,reset,password,profile,preferences,avatar,avatarContent};
 }
+

@@ -9,6 +9,9 @@ API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma 
 | GET | `/session` | Oturum; `{user}` |
 | POST | `/logout` | Oturum; `{}` |
 | PATCH | `/preferences` | Oturum; `{expectedVersion,theme:"light" veya "dark"}`; yalnızca kendi görünüm tercihi |
+| GET | `/profile/avatar` | Oturum; yalnızca kendi fotoğrafı, özel / önbelleksiz görsel yanıtı |
+| PUT | `/profile/avatar` | Oturum; `{expectedVersion,mimeType,data}`; base64 PNG/JPEG/WEBP/GIF, en fazla 2 MB |
+| DELETE | `/profile/avatar` | Oturum; `{expectedVersion}`; kendi fotoğrafını kaldırır |
 | PATCH | `/profile` | Oturum; `{expectedVersion,name}`; yalnızca kendi profil adı |
 | POST | `/password` | Oturum; `{currentPassword,newPassword}` |
 | GET | `/catalog` | `catalog.read`; `{catalog}` |
@@ -108,3 +111,6 @@ Kart yayından kaldırılıp yeniden yayınlandığında ürün adresi ve QR de�
 ## Görünüm tercihi
 
 Kullanıcı yanıtları `theme` alanını içerir. Varsayılan `light`, diğer geçerli değer `dark`tır. `PATCH /preferences` yalnızca oturum sahibini günceller; kullanıcı kimliği veya rol kabul etmez. `expectedVersion` son oturum / profil yanıtından alınır. Başarılı yanıt güncel `{user}` bilgisini döndürür; geçersiz tema 422, eski sürüm 409 döndürür. Tercih `app_users.theme` alanında kalıcıdır. Mevcut hesaplara bu alan veri kaybı olmadan başlangıçta eklenir.
+
+
+Kullanıcı yanıtındaki `avatarUrl`, fotoğraf yoksa boş metindir. Görsel URL’si hesap kimliği ve fotoğraf sürümünü içerir; yükleme/değiştirme/kaldırma kullanıcı `version` değerini günceller. Başka kullanıcı kimliği gönderilse de yazma işlemi yalnızca oturum sahibini etkiler. GET isteğinde farklı `user` sorgusu 404 döndürür. Geçersiz dosya 422, sürüm çakışması 409, oturumsuz erişim 401 döndürür. Fotoğraf baytları kullanıcı veya katalog JSON yanıtlarına dahil edilmez.

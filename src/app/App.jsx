@@ -28,6 +28,7 @@ const Overview=lazy(()=>import('../modules/overview/Overview.jsx'));
 const ActivityLog=lazy(()=>import('../modules/activity/ActivityLog.jsx'));
 const HelpCenter=lazy(()=>import('../modules/help/HelpCenter.jsx'));
 const ProfileForm=lazy(()=>import('../modules/account/ProfileForm.jsx'));
+import AvatarSettings from '../modules/account/AvatarSettings.jsx';
 import ThemePreferences from '../modules/account/ThemePreferences.jsx';
 import PasswordForm from '../modules/account/PasswordForm.jsx';
 import {request} from '../api.js';
@@ -63,7 +64,7 @@ function Workspace({user,onLogout,onUserUpdated}){
   codes:<CodeManagement user={user}/>,users:<UserManagement route={route} onNavigate={navigate} onClose={closeEditor} user={user} onChanged={async()=>onUserUpdated((await request('/session')).user)}/>,media:<MediaManagement user={user}/>,
   prices:<PriceManagement products={products} categories={categories} canWrite={can(user,'prices.write')} onSave={savePrices} onBulk={onBulk} busy={busy}/>,
   overview:<Overview products={products} categories={categories} logs={logs} onBrowse={browse} onActivity={()=>navigate('settings')} onNewProduct={create} canCreate={can(user,'products.write')}/>,settings:<ActivityLog logs={logs}/>,activity:<ActivityLog logs={logs}/>,help:<HelpCenter user={user} onNavigate={navigate}/>,
-  account:<Card className="panel account-panel"><div className="panel-title"><div><h2>{user.name}</h2><p className="muted">{user.email}</p></div><SlTag>{roleFor(user.role)?.name}</SlTag></div><ThemePreferences user={user} onChanged={onUserUpdated}/><ProfileSection focused={params.get('section')==='profile'}><ProfileForm user={user} onChanged={onUserUpdated}/></ProfileSection><PasswordForm user={user} onChanged={onUserUpdated}/></Card>
+  account:<Card className="panel account-panel"><div className="panel-title"><div><h2>{user.name}</h2><p className="muted">{user.email}</p></div><SlTag>{roleFor(user.role)?.name}</SlTag></div><AvatarSettings user={user} onChanged={onUserUpdated}/><ThemePreferences user={user} onChanged={onUserUpdated}/><ProfileSection focused={params.get('section')==='profile'}><ProfileForm user={user} onChanged={onUserUpdated}/></ProfileSection><PasswordForm user={user} onChanged={onUserUpdated}/></Card>
  };
  let pageContent=content[page];
  if(['products','variants'].includes(page)&&record){
@@ -73,3 +74,4 @@ function Workspace({user,onLogout,onUserUpdated}){
  }
  return <AppShell user={user} page={page} onNavigate={navigate} onLogout={onLogout} onNotifications={()=>setNotifications(true)}><ModuleBoundary module={page}><Suspense fallback={<Card className="panel" role="status">Bölüm yükleniyor…</Card>}>{allowed(page)?pageContent:null}</Suspense></ModuleBoundary>{bulk&&<BulkPriceDialog ids={bulk} onClose={()=>setBulk(null)}/>} {notifications&&<Modal title="Katalog bildirimleri" onClose={()=>setNotifications(false)}><div className="notification-items"><p>Güncel kayıtlardan hesaplanan tamamlanacak işler.</p><Button className="overview-task" onClick={()=>{setNotifications(false);browse({status:'Taslak'})}}><span>Taslak ürünler</span><strong>{products.filter(p=>p.status==='Taslak').length}</strong></Button><Button className="overview-task" onClick={()=>{setNotifications(false);browse({quality:'image'})}}><span>Görseli olmayanlar</span><strong>{products.filter(p=>!p.customImage).length}</strong></Button><Button className="btn full" onClick={()=>{setNotifications(false);navigate('settings')}}>İşlem geçmişini aç</Button></div></Modal>}</AppShell>;
 }
+

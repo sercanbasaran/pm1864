@@ -23,7 +23,7 @@ export async function createApp({env=process.env,database}={}){
    if(route.startsWith('/api/public/')&&method==='GET')throw new ApiError(404,'Ürün kartı bulunamadı veya yayından kaldırıldı.','NOT_FOUND');
    if(!await users.configured())throw new ApiError(503,'İlk yönetici hesabı yapılandırılmadı. ADMIN_EMAIL ve ADMIN_PASSWORD_HASH değerlerini tamamlayın.','NOT_CONFIGURED');
    if(['POST','PUT','PATCH','DELETE'].includes(method)&&request.headers.get('origin')!==(env.APP_ORIGIN||url.origin))throw new ApiError(403,'İstek kaynağı doğrulanamadı.','ORIGIN_REJECTED');
-   let body={};if(['POST','PUT','PATCH','DELETE'].includes(method)){if(!request.headers.get('content-type')?.includes('application/json'))throw new ApiError(415,'JSON içerik gerekli.');const raw=await request.text();if(Buffer.byteLength(raw)>(route==='/api/media'&&method==='POST'?2900000:262144))throw new ApiError(413,'İstek boyutu sınırı aşıldı.');try{body=JSON.parse(raw)}catch{throw new ApiError(400,'Geçersiz JSON.')}if(!body||Array.isArray(body)||typeof body!=='object')throw new ApiError(400,'JSON nesnesi gerekli.')}
+   let body={};if(['POST','PUT','PATCH','DELETE'].includes(method)){if(!request.headers.get('content-type')?.includes('application/json'))throw new ApiError(415,'JSON içerik gerekli.');const raw=await request.text();if(Buffer.byteLength(raw)>((route==='/api/media'&&method==='POST')||(route==='/api/profile/avatar'&&method==='PUT')?2900000:262144))throw new ApiError(413,'İstek boyutu sınırı aşıldı.');try{body=JSON.parse(raw)}catch{throw new ApiError(400,'Geçersiz JSON.')}if(!body||Array.isArray(body)||typeof body!=='object')throw new ApiError(400,'JSON nesnesi gerekli.')}
    const secure=url.protocol==='https:';
    if(route==='/api/login'&&method==='POST'){
     const row=await users.findEmail(body.email),passwordOkay=await checkPassword(body.password,row?.password_hash||dummyHash);if(!row?.active||!passwordOkay)throw new ApiError(401,'E-posta veya parola hatalı.','INVALID_CREDENTIALS');const user=publicUser(row),token=await issueSession(user);return json({user},200,{'set-cookie':cookie(token,secure)})
@@ -44,6 +44,10 @@ export async function createApp({env=process.env,database}={}){
    let match;if((match=route.match(/^\/api\/users\/([^/]+)$/))&&method==='PUT'){requirePermission('users.manage');return json({user:await users.save(body,decodeURIComponent(match[1]),user)})}
    if((match=route.match(/^\/api\/users\/([^/]+)\/password$/))&&method==='POST'){requirePermission('users.manage');return json(await users.reset(body,decodeURIComponent(match[1]),user))}
    if(route==='/api/preferences'&&method==='PATCH')return json({user:await users.preferences(body,user)});
+   if(route==='/api/profile/avatar'){
+    if(method==='GET'){if(url.searchParams.has('user')&&url.searchParams.get('user')!==user.id)throw new ApiError(404,'Profil fotoğrafı bulunamadı.');return await users.avatarContent(user)}
+    if(method==='PUT'||method==='DELETE')return json({user:await users.avatar(body,user,method==='DELETE')});
+   }
    if(route==='/api/profile'&&method==='PATCH')return json({user:await users.profile(body,user)});
    let catalog;
    if(route==='/api/categories'&&method==='POST'){requirePermission('categories.write');catalog=await service.saveCategory(body,null,user.email)}
@@ -63,3 +67,4 @@ export async function createApp({env=process.env,database}={}){
 let instance;
 export async function getApp(){if(!instance)instance=createApp().catch(e=>{instance=null;throw e});return instance}
 export async function handler(request){try{return await(await getApp()).handle(request)}catch(e){console.error('pm1864 initialization:',e.code||e.name);return json({error:{code:'NOT_CONFIGURED',message:'Veritabanı bağlantısı kurulamadı. DATABASE_URL ve ilk yönetici ayarlarını kontrol edin.'}},503)}}
+
