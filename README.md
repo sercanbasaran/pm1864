@@ -25,7 +25,7 @@ Rol değişikliği, pasifleştirme, e-posta değişikliği veya parola sıfırla
 
 Kategori ve ürün yönetimi ortak özet kartları ve varsayılan tablo görünümü kullanır. Ürün özetinde toplam, aktif ve taslak ürün sayıları ile toplam varyant sayısı görünür; arama ve filtreler bu genel sayaçları değiştirmez. Kart görünümü, dışa aktarım ve toplu fiyat güncelleme kullanılabilir.
 
-**Profil menüsü → Hesabım → Görünüm ayarları** bölümünden açık veya koyu tema seçip **Tema tercihini kaydet** butonuna basın. Tercih hesaba kaydedilir ve sonraki oturumlarda / farklı cihazlarda uygulanır. Shoelace açık / koyu renkleri kullanılır; birincil renk `#DA291C`, üst ve yan menü siyahtır. Mevcut kullanıcılar varsayılan açık temayla devam eder. Veritabanı alanı uygulama başlangıcında otomatik eklenir; yeni ortam değişkeni gerekmez.
+**Profil menüsü → Hesabım → Görünüm ayarları** bölümünden açık veya koyu tema seçip **Tema tercihini kaydet** butonuna basın. Tercih hesaba kaydedilir ve sonraki oturumlarda / farklı cihazlarda uygulanır. Shoelace açık / koyu renkleri kullanılır; birincil renk `#DA291C` olarak korunur. Üst menü, yan menü ve mobil menü seçilen temanın renklerine uyum sağlar. Mevcut kullanıcılar varsayılan açık temayla devam eder. Veritabanı alanı uygulama başlangıcında otomatik eklenir; yeni ortam değişkeni gerekmez.
 
 ## Yerel kurulum
 

@@ -16,7 +16,7 @@ export default function ThemePreferences({user,onChanged}){
   <ActionBar>{action}</ActionBar>
   {error&&<SlAlert open variant="danger">{error}</SlAlert>}{saved&&<SlAlert open variant="success">Tema tercihiniz kaydedildi.</SlAlert>}
   <div className="theme-choice"><span aria-hidden="true">{theme==='dark'?<Moon size={24}/>:<Sun size={24}/>}</span><Select label="Görünüm teması" value={theme} disabled={busy} onChange={e=>{setTheme(e.target.value);setSaved(false)}}><option value="light">Açık tema</option><option value="dark">Koyu tema</option></Select></div>
-  <small className="input-help">Değişiklik kaydedildiğinde uygulanır. Üst ve yan menü siyah kalır.</small>
+  <small className="input-help">Değişiklik kaydedildiğinde tüm yönetim arayüzüne uygulanır.</small>
   <ActionBar position="bottom">{action}</ActionBar>
  </form></section>;
 }

@@ -155,10 +155,9 @@ th{font-weight:var(--sl-font-weight-semibold);white-space:nowrap}
 @media(max-width:1000px){.pm-workspace{display:block}.workspace-sidebar{display:none}.workspace-mobile-toggle{display:inline-block}.overview-grid{grid-template-columns:1fr}.workspace-topbar{margin-bottom:var(--sl-spacing-large)}}
 @media(max-width:600px){.pm-workspace,.public-product-page{padding:var(--sl-spacing-medium)}.form-grid,.variant-fields,.product-detail-hero{grid-template-columns:1fr}.connection-tag{display:none}.module-toolbar>*,.toolbar-right,.filter-panel>*{flex-basis:100%;min-width:0}.card-action-bar sl-button,.product-summary-actions sl-button{flex:1;display:block}.product-detail-hero>.product-image{max-height:20rem}.workspace-notification{right:var(--sl-spacing-medium);bottom:var(--sl-spacing-medium)}.sku-line{flex-direction:column}}
 
-/* Black chrome retains Shoelace dark tokens in both workspace themes. */
+/* Navigation surfaces inherit the saved Shoelace workspace theme. */
 .workspace-sidebar,.workspace-topbar,.workspace-mobile-drawer{
- --sl-panel-background-color:#000000;
- background:#000000;
+ background:var(--sl-panel-background-color);
  color:var(--sl-color-neutral-900);
 }
 .workspace-sidebar{min-height:calc(100vh - 2 * var(--sl-spacing-large))}
