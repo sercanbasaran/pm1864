@@ -1,4 +1,4 @@
-/* Application layout only. Shoelace component internals and states are untouched. */
+/* Application layout and wrapping. Shoelace colors, shapes and interaction states are retained. */
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--sl-font-sans);font-size:var(--sl-font-size-medium);line-height:var(--sl-line-height-normal);color:var(--sl-color-neutral-900);background:var(--sl-panel-background-color)}
 h1,h2,h3,p{margin-top:0}
@@ -163,3 +163,68 @@ th{font-weight:var(--sl-font-weight-semibold);white-space:nowrap}
 }
 .workspace-sidebar{min-height:calc(100vh - 2 * var(--sl-spacing-large))}
 .workspace-topbar{padding:var(--sl-spacing-medium)}
+
+/* Constrain intrinsic grid sizes; long names must wrap instead of widening pages. */
+body{overflow-wrap:anywhere}
+.workspace-sidebar-content,.workspace-sidebar nav{grid-template-columns:minmax(0,1fr)}
+.workspace-sidebar-content>*,.panel-title>*,.catalog-heading>*,.hierarchy-heading>*,.variant-top>*,.form-grid>*,.variant-fields>*,.product-detail-hero>*,.product-card-workspace>*{min-width:0;max-width:100%}
+.profile-area{flex-wrap:nowrap}
+.profile-area>sl-avatar{flex:none}
+.profile-area>sl-dropdown{flex:1;min-width:0}
+.profile-menu-trigger{display:block;width:100%}
+.profile-menu-heading{max-width:min(22rem,calc(100vw - 3rem))}
+.workspace-sidebar{max-height:calc(100dvh - 2 * var(--sl-spacing-large));overflow-y:auto;scrollbar-gutter:stable}
+sl-button{max-width:100%}
+sl-button::part(label){min-width:0;white-space:normal;overflow-wrap:anywhere}
+.control-content{display:flex;align-items:center;justify-content:center;gap:var(--sl-spacing-small);min-width:0;white-space:normal;line-height:var(--sl-line-height-normal);padding-block:var(--sl-spacing-x-small)}
+.control-content>*{min-width:0;max-width:100%}
+.product-cell .control-content{justify-content:flex-start;text-align:left}
+.product-cell .control-content>.product-image{width:4rem;flex:none}
+.product-cell .control-content>div:not(.product-image){flex:1;min-width:0}
+.product-cell .image-placeholder small{display:none}
+.variant-top>strong>span{display:block;font-weight:var(--sl-font-weight-normal);font-size:var(--sl-font-size-small);margin-top:var(--sl-spacing-x-small)}
+.variant-actions{max-width:100%}
+.product-detail-variant-heading>strong{min-width:0;max-width:100%}
+.product-qr-frame{padding:0;min-width:0}
+.product-card-sharing,.product-details{min-width:0}
+.product-detail-identifiers sl-tag{max-width:100%}
+.product-detail-identifiers sl-tag::part(content){white-space:normal;overflow-wrap:anywhere}
+.product-card-share-actions sl-button{flex:1 1 12rem}
+.sales-summary sl-tag{max-width:100%}
+.sales-summary{min-width:12rem}
+.sl-theme-dark sl-button[variant="primary"]{--sl-color-neutral-0:#ffffff}
+@media(max-width:600px){
+ .workspace-topbar>strong{overflow-wrap:anywhere}
+ .editor-tabs sl-button,.tabs sl-button{flex:1 1 auto}
+ .product-cell{width:15rem}
+ .variant-actions{gap:var(--sl-spacing-x-small)}
+ .variant-actions sl-button{flex:none}
+ .product-detail-identifiers{align-items:flex-start}
+}
+
+/* Dense data stays readable; wide tables scroll within their own region. */
+.catalog table{min-width:62rem}
+.catalog td:nth-child(4),.price-manager td:nth-child(3),.variant-manager td:nth-child(3),.variant-manager td:nth-child(5){white-space:nowrap}
+.product-cell{width:18rem;max-width:100%}
+.product-cell strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.product-summary-card h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.product-summary-card::part(base){height:100%}
+.product-summary-card::part(body){display:flex;flex-direction:column;height:100%}
+.product-summary-actions{margin-top:auto;padding-top:var(--sl-spacing-medium)}
+.product-detail-identifiers sl-tag::part(base){height:auto;min-height:var(--sl-input-height-small)}
+.table-scroll:focus-visible{outline:var(--sl-focus-ring);outline-offset:var(--sl-focus-ring-offset)}
+
+/* Use the drawer's own scroll area, with the same navigation spacing as desktop. */
+.workspace-sidebar-content nav{display:grid;gap:var(--sl-spacing-small)}
+.workspace-sidebar-content nav p{margin:var(--sl-spacing-small) 0;color:var(--sl-color-neutral-600);font-size:var(--sl-font-size-small)}
+.workspace-mobile-drawer .workspace-sidebar-content{max-height:none;overflow:visible}
+.price-manager table{min-width:52rem}
+.variant-manager table{min-width:78rem}
+.code-management table{min-width:56rem}
+.user-management table{min-width:46rem}
+.permission-table{min-width:36rem}
+.table-scroll td:last-child sl-button{min-width:max-content}
+.product-list-actions,.user-actions{flex-wrap:nowrap}
+.product-summary-card h3{-webkit-line-clamp:2;min-block-size:calc(2em * var(--sl-line-height-normal))}
+.product-summary-category{min-block-size:calc(2em * var(--sl-line-height-normal))}
+.catalog th,.catalog td{padding-inline:var(--sl-spacing-small)}

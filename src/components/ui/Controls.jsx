@@ -22,14 +22,18 @@ function useControl(forwarded,label,disabled,autoFocus){
 }
 export const Button=forwardRef(function Button({className='',children,type='submit',variant,...props},ref){
  const control=useControl(ref,props['aria-label'],props.disabled),items=Children.toArray(children);
- const contents=items.map((child,i)=>isValidElement(child)&&child.props.size&&typeof child.type!=='string'?cloneElement(child,{slot:i===items.length-1&&i>0?'suffix':'prefix'}):child);
- return <SlButton {...props} {...control} type={type} className={className} variant={variant||((className.includes('selected')||className.includes('is-active'))?'primary':'default')} circle={props.circle??className.includes('icon-btn')}>{contents}</SlButton>;
+ const icon=child=>isValidElement(child)&&child.props.size&&typeof child.type!=='string';
+ const iconOnly=items.length>0&&items.every(icon),circle=props.circle??className.includes('icon-btn');
+ const adornments=[],content=[];
+ items.forEach((child,i)=>{if(icon(child)&&!iconOnly&&!circle)adornments.push(cloneElement(child,{slot:child.props.slot||(i===items.length-1&&i>0?'suffix':'prefix')}));else content.push(child)});
+ const contents=iconOnly||circle?content:<><span className="control-content">{content}</span>{adornments}</>;
+ return <SlButton {...props} {...control} type={type} className={className} variant={variant||((className.includes('selected')||className.includes('is-active'))?'primary':'default')} circle={circle}>{contents}</SlButton>;
 });
-export const Input=forwardRef(function Input({type='text',className='',onChange,readOnly,maxLength,minLength,autoFocus,label,children,...props},ref){
+export const Input=forwardRef(function Input({type='text',className='',onChange,readOnly,maxLength,minLength,autoFocus,label,children,prefix,...props},ref){
  const control=useControl(ref,props['aria-label']||label,props.disabled,autoFocus);
  if(type==='file'||type==='hidden')return <input ref={ref} type={type} className={className} onChange={onChange} {...props}/>;
  if(type==='checkbox')return <SlCheckbox {...props} {...control} className={className} onSlChange={e=>onChange?.(e)}>{label||children}</SlCheckbox>;
- return <SlInput {...props} {...control} className={className} label={label||props['aria-label']} value={props.value==null?'':String(props.value)} type={type} readonly={readOnly} maxlength={maxLength} minlength={minLength} onSlInput={e=>onChange?.(e)}/>;
+ return <SlInput {...props} {...control} className={className} label={label||props['aria-label']} value={props.value==null?'':String(props.value)} type={type} readonly={readOnly} maxlength={maxLength} minlength={minLength} onSlInput={e=>onChange?.(e)}>{prefix&&cloneElement(prefix,{slot:'prefix'})}{children}</SlInput>;
 });
 export const Textarea=forwardRef(function Textarea({onChange,maxLength,minLength,readOnly,autoFocus,label,...props},ref){
  const control=useControl(ref,props['aria-label']||label,props.disabled,autoFocus);

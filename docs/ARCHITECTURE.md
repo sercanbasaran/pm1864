@@ -53,6 +53,6 @@ Sunucu, mevcut katalog JSON belgesinde `publicCardEnabled` saklar; mevcut kayıt
 
 ## Shoelace varsayılan arayüzü
 
-Tema, Shoelace light CSS ve Türkçe yerelleştirmeden oluşur. `src/theme/primary.css` yalnızca #DA291C temelindeki primary paleti tanımlar; nötr ve semantik renkler framework'ten gelir. `src/layout.css` grid, flex, sayfa boşlukları, duyarlı yerleşim ve yerel HTML tablo düzenini içerir. Bileşenlerin shadow part, border, radius, shadow, hover, yazı tipi veya animasyonları özelleştirilmez. Önceki dokuz marka/modül CSS dosyası kaldırılmıştır.
+Tema, Shoelace light CSS ve Türkçe yerelleştirmeden oluşur. `src/theme/primary.css` yalnızca #DA291C temelindeki primary paleti tanımlar; nötr ve semantik renkler framework'ten gelir. `src/layout.css` grid, flex, sayfa boşlukları, duyarlı yerleşim ve yerel HTML tablo düzenini içerir. Shoelace renkleri, kenarlıkları, köşe ve gölge biçimleri, hover ve animasyonları korunur. Shadow part kuralları yalnızca metin sarmalama, minimum genişlik ve kart yüksekliği gibi yerleşim sorunlarında kullanılır. Önceki dokuz marka/modül CSS dosyası kaldırılmıştır.
 
 Ortak kontrol adaptörleri yalnızca React olaylarını, görünür Shoelace etiketlerini, erişilebilir adları ve fieldset disabled aktarımını yönetir. Butonlar standart medium boyutundadır; ikonlar resmi prefix/suffix slotlarında gösterilir. Form uyarıları, rol/durum etiketleri, kategori/medya/varyant kartları framework bileşenleridir. Profil menüsü ve mobil menü Shoelace dropdown/drawer kullanır.
