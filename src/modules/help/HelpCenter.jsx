@@ -1,4 +1,6 @@
-import {MaterialButton,MaterialInput} from '../../components/ui/Material.jsx';
+import SlDetails from '@shoelace-style/shoelace/dist/react/details/index.js';
+import Card from '../../components/ui/Card.jsx';
+import {Button,Input} from '../../components/ui/Controls.jsx';
 import React,{useState} from 'react';
 import {MagnifyingGlass,ArrowRight} from '@phosphor-icons/react';
 import {can} from '../../permissions.js';
@@ -18,5 +20,5 @@ export default function HelpCenter({user,onNavigate}) {
   ['Eşzamanlı düzenlemeler','Ürün yönetimi','catalog.read','Başka biri sizden önce kaydettiğinde eski verinin üzerine yazılmaz. Güncel veriler yüklenir; girdiğiniz değişiklikleri kontrol edip tekrar kaydedin.'],
  ];
  const visible=entries.filter(([title,,permission,text])=>can(user,permission)&&`${title} ${text}`.toLocaleLowerCase('tr').includes(query.toLocaleLowerCase('tr')));
- return <section className="panel help-center"><div className="panel-title"><h2>Kullanım rehberi</h2></div><div className="module-toolbar"><div className="search"><MagnifyingGlass size={17}/><MaterialInput aria-label="Yardımda ara" placeholder="Nasıl yardımcı olabiliriz?" value={query} onChange={e=>setQuery(e.target.value)}/></div></div>{visible.map(([title,page,,text])=><details key={title}><summary>{title}</summary><p>{text}</p><MaterialButton className="text-btn" onClick={()=>onNavigate(page)}>{page} bölümünü aç<ArrowRight size={15}/></MaterialButton></details>)}{!visible.length&&<p className="muted">Aramanızla eşleşen yardım konusu bulunamadı.</p>}</section>;
+ return <Card className="panel help-center"><div className="panel-title"><h2>Kullanım rehberi</h2></div><div className="module-toolbar"><div className="search"><MagnifyingGlass size={17}/><Input aria-label="Yardımda ara" placeholder="Nasıl yardımcı olabiliriz?" value={query} onChange={e=>setQuery(e.target.value)}/></div></div>{visible.map(([title,page,,text])=><SlDetails key={title} summary={title}><p>{text}</p><Button className="text-btn" onClick={()=>onNavigate(page)}>{page} bölümünü aç<ArrowRight size={15}/></Button></SlDetails>)}{!visible.length&&<p className="muted">Aramanızla eşleşen yardım konusu bulunamadı.</p>}</Card>;
 }

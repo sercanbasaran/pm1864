@@ -1,3 +1,3 @@
 import React from 'react';
-import {Chip} from '@mui/material';
-export default function StatusBadge({status}){return <Chip size="small" label={status} color={status==='Aktif'?'success':'default'} variant="outlined"/>}
+import SlBadge from '@shoelace-style/shoelace/dist/react/badge/index.js';
+export default function StatusBadge({status}){return <SlBadge pill variant={status==='Aktif'?'success':'neutral'}>{status}</SlBadge>}

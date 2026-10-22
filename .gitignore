@@ -9,3 +9,5 @@ dist/
 restore-offline.cjs
 data/
 .netlify/
+
+public/shoelace/

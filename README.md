@@ -115,13 +115,17 @@ Ana menü sırası: Kategori yönetimi → Ürün yönetimi → Varyant yönetim
 
 Medya modülü gerçek dosya yükleme, önizleme, yeniden adlandırma, arama, ürüne bağlama ve kullanılmayan dosyayı onayla silme işlemleri içerir. PNG / JPEG / WEBP / GIF, en fazla 2 MB desteklenir. Dosyalar `app_media` tablosunda saklanır; katalog yalnızca medya kimliği ve URL’sini taşır. Görsel içeriği yetkili oturumla okunur. Yönetici ve editör yükleyebilir / düzenleyebilir; görüntüleyici okuyabilir. Kullanımdaki dosya sunucuda da silinemez. Yeni ortam değişkeni gerekmez; tablo uygulama açılışında oluşturulur.
 
-### Material UI arayüzü
+### Shoelace arayüzü
 
-Arayüz, React için Material UI ve Emotion kullanır. Marka renkleri, tipografi ve ortak bileşen ayarları `src/theme/MaterialTheme.jsx` içinde tanımlıdır. Menü ve üst çubuk Drawer/AppBar, pencereler Dialog, tablolamalar Table, durumlar Chip, bildirimler Snackbar/Alert bileşenleriyle çalışır. Modüllerdeki ortak düğme, giriş, seçim ve tablo bileşenleri `src/components/ui/Material.jsx` üzerinden yönetilir. `src/material.css`, modül yerleşimlerini Material tema ile uyumlu hale getirir. Bu değişiklik ek ortam değişkeni veya veritabanı geçişi gerektirmez.
+Arayüz bileşenleri Shoelace 2.20.1 ile çalışır. Ana renk #DA291C, ikinci renk #CBA052, üçüncü renk #000000 olarak src/shoelace.css içindeki ortak değişkenlerde tanımlıdır. React bileşenleri düğme, giriş, seçim, metin alanı, checkbox, switch, kart, menü, diyalog, mobil çekmece, uyarı, etiket, tooltip ve accordion için Shoelace kullanır. Veri tabloları semantik HTML ile sunulur. Ortak kontroller src/components/ui/Controls.jsx içindedir. Tema ve Türkçe yerelleştirme src/theme/ShoelaceTheme.jsx üzerinden yüklenir.
+
+Shoelace paketinin sürümü sabittir; resmi proje aktif geliştirmeyi sonlandırmıştır. Geçiş, kullanıcının Shoelace tercihi doğrultusunda yapılmıştır. Kontrol ikonları build sırasında yerel public/shoelace/assets klasörüne kopyalanır; Netlify dağıtımında CDN gerektirmez. npm install ve npm run build yeterlidir; ek ortam değişkeni veya veritabanı geçişi yoktur.
+
+Arayüz testleri Shadow DOM sorguları ve gerçek API kullanır. Vitest, @lit/react paketinin browser sürümünü seçer; Node sürümü arayüzdeki özellikleri ve olayları bağlamadığından jsdom testlerine uygun değildir.
 
 ### Ürün ve varyant satış kanalları
 
-Ürün ve varyant formlarındaki Material UI anahtarları mağaza, online ve yemek sipariş platformu satışını ayrı ayrı yönetir. Ürün kanal tercihi, varyant kanal tercihi, ürünün aktif durumu ve varyantın aktif durumu birlikte değerlendirilir. Üründe kapalı bir kanal bütün varyantlarda kapalıdır; yeniden açıldığında varyant tercihleri korunur. Kanal bilgisi bulunmayan ürünler kapalı başlar; varyant tercihleri varsayılan olarak ürünü takip eder. API katalog yanıtında `salesAvailability` tercihler, `effectiveSales` ise geçerli satış durumudur. Eski istemciler bu alanları göndermediğinde mevcut tercihler korunur. İşlemler mevcut ürün düzenleme yetkisini ve katalog sürüm kontrolünü kullanır. Bu ayarlar dış platform entegrasyonu veya otomatik yayınlama yapmaz; ek ortam değişkeni veya SQL geçişi gerekmez.
+Ürün ve varyant formlarındaki Shoelace anahtarları mağaza, online ve yemek sipariş platformu satışını ayrı ayrı yönetir. Ürün kanal tercihi, varyant kanal tercihi, ürünün aktif durumu ve varyantın aktif durumu birlikte değerlendirilir. Üründe kapalı bir kanal bütün varyantlarda kapalıdır; yeniden açıldığında varyant tercihleri korunur. Kanal bilgisi bulunmayan ürünler kapalı başlar; varyant tercihleri varsayılan olarak ürünü takip eder. API katalog yanıtında `salesAvailability` tercihler, `effectiveSales` ise geçerli satış durumudur. Eski istemciler bu alanları göndermediğinde mevcut tercihler korunur. İşlemler mevcut ürün düzenleme yetkisini ve katalog sürüm kontrolünü kullanır. Bu ayarlar dış platform entegrasyonu veya otomatik yayınlama yapmaz; ek ortam değişkeni veya SQL geçişi gerekmez.
 
 ### Tam sayfa kayıt işlemleri
 

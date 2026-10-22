@@ -1,0 +1,11 @@
+import {screen as deepScreen,within as deepWithin} from 'shadow-dom-testing-library';
+import {waitFor,act,configure} from '@testing-library/react';
+configure({asyncUtilTimeout:5000});
+function visible(node){let child=node;for(let current=node;current;child=current,current=current.parentElement||current.getRootNode()?.host){if(current.hidden||current.style?.display==='none')return false;if(current.localName==='sl-dropdown'&&!current.open&&child.slot!=='trigger')return false;if(current.localName==='sl-select'&&!current.open&&(node.localName==='sl-option'||node.getAttribute('role')==='option'))return false;if(current.localName==='sl-dialog'&&!current.open)return false}return true}
+function normalize(node){const host=node.localName?.startsWith('sl-')?node:node.getRootNode()?.host;if(host?.localName==='sl-select')return host.shadowRoot?.querySelector('[role=combobox]')||node;if(['sl-input','sl-textarea','sl-checkbox'].includes(host?.localName))return host.shadowRoot?.querySelector('input,textarea')||node;return node}
+function adapt(source){return new Proxy(source,{get(target,key){const match=String(key).match(/^(get|query|find)(All)?By(.+)$/);if(!match)return target[key];const [,mode,all,type]=match;return (...args)=>{const query=()=>{const method=target['queryAllByShadow'+type]||target['queryAllBy'+type];const nodes=[...new Set(method(...args).map(normalize))].filter(visible);if(all){if(mode!=='query'&&!nodes.length)throw Error('Not found: '+type+' '+String(args[0]));return nodes}if(nodes.length>1)throw Error('Multiple matches: '+type+' '+String(args[0]));if(!nodes.length&&mode!=='query')throw Error('Not found: '+type+' '+String(args[0]));return nodes[0]||null};return mode==='find'?waitFor(query):query()}}})}
+export const screen=adapt(deepScreen);
+export function within(node){let root=node;const host=node.getRootNode()?.host;if(host?.localName==='sl-dialog')root=host;return adapt(deepWithin(root))}
+export async function settle(){await act(async()=>{for(let i=0;i<3;i++)await Promise.all([...document.querySelectorAll('*')].filter(n=>n.updateComplete).map(n=>n.updateComplete))})}
+
+export function focused(){let node=document.activeElement;while(node?.shadowRoot?.activeElement)node=node.shadowRoot.activeElement;return node}
