@@ -122,3 +122,7 @@ Arayüz, React için Material UI ve Emotion kullanır. Marka renkleri, tipografi
 ### Ürün ve varyant satış kanalları
 
 Ürün ve varyant formlarındaki Material UI anahtarları mağaza, online ve yemek sipariş platformu satışını ayrı ayrı yönetir. Ürün kanal tercihi, varyant kanal tercihi, ürünün aktif durumu ve varyantın aktif durumu birlikte değerlendirilir. Üründe kapalı bir kanal bütün varyantlarda kapalıdır; yeniden açıldığında varyant tercihleri korunur. Kanal bilgisi bulunmayan ürünler kapalı başlar; varyant tercihleri varsayılan olarak ürünü takip eder. API katalog yanıtında `salesAvailability` tercihler, `effectiveSales` ise geçerli satış durumudur. Eski istemciler bu alanları göndermediğinde mevcut tercihler korunur. İşlemler mevcut ürün düzenleme yetkisini ve katalog sürüm kontrolünü kullanır. Bu ayarlar dış platform entegrasyonu veya otomatik yayınlama yapmaz; ek ortam değişkeni veya SQL geçişi gerekmez.
+
+### Tam sayfa kayıt işlemleri
+
+Ürün, varyant, kategori, alt kategori ve kullanıcı ekleme/düzenleme işlemleri yönetim alanı içinde ayrı sayfalarda açılır. Örnek adresler `#products/new`, `#products/1/edit`, `#categories/new` ve `#users/new` biçimindedir. Mevcut kayıtların bağlantıları sayfa yenilendiğinde tekrar açılır. Listeye dön ve Vazgeç ilgili listeye döner; Kaydet başarılı olduğunda da liste açılır. Kaydetme başarısızsa taslak ve hata mesajı sayfada kalır. Üst ve alt aksiyonlar aynı formu kullanır. Netlify yönlendirmeleri, veritabanı ve ortam değişkenleri için ek ayar gerekmez.
