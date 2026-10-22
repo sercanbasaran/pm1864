@@ -1,24 +1,51 @@
-import {categoryOf,rootOf,categoryPath} from './hierarchy.js';
-import {productInformationFields} from './product-information.js';
+import { categoryOf, rootOf, categoryPath } from "./hierarchy.js";
+import { productInformationFields } from "./product-information.js";
 
-export const productCardCode=product=>product.productCode||`P${String(product.id).padStart(6,'0')}`;
-export const productCardPath=product=>'/p/'+encodeURIComponent(productCardCode(product));
+export const productCardCode = (product) =>
+  product.productCode || `P${String(product.id).padStart(6, "0")}`;
+export const productCardPath = (product) =>
+  "/p/" + encodeURIComponent(productCardCode(product));
 
-export function productCardEligible(product,categories){
- const category=categoryOf(product,categories),root=rootOf(category,categories);
- return product.status==='Aktif'&&!!category?.active&&!!root?.active&&product.variants.some(v=>v.active!==false);
+export function productCardEligible(product, categories) {
+  const category = categoryOf(product, categories),
+    root = rootOf(category, categories);
+  return (
+    product.status === "Aktif" &&
+    !!category?.active &&
+    !!root?.active &&
+    product.variants.some((v) => v.active !== false)
+  );
 }
 
 // Explicit public fields only. Never return catalog records, audit data or media IDs.
-export function productCardData(product,categories,image=product.customImage||''){
- return {
-  productCode:productCardCode(product),sku:product.sku,name:product.name,
-  category:categoryPath(categoryOf(product,categories),categories),
-  description:product.description||'',customImage:image,
-  ...Object.fromEntries(productInformationFields.map(field=>[field.key,product[field.key]||''])),
-  variants:product.variants.filter(v=>v.active!==false).map(v=>({
-   sku:v.sku,size:v.size,weight:v.weight,unit:v.unit||'Adet',
-   packaging:v.packaging||'',slices:v.slices,price:v.price
-  }))
- };
+export function productCardData(
+  product,
+  categories,
+  image = product.customImage || "",
+) {
+  return {
+    productCode: productCardCode(product),
+    sku: product.sku,
+    name: product.name,
+    category: categoryPath(categoryOf(product, categories), categories),
+    description: product.description || "",
+    customImage: image,
+    ...Object.fromEntries(
+      productInformationFields.map((field) => [
+        field.key,
+        product[field.key] || "",
+      ]),
+    ),
+    variants: product.variants
+      .filter((v) => v.active !== false)
+      .map((v) => ({
+        sku: v.sku,
+        size: v.size,
+        weight: v.weight,
+        unit: v.unit || "Adet",
+        packaging: v.packaging || "",
+        slices: v.slices,
+        price: v.price,
+      })),
+  };
 }

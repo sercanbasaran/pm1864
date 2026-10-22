@@ -1,3 +1,46 @@
-import React from 'react';
-import {Button} from './Controls.jsx';
-export default function Pagination({total,page,pageSize=8,onChange}){const pages=Math.max(1,Math.ceil(total/pageSize)),current=Math.min(page,pages);const numbers=Array.from({length:pages},(_,i)=>i+1).filter(n=>n===1||n===pages||Math.abs(n-current)<=1);return <div className="records-pagination"><span>{total} kayıt · Sayfa {current} / {pages}</span><nav aria-label="Sayfalama"><Button type="button" disabled={current<=1} onClick={()=>onChange(current-1)}>Önceki</Button>{numbers.map((n,i)=><React.Fragment key={n}>{i>0&&n-numbers[i-1]>1&&<span>…</span>}<Button type="button" variant={n===current?'primary':'default'} aria-current={n===current?'page':undefined} aria-label={n+'. sayfa'} onClick={()=>onChange(n)}>{n}</Button></React.Fragment>)}<Button type="button" disabled={current>=pages} onClick={()=>onChange(current+1)}>Sonraki</Button></nav></div>}
+import React from "react";
+import { Button } from "./Controls.jsx";
+export default function Pagination({ total, page, pageSize = 8, onChange }) {
+  const pages = Math.max(1, Math.ceil(total / pageSize)),
+    current = Math.min(page, pages);
+  const numbers = Array.from({ length: pages }, (_, i) => i + 1).filter(
+    (n) => n === 1 || n === pages || Math.abs(n - current) <= 1,
+  );
+  return (
+    <div className="records-pagination">
+      <span>
+        {total} kayıt · Sayfa {current} / {pages}
+      </span>
+      <nav aria-label="Sayfalama">
+        <Button
+          type="button"
+          disabled={current <= 1}
+          onClick={() => onChange(current - 1)}
+        >
+          Önceki
+        </Button>
+        {numbers.map((n, i) => (
+          <React.Fragment key={n}>
+            {i > 0 && n - numbers[i - 1] > 1 && <span>…</span>}
+            <Button
+              type="button"
+              variant={n === current ? "primary" : "default"}
+              aria-current={n === current ? "page" : undefined}
+              aria-label={n + ". sayfa"}
+              onClick={() => onChange(n)}
+            >
+              {n}
+            </Button>
+          </React.Fragment>
+        ))}
+        <Button
+          type="button"
+          disabled={current >= pages}
+          onClick={() => onChange(current + 1)}
+        >
+          Sonraki
+        </Button>
+      </nav>
+    </div>
+  );
+}

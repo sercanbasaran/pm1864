@@ -1,4 +1,35 @@
-import React from 'react';
-import {Textarea} from '../../components/ui/Controls.jsx';
-import {productInformationFields} from '../../product-information.js';
-export default function ProductInformationFields({product,onChange}){return <div className="product-information-fields"><div><h2>Besin ve saklama bilgileri</h2><p>Bu bilgiler ürünün tüm varyantları için geçerlidir. Besin değerlerini 100 g temelinde girin.</p></div>{productInformationFields.map(field=><div key={field.key}><div><Textarea label={field.label} rows={field.key==='nutrition'?4:3} maxLength={field.maxLength} placeholder={field.placeholder} value={product[field.key]||''} onChange={e=>onChange({...product,[field.key]:e.target.value})}/></div><small className="field-counter">{(product[field.key]||'').length} / {field.maxLength}</small></div>)}</div>}
+import React from "react";
+import { Textarea } from "../../components/ui/Controls.jsx";
+import { productInformationFields } from "../../product-information.js";
+export default function ProductInformationFields({ product, onChange }) {
+  return (
+    <div className="product-information-fields">
+      <div>
+        <h2>Besin ve saklama bilgileri</h2>
+        <p>
+          Bu bilgiler ürünün tüm varyantları için geçerlidir. Besin değerlerini
+          100 g temelinde girin.
+        </p>
+      </div>
+      {productInformationFields.map((field) => (
+        <div key={field.key}>
+          <div>
+            <Textarea
+              label={field.label}
+              rows={field.key === "nutrition" ? 4 : 3}
+              maxLength={field.maxLength}
+              placeholder={field.placeholder}
+              value={product[field.key] || ""}
+              onChange={(e) =>
+                onChange({ ...product, [field.key]: e.target.value })
+              }
+            />
+          </div>
+          <small className="field-counter">
+            {(product[field.key] || "").length} / {field.maxLength}
+          </small>
+        </div>
+      ))}
+    </div>
+  );
+}

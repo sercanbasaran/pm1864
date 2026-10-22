@@ -1,20 +1,220 @@
-import SlAlert from '@shoelace-style/shoelace/dist/react/alert/index.js';
-import ActionBar from '../../components/ui/ActionBar.jsx';
-import {SalesChannelSwitches} from '../../components/ui/SalesChannels.jsx';
-import ProductInformationFields from './ProductInformationFields.jsx';
-import {Button,Input,Select,Textarea} from '../../components/ui/Controls.jsx';
-import React,{useState} from 'react';
-import {Check} from '@phosphor-icons/react';
-import {useCatalog} from '../../app/CatalogContext.jsx';
-import {validateProduct} from '../../catalog.js';
-import CategoryFields from '../categories/CategoryFields.jsx';
-import VariantFields from '../variants/VariantFields.jsx';
-import MediaPicker from '../media/MediaPicker.jsx';
-import ProductImage from '../../components/ui/ProductImage.jsx';
-import EditorPage from '../../components/layout/EditorPage.jsx';
-export default function ProductEditor({product,tab='Genel bilgiler',readOnly=false,onClose}){
- const [draft,setDraft]=useState(()=>structuredClone(product)),[active,setActive]=useState(tab),[error,setError]=useState(''),{categories,busy,mutate,notify}=useCatalog();
- async function save(e){e.preventDefault();setError('');const invalid=!draft.categoryId?{tab:'Genel bilgiler',message:'Ana kategori ve alt kategori seçin.'}:validateProduct(draft,categories);if(invalid){setActive(invalid.tab);setError(invalid.message);return}try{await mutate('/products'+(draft.isNew?'':'/'+draft.id),{product:draft},draft.isNew?'POST':'PUT');notify('Ürün kaydedildi.');onClose()}catch(e){setError(e.message)}}
- const saveAction=(!readOnly)?(<Button type="submit" variant="primary" className="btn" disabled={busy}><Check size={17}/>{draft.isNew?'Ürünü oluştur':'Değişiklikleri kaydet'}</Button>):null;
- return <EditorPage title={draft.isNew?'Ürün ekle':'Ürün düzenle'} busy={busy} onClose={onClose}><div className="product-editor-title"><strong>{draft.isNew?'Yeni ürün oluştur':draft.name}</strong><small>{draft.isNew?'Ürün kodu ve SKU kayıt sırasında oluşturulacak':draft.productCode+' · '+draft.sku}</small></div><div className="editor-tabs">{['Genel bilgiler','Besin ve saklama','Varyant & fiyat'].map(label=><Button type="button" key={label} className={active===label?'selected':''} onClick={()=>setActive(label)}>{label}</Button>)}</div><form onSubmit={save} noValidate><ActionBar>{saveAction}</ActionBar><fieldset className="editor-fields" disabled={busy||readOnly}><div className="editor-content">{error&&<SlAlert open variant="danger" className="form-error">{error}</SlAlert>}{active==='Genel bilgiler'?<><div className="edit-product-preview"><ProductImage product={draft}/><span>Ürün kodu ve SKU değişikliklerde korunur.</span></div><div><Input label="Ürün adı" required maxLength={160} value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></div><CategoryFields product={draft} categories={categories} onChange={setDraft}/><div><Select label="Ürün durumu" value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value})}><option>Aktif</option><option>Taslak</option></Select></div><SalesChannelSwitches disabled={busy||readOnly} product={draft} onChange={salesAvailability=>setDraft({...draft,salesAvailability})}/><div><Textarea label="Kısa açıklama" rows={4} maxLength={4000} value={draft.description||''} onChange={e=>setDraft({...draft,description:e.target.value})}/></div><MediaPicker value={draft.mediaId||''} onChange={asset=>setDraft({...draft,mediaId:asset?.id||'',customImage:asset?.url||''})}/>{!draft.mediaId&&<div><Input label="Ürün görseli URL’si" type="url" value={draft.customImage||''} onChange={e=>setDraft({...draft,mediaId:'',customImage:e.target.value})}/></div>}</>:active==='Besin ve saklama'?<ProductInformationFields product={draft} onChange={setDraft}/>:<VariantFields disabled={busy||readOnly} product={draft} onChange={setDraft}/>}</div></fieldset><div className="editor-footer"><Button type="button" className="btn" disabled={busy} onClick={onClose}>{readOnly?'Kapat':'Vazgeç'}</Button><div className="overview-actions">{active!=='Varyant & fiyat'&&<Button type="button" className="btn" onClick={()=>setActive(active==='Genel bilgiler'?'Besin ve saklama':'Varyant & fiyat')}>Sonraki adım</Button>}{saveAction}</div></div></form></EditorPage>;
+import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
+import ActionBar from "../../components/ui/ActionBar.jsx";
+import { SalesChannelSwitches } from "../../components/ui/SalesChannels.jsx";
+import ProductInformationFields from "./ProductInformationFields.jsx";
+import {
+  Button,
+  Input,
+  Select,
+  Textarea,
+} from "../../components/ui/Controls.jsx";
+import React, { useState } from "react";
+import { Check } from "@phosphor-icons/react";
+import { useCatalog } from "../../app/CatalogContext.jsx";
+import { validateProduct } from "../../catalog.js";
+import CategoryFields from "../categories/CategoryFields.jsx";
+import VariantFields from "../variants/VariantFields.jsx";
+import MediaPicker from "../media/MediaPicker.jsx";
+import ProductImage from "../../components/ui/ProductImage.jsx";
+import EditorPage from "../../components/layout/EditorPage.jsx";
+export default function ProductEditor({
+  product,
+  tab = "Genel bilgiler",
+  readOnly = false,
+  onClose,
+}) {
+  const [draft, setDraft] = useState(() => structuredClone(product)),
+    [active, setActive] = useState(tab),
+    [error, setError] = useState(""),
+    { categories, busy, mutate, notify } = useCatalog();
+  async function save(e) {
+    e.preventDefault();
+    setError("");
+    const invalid = !draft.categoryId
+      ? {
+          tab: "Genel bilgiler",
+          message: "Ana kategori ve alt kategori seçin.",
+        }
+      : validateProduct(draft, categories);
+    if (invalid) {
+      setActive(invalid.tab);
+      setError(invalid.message);
+      return;
+    }
+    try {
+      await mutate(
+        "/products" + (draft.isNew ? "" : "/" + draft.id),
+        { product: draft },
+        draft.isNew ? "POST" : "PUT",
+      );
+      notify("Ürün kaydedildi.");
+      onClose();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+  const saveAction = !readOnly ? (
+    <Button type="submit" variant="primary" className="btn" disabled={busy}>
+      <Check size={17} />
+      {draft.isNew ? "Ürünü oluştur" : "Değişiklikleri kaydet"}
+    </Button>
+  ) : null;
+  return (
+    <EditorPage
+      title={draft.isNew ? "Ürün ekle" : "Ürün düzenle"}
+      busy={busy}
+      onClose={onClose}
+    >
+      <div className="product-editor-title">
+        <strong>{draft.isNew ? "Yeni ürün oluştur" : draft.name}</strong>
+        <small>
+          {draft.isNew
+            ? "Ürün kodu ve SKU kayıt sırasında oluşturulacak"
+            : draft.productCode + " · " + draft.sku}
+        </small>
+      </div>
+      <div className="editor-tabs">
+        {["Genel bilgiler", "Besin ve saklama", "Varyant & fiyat"].map(
+          (label) => (
+            <Button
+              type="button"
+              key={label}
+              className={active === label ? "selected" : ""}
+              onClick={() => setActive(label)}
+            >
+              {label}
+            </Button>
+          ),
+        )}
+      </div>
+      <form onSubmit={save} noValidate>
+        <ActionBar>{saveAction}</ActionBar>
+        <fieldset className="editor-fields" disabled={busy || readOnly}>
+          <div className="editor-content">
+            {error && (
+              <SlAlert open variant="danger" className="form-error">
+                {error}
+              </SlAlert>
+            )}
+            {active === "Genel bilgiler" ? (
+              <>
+                <div className="edit-product-preview">
+                  <ProductImage product={draft} />
+                  <span>Ürün kodu ve SKU değişikliklerde korunur.</span>
+                </div>
+                <div>
+                  <Input
+                    label="Ürün adı"
+                    required
+                    maxLength={160}
+                    value={draft.name}
+                    onChange={(e) =>
+                      setDraft({ ...draft, name: e.target.value })
+                    }
+                  />
+                </div>
+                <CategoryFields
+                  product={draft}
+                  categories={categories}
+                  onChange={setDraft}
+                />
+                <div>
+                  <Select
+                    label="Ürün durumu"
+                    value={draft.status}
+                    onChange={(e) =>
+                      setDraft({ ...draft, status: e.target.value })
+                    }
+                  >
+                    <option>Aktif</option>
+                    <option>Taslak</option>
+                  </Select>
+                </div>
+                <SalesChannelSwitches
+                  disabled={busy || readOnly}
+                  product={draft}
+                  onChange={(salesAvailability) =>
+                    setDraft({ ...draft, salesAvailability })
+                  }
+                />
+                <div>
+                  <Textarea
+                    label="Kısa açıklama"
+                    rows={4}
+                    maxLength={4000}
+                    value={draft.description || ""}
+                    onChange={(e) =>
+                      setDraft({ ...draft, description: e.target.value })
+                    }
+                  />
+                </div>
+                <MediaPicker
+                  value={draft.mediaId || ""}
+                  onChange={(asset) =>
+                    setDraft({
+                      ...draft,
+                      mediaId: asset?.id || "",
+                      customImage: asset?.url || "",
+                    })
+                  }
+                />
+                {!draft.mediaId && (
+                  <div>
+                    <Input
+                      label="Ürün görseli URL’si"
+                      type="url"
+                      value={draft.customImage || ""}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          mediaId: "",
+                          customImage: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                )}
+              </>
+            ) : active === "Besin ve saklama" ? (
+              <ProductInformationFields product={draft} onChange={setDraft} />
+            ) : (
+              <VariantFields
+                disabled={busy || readOnly}
+                product={draft}
+                onChange={setDraft}
+              />
+            )}
+          </div>
+        </fieldset>
+        <div className="editor-footer">
+          <Button
+            type="button"
+            className="btn"
+            disabled={busy}
+            onClick={onClose}
+          >
+            {readOnly ? "Kapat" : "Vazgeç"}
+          </Button>
+          <div className="overview-actions">
+            {active !== "Varyant & fiyat" && (
+              <Button
+                type="button"
+                className="btn"
+                onClick={() =>
+                  setActive(
+                    active === "Genel bilgiler"
+                      ? "Besin ve saklama"
+                      : "Varyant & fiyat",
+                  )
+                }
+              >
+                Sonraki adım
+              </Button>
+            )}
+            {saveAction}
+          </div>
+        </div>
+      </form>
+    </EditorPage>
+  );
 }
