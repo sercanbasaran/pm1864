@@ -154,3 +154,12 @@ th{font-weight:var(--sl-font-weight-semibold);white-space:nowrap}
 @media(max-width:1200px){.pm-workspace{grid-template-columns:16rem minmax(0,1fr)}.product-card-workspace{grid-template-columns:1fr}.variant-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1000px){.pm-workspace{display:block}.workspace-sidebar{display:none}.workspace-mobile-toggle{display:inline-block}.overview-grid{grid-template-columns:1fr}.workspace-topbar{margin-bottom:var(--sl-spacing-large)}}
 @media(max-width:600px){.pm-workspace,.public-product-page{padding:var(--sl-spacing-medium)}.form-grid,.variant-fields,.product-detail-hero{grid-template-columns:1fr}.connection-tag{display:none}.module-toolbar>*,.toolbar-right,.filter-panel>*{flex-basis:100%;min-width:0}.card-action-bar sl-button,.product-summary-actions sl-button{flex:1;display:block}.product-detail-hero>.product-image{max-height:20rem}.workspace-notification{right:var(--sl-spacing-medium);bottom:var(--sl-spacing-medium)}.sku-line{flex-direction:column}}
+
+/* Dark chrome uses Shoelace's scoped dark theme; the workspace stays light. */
+.workspace-sidebar,.workspace-topbar,.workspace-mobile-drawer{
+ --sl-panel-background-color:#000000;
+ background:#000000;
+ color:var(--sl-color-neutral-900);
+}
+.workspace-sidebar{min-height:calc(100vh - 2 * var(--sl-spacing-large))}
+.workspace-topbar{padding:var(--sl-spacing-medium)}
