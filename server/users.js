@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {roles,roleFor,can} from '../src/permissions.js';
 import {hashPassword,checkPassword} from './security.js';
 import {ApiError,audit} from './catalog-service.js';
-export const publicUser=row=>({id:row.id,email:row.email,name:row.name,role:row.role,active:!!row.active,mustChangePassword:!!row.must_change_password,version:Number(row.version),createdAt:row.created_at,updatedAt:row.updated_at,permissions:roleFor(row.role)?.permissions||[]});
+export const publicUser=row=>({id:row.id,email:row.email,name:row.name,role:row.role,theme:row.theme==='dark'?'dark':'light',active:!!row.active,mustChangePassword:!!row.must_change_password,version:Number(row.version),createdAt:row.created_at,updatedAt:row.updated_at,permissions:roleFor(row.role)?.permissions||[]});
 const emailOf=value=>typeof value==='string'?value.trim().toLowerCase():'';
 const validEmail=email=>email.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validHash=hash=>/^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(hash||'');
@@ -32,5 +32,13 @@ export function createUserService(db,env){
   await tx.query('UPDATE app_users SET name=?,version=?,updated_at=? WHERE id=?',[name,Number(old.version)+1,new Date().toISOString(),old.id]);await record(tx,'Profil güncellendi',name,actor);
   return publicUser((await tx.query('SELECT * FROM app_users WHERE id=?',[old.id])).rows[0]);
  })}
- return {initialize,findEmail,configured,list,save,reset,password,profile};
+ async function preferences(body,actor){return db.transaction(async tx=>{
+  await lock(tx);const old=(await tx.query('SELECT * FROM app_users WHERE id=?',[actor.id])).rows[0];
+  if(!old?.active)throw new ApiError(401,'Oturum açmanız gerekiyor.','UNAUTHORIZED');
+  if(body.expectedVersion!==Number(old.version))throw new ApiError(409,'Hesap bilgileriniz değişti. Sayfayı yenileyin.','USER_CONFLICT');
+  if(!['light','dark'].includes(body.theme))throw new ApiError(422,'Açık veya koyu tema seçin.');
+  if(body.theme!==old.theme){await tx.query('UPDATE app_users SET theme=?,version=?,updated_at=? WHERE id=?',[body.theme,Number(old.version)+1,new Date().toISOString(),old.id]);await record(tx,'Görünüm tercihi güncellendi',body.theme==='dark'?'Koyu tema':'Açık tema',actor)}
+  return publicUser((await tx.query('SELECT * FROM app_users WHERE id=?',[old.id])).rows[0]);
+ })}
+ return {initialize,findEmail,configured,list,save,reset,password,profile,preferences};
 }

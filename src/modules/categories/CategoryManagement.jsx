@@ -1,3 +1,4 @@
+import ManagementSummary from '../../components/ui/ManagementSummary.jsx';
 import Card from '../../components/ui/Card.jsx';
 import SlBadge from '@shoelace-style/shoelace/dist/react/badge/index.js';
 import SlAlert from '@shoelace-style/shoelace/dist/react/alert/index.js';
@@ -24,11 +25,10 @@ export default function CategoryManager({categories,products,onSave,onProducts,o
  const activeChildren=categories.filter(c=>c.parentId&&c.active&&main.some(parent=>parent.id===c.parentId&&parent.active)).length;
  const rows=visible.flatMap(root=>[root,...categories.filter(c=>c.parentId===root.id&&(matches(root)||matches(c)))]);
  return <>{!route.split('?')[0].includes('/')&&<section className="category-module">
-  <div className="category-summary" aria-label="Kategori özeti">
-   <Card><div className="category-summary-stat"><span>Aktif kategori sayısı</span><strong>{activeMain}</strong><small>{main.length} ana kategori içinde</small></div></Card>
-   <Card><div className="category-summary-stat"><span>Aktif alt kategori sayısı</span><strong>{activeChildren}</strong><small>Ana kategorisi de aktif olan alt kategoriler</small></div></Card>
-   {!readOnly&&<Card><div className="category-summary-create"><strong>Kategorilerinizi yönetin</strong><p>Ana kategorileri ve ürünlerin bağlanacağı alt kategorileri oluşturun.</p>{addAction}</div></Card>}
-  </div>
+  <ManagementSummary label="Kategori özeti" items={[
+   {label:'Aktif kategori sayısı',value:activeMain,detail:main.length+' ana kategori içinde'},
+   {label:'Aktif alt kategori sayısı',value:activeChildren,detail:'Ana kategorisi de aktif olan alt kategoriler'}
+  ]} title="Kategorilerinizi yönetin" description="Ana kategorileri ve ürünlerin bağlanacağı alt kategorileri oluşturun." action={addAction}/>
   <Card className="category-list-card">
    <div className="category-toolbar"><div><h2>Kategori listesi</h2><p>{main.length} ana kategori · {categories.length-main.length} alt kategori</p></div><div className="search"><Input prefix={<MagnifyingGlass size={17}/>} aria-label="Kategori ara" placeholder="Ana kategori, alt kategori veya kod ara" value={query} onChange={e=>setQuery(e.target.value)}/></div></div>
    <div className="table-scroll" tabIndex={0} role="region" aria-label="Kategori listesi">

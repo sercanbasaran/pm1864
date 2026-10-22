@@ -43,6 +43,7 @@ export async function createApp({env=process.env,database}={}){
    if(assetRoute){const id=assetRoute[1];if(assetRoute[2]&&method==='GET'){requirePermission('catalog.read');return await media.content(id)}if(!assetRoute[2]&&method==='PATCH'){requirePermission('media.write');return json(await media.rename(id,body,user.email))}if(!assetRoute[2]&&method==='DELETE'){requirePermission('media.write');return json(await media.remove(id,body,user.email))}}
    let match;if((match=route.match(/^\/api\/users\/([^/]+)$/))&&method==='PUT'){requirePermission('users.manage');return json({user:await users.save(body,decodeURIComponent(match[1]),user)})}
    if((match=route.match(/^\/api\/users\/([^/]+)\/password$/))&&method==='POST'){requirePermission('users.manage');return json(await users.reset(body,decodeURIComponent(match[1]),user))}
+   if(route==='/api/preferences'&&method==='PATCH')return json({user:await users.preferences(body,user)});
    if(route==='/api/profile'&&method==='PATCH')return json({user:await users.profile(body,user)});
    let catalog;
    if(route==='/api/categories'&&method==='POST'){requirePermission('categories.write');catalog=await service.saveCategory(body,null,user.email)}

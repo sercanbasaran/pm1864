@@ -28,11 +28,12 @@ const Overview=lazy(()=>import('../modules/overview/Overview.jsx'));
 const ActivityLog=lazy(()=>import('../modules/activity/ActivityLog.jsx'));
 const HelpCenter=lazy(()=>import('../modules/help/HelpCenter.jsx'));
 const ProfileForm=lazy(()=>import('../modules/account/ProfileForm.jsx'));
+import ThemePreferences from '../modules/account/ThemePreferences.jsx';
 import PasswordForm from '../modules/account/PasswordForm.jsx';
 import {request} from '../api.js';
 export function App({snapshot,user,onLogout,onUserUpdated}){
  const [toast,setToast]=useState('');useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(''),5000);return()=>clearTimeout(timer)},[toast]);
- return <ShoelaceTheme><CatalogProvider snapshot={snapshot} notify={setToast}><Workspace user={user} onLogout={onLogout} onUserUpdated={onUserUpdated}/><Notification message={toast} onClose={()=>setToast('')}/></CatalogProvider></ShoelaceTheme>;
+ return <ShoelaceTheme theme={user.theme||'light'}><CatalogProvider snapshot={snapshot} notify={setToast}><Workspace user={user} onLogout={onLogout} onUserUpdated={onUserUpdated}/><Notification message={toast} onClose={()=>setToast('')}/></CatalogProvider></ShoelaceTheme>;
 }
 function ProfileSection({focused,children}){const ref=useRef(null);useEffect(()=>{if(!focused)return;const frame=requestAnimationFrame(()=>ref.current?.focus());return()=>cancelAnimationFrame(frame)},[focused]);return <section ref={ref} id="profile-information" tabIndex={-1} aria-label="Profil bilgileri">{children}</section>}
 function Workspace({user,onLogout,onUserUpdated}){
@@ -62,7 +63,7 @@ function Workspace({user,onLogout,onUserUpdated}){
   codes:<CodeManagement user={user}/>,users:<UserManagement route={route} onNavigate={navigate} onClose={closeEditor} user={user} onChanged={async()=>onUserUpdated((await request('/session')).user)}/>,media:<MediaManagement user={user}/>,
   prices:<PriceManagement products={products} categories={categories} canWrite={can(user,'prices.write')} onSave={savePrices} onBulk={onBulk} busy={busy}/>,
   overview:<Overview products={products} categories={categories} logs={logs} onBrowse={browse} onActivity={()=>navigate('settings')} onNewProduct={create} canCreate={can(user,'products.write')}/>,settings:<ActivityLog logs={logs}/>,activity:<ActivityLog logs={logs}/>,help:<HelpCenter user={user} onNavigate={navigate}/>,
-  account:<Card className="panel account-panel"><div className="panel-title"><div><h2>{user.name}</h2><p className="muted">{user.email}</p></div><SlTag>{roleFor(user.role)?.name}</SlTag></div><ProfileSection focused={params.get('section')==='profile'}><ProfileForm user={user} onChanged={onUserUpdated}/></ProfileSection><PasswordForm user={user} onChanged={onUserUpdated}/></Card>
+  account:<Card className="panel account-panel"><div className="panel-title"><div><h2>{user.name}</h2><p className="muted">{user.email}</p></div><SlTag>{roleFor(user.role)?.name}</SlTag></div><ThemePreferences user={user} onChanged={onUserUpdated}/><ProfileSection focused={params.get('section')==='profile'}><ProfileForm user={user} onChanged={onUserUpdated}/></ProfileSection><PasswordForm user={user} onChanged={onUserUpdated}/></Card>
  };
  let pageContent=content[page];
  if(['products','variants'].includes(page)&&record){

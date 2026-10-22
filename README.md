@@ -21,6 +21,12 @@ Yönetici **Kullanıcılar ve yetkiler** ekranından hesap açar; varsayılan ye
 
 Rol değişikliği, pasifleştirme, e-posta değişikliği veya parola sıfırlama kullanıcının açık oturumlarını kapatır. Kişisel parola değişikliği diğer oturumları kapatır ve mevcut tarayıcıya yeni oturum verir. Kendi yönetici rolünü düşürmek / kendi hesabını pasifleştirmek engellenir; son aktif yönetici korunur. Kullanıcı güncellemeleri sürüm kontrolüyle yapılır.
 
+## Görünüm ve yönetim listeleri
+
+Kategori ve ürün yönetimi ortak özet kartları ve varsayılan tablo görünümü kullanır. Ürün özetinde toplam, aktif ve taslak ürün sayıları ile toplam varyant sayısı görünür; arama ve filtreler bu genel sayaçları değiştirmez. Kart görünümü, dışa aktarım ve toplu fiyat güncelleme kullanılabilir.
+
+**Profil menüsü → Hesabım → Görünüm ayarları** bölümünden açık veya koyu tema seçip **Tema tercihini kaydet** butonuna basın. Tercih hesaba kaydedilir ve sonraki oturumlarda / farklı cihazlarda uygulanır. Shoelace açık / koyu renkleri kullanılır; birincil renk `#DA291C`, üst ve yan menü siyahtır. Mevcut kullanıcılar varsayılan açık temayla devam eder. Veritabanı alanı uygulama başlangıcında otomatik eklenir; yeni ortam değişkeni gerekmez.
+
 ## Yerel kurulum
 
 Node.js 24 gereklidir.

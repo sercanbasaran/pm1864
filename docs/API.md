@@ -8,6 +8,7 @@ API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma 
 | POST | `/login` | Açık; `{email,password}` |
 | GET | `/session` | Oturum; `{user}` |
 | POST | `/logout` | Oturum; `{}` |
+| PATCH | `/preferences` | Oturum; `{expectedVersion,theme:"light" veya "dark"}`; yalnızca kendi görünüm tercihi |
 | PATCH | `/profile` | Oturum; `{expectedVersion,name}`; yalnızca kendi profil adı |
 | POST | `/password` | Oturum; `{currentPassword,newPassword}` |
 | GET | `/catalog` | `catalog.read`; `{catalog}` |
@@ -103,3 +104,7 @@ Kart adresi `/p/P000001` biçimindedir ve ürünün kalıcı koduna dayanır. `p
 Açık JSON alanları: `productCode`, `sku`, `name`, kategori yolu `category`, `description`, `customImage`, `nutrition`, `storageConditions`, `allergens`, `longTermStorage`, `variants`. Yalnızca aktif varyantların `sku`, `size`, `weight`, `unit`, `packaging`, `slices`, `price` alanları gösterilir. Katalog revizyonu, işlem geçmişi, kullanıcılar, medya metadata’sı ve satış kanalı ayarları paylaşılmaz. Yüklenen görseller ayrı public ürün endpoint’inden, her istekte yayın durumu kontrol edilerek sunulur; özel medya API’si oturum istemeye devam eder. Yanıtlar önbelleğe alınmaz.
 
 Kart yayından kaldırılıp yeniden yayınlandığında ürün adresi ve QR değişmez. Güncel ürün ve fiyat verileri aynı bağlantıdan alınır. QR kod Shoelace `sl-qr-code` ile tarayıcıda üretilir; PNG dosyasına beyaz güvenli kenar payı eklenir. Dış QR servisine ürün bilgisi gönderilmez. Kartı yayınlama/kapatma işlemi revizyon kontrolüne ve işlem geçmişine tabidir.
+
+## Görünüm tercihi
+
+Kullanıcı yanıtları `theme` alanını içerir. Varsayılan `light`, diğer geçerli değer `dark`tır. `PATCH /preferences` yalnızca oturum sahibini günceller; kullanıcı kimliği veya rol kabul etmez. `expectedVersion` son oturum / profil yanıtından alınır. Başarılı yanıt güncel `{user}` bilgisini döndürür; geçersiz tema 422, eski sürüm 409 döndürür. Tercih `app_users.theme` alanında kalıcıdır. Mevcut hesaplara bu alan veri kaybı olmadan başlangıçta eklenir.
