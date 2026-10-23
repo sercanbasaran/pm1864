@@ -88,7 +88,9 @@ export const Button = forwardRef(function Button(
       {...props}
       {...control}
       type={type}
-      className={[className,iconOnly||circle?"control-icon-only":""].filter(Boolean).join(" ")}
+      className={[className, iconOnly || circle ? "control-icon-only" : ""]
+        .filter(Boolean)
+        .join(" ")}
       variant={
         variant ||
         (className.includes("selected") || className.includes("is-active")

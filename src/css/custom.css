@@ -1,7 +1,7 @@
 /* src/custom.css */
 
 :root {
-  --sidebar-accent: #DA291C;
+  --sidebar-accent: #da291c;
   --sidebar-transition-duration: 400ms;
   --sidebar-transition-easing: ease-in-out;
 }
@@ -34,8 +34,7 @@
 .workspace-module-group::part(base),
 .workspace-module-group::part(header) {
   transition:
-    color var(--sidebar-transition-duration)
-      var(--sidebar-transition-easing),
+    color var(--sidebar-transition-duration) var(--sidebar-transition-easing),
     background-color var(--sidebar-transition-duration)
       var(--sidebar-transition-easing),
     border-color var(--sidebar-transition-duration)
@@ -84,15 +83,14 @@
   font-weight: 600;
 }
 
-.workspace-brand{
+.workspace-brand {
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: var(--sl-panel-background-color);
   padding-block: 16px;
 }
-.workspace-sidebar{
-    background-color: var(--sl-panel-background-color);
+.workspace-sidebar {
+  background-color: #fff;
 }
 
 .sl-toast-stack {
@@ -134,4 +132,26 @@ sl-textarea::part(textarea) {
 .selectable {
   -webkit-user-select: text;
   user-select: text;
+}
+.workspace-topbar {
+  justify-content: flex-end;
+  align-items: center;
+  background-color: #fff;
+
+    margin-bottom: 0;
+}
+
+.workspace-topbar .profile-area > sl-avatar {
+  --size: 40px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
+.workspace-main {
+  padding: 0px;
+  background-color: #f1f1f1;
+}
+.workspace-content {
+  padding: var(--sl-spacing-large);
+  margin-top: 0;
 }

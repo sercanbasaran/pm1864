@@ -598,7 +598,7 @@ th {
   margin: 0;
 }
 .account-panel {
-  max-width: 56rem;
+ /*  max-width: 56rem; */
 }
 .profile-form,
 .password-panel form,

@@ -77,7 +77,7 @@ export default function AppShell({
                 role="group"
                 aria-label={group.label + " alt modülleri"}
               >
-               {/*  <Button
+                {/*  <Button
                   type="button"
                   className={
                     "workspace-nav-item " +
@@ -122,7 +122,7 @@ export default function AppShell({
             <Menu size={24} />
           </Button>
           {/* <strong>{current?.label}</strong> */}
-           {/*  <nav className="workspace-breadcrumb" aria-label="Modül yolu">
+          {/*  <nav className="workspace-breadcrumb" aria-label="Modül yolu">
               {parent ? (
   <nav className="workspace-breadcrumb" aria-label="Modül yolu">
     <Button
@@ -178,12 +178,12 @@ export default function AppShell({
               <Bell size={21} />
             </Button>
           </SlTooltip>
-           <ProfileMenu
-        user={user}
-        onNavigate={navigate}
-        onLogout={onLogout}
-        onError={notify}
-      />
+          <ProfileMenu
+            user={user}
+            onNavigate={navigate}
+            onLogout={onLogout}
+            onError={notify}
+          />
         </header>
         {busy && (
           <SlProgressBar indeterminate aria-label="Sunucuya kaydediliyor" />
@@ -207,13 +207,13 @@ export default function AppShell({
               <span aria-current="page">{current?.label}</span>
             </nav>
             
-          )} */}
+          )} 
           <div className="workspace-page-heading">
             <h1>{current?.label}</h1>
             {current?.description && <p>{current.description}</p>}
-          </div>
+          </div>*/}
           {children}
-          <footer>HAFIZ MUSTAFA 1864 · YÖNETİM MERKEZİ</footer>
+          <footer><small style={{fontSize:"10px"}}><strong>powered by</strong> HM 1864 Digital</small></footer>
         </main>
       </div>
     </div>

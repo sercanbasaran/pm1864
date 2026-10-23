@@ -1,4 +1,4 @@
-import BrandLogo from '../components/ui/BrandLogo.jsx';
+import BrandLogo from "../components/ui/BrandLogo.jsx";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import { Button, Input } from "../components/ui/Controls.jsx";
 import Card from "../components/ui/Card.jsx";
@@ -90,7 +90,7 @@ export default function BackendGate({ children }) {
   return (
     <div className="login-page">
       <div className="login-brand">
-      {/*   <strong>1864 USTA</strong>
+        {/*   <strong>1864 USTA</strong>
         <small>Hafız Mustafa 1864 Usta Projesi - Beta</small> */}
       </div>
       {user?.mustChangePassword ? (
@@ -107,18 +107,14 @@ export default function BackendGate({ children }) {
       ) : (
         <main>
           <Card className="login-card">
-              <BrandLogo className="login-logo"/>
-           {/*  <span className="login-lock">
+            <BrandLogo className="login-logo" />
+            {/*  <span className="login-lock">
               <LockKey size={25} />
             </span>
             <div className="eyebrow">YETKİLİ ERİŞİM</div> */}
-              <h4 style={{ textAlign: 'center' }}>Hafız Mustafa 1864 - USTA</h4>
+            <h4 style={{ textAlign: "center" }}>Hafız Mustafa 1864 - USTA</h4>
             <p>
-              {loading
-                ? "Yükleniyor…"
-                : setup
-                  ? "Sunucu kurulumu gerekli"
-                  : ""}
+              {loading ? "Yükleniyor…" : setup ? "Sunucu kurulumu gerekli" : ""}
             </p>
             {error && (
               <SlAlert open variant="danger" className="form-error">

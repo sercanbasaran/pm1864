@@ -53,9 +53,7 @@ export default function Overview({
             Ürünleri git
             <ArrowRight size={16} />
           </Button>
-          {canCreate && <ActionBar position="middle">
-            {addAction}</ActionBar>
-          }
+          {canCreate && <ActionBar position="middle">{addAction}</ActionBar>}
         </div>
       </Card>
       <Card className="panel">
