@@ -135,3 +135,59 @@ sl-textarea::part(textarea) {
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* Topbar: right-aligned controls with matching avatar/button dimensions. */
+.workspace-topbar {
+  --topbar-control-size: 40px;
+  --topbar-icon-size: 21px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.workspace-topbar > nav {
+  flex: 0 1 auto;
+  margin-block: 0;
+}
+
+.workspace-topbar .icon-btn {
+  flex: 0 0 var(--topbar-control-size);
+  width: var(--topbar-control-size);
+  height: var(--topbar-control-size);
+}
+
+.workspace-topbar .icon-btn::part(base) {
+  box-sizing: border-box;
+  width: var(--topbar-control-size);
+  height: var(--topbar-control-size);
+  min-height: var(--topbar-control-size);
+  padding: 0;
+}
+
+.workspace-topbar .icon-btn svg {
+  width: var(--topbar-icon-size);
+  height: var(--topbar-icon-size);
+  flex-shrink: 0;
+}
+
+.workspace-topbar .profile-area {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(100%, 22rem);
+  align-items: center;
+}
+
+.workspace-topbar .profile-area > sl-avatar {
+  --size: var(--topbar-control-size);
+  flex: 0 0 var(--topbar-control-size);
+}
+
+.workspace-topbar .profile-menu-trigger::part(base) {
+  height: var(--topbar-control-size);
+  min-height: var(--topbar-control-size);
+}
+
+.workspace-topbar .profile-menu-trigger::part(label) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
