@@ -1,5 +1,18 @@
+import { validateNutrition } from "./nutrition.js";
 // Shared product-level editorial fields, used by the form and API validation.
 export const productInformationFields = [
+  {
+    key: "ingredients",
+    label: "İçindekiler",
+    maxLength: 4000,
+    placeholder: "Ürünün içindekiler listesini girin.",
+  },
+  {
+    key: "servingSuggestion",
+    label: "Servis Önerisi",
+    maxLength: 4000,
+    placeholder: "Servis sıcaklığı, sunum ve eşlikçi önerilerini girin.",
+  },
   {
     key: "nutrition",
     label: "Besin değerleri (100 g için)",
@@ -38,5 +51,26 @@ export function validateProductInformation(product) {
     )
       return `${field.label}: en fazla ${field.maxLength} karakter metin girin.`;
   }
-  return "";
+  return validateNutrition(product.nutrition || "");
+}
+
+export const productDetailSteps = [
+  { label: "Genel bilgiler", key: null },
+  { label: "İçindekiler", key: "ingredients" },
+  { label: "Alerjen uyarısı", key: "allergens" },
+  { label: "Besin Değerleri", key: "nutrition" },
+  { label: "Servis Önerisi", key: "servingSuggestion" },
+  { label: "Saklama Koşulları", key: "storageConditions" },
+  { label: "Uzun Süreli Muhafaza", key: "longTermStorage" },
+];
+export function stepForProductError(invalid) {
+  if (invalid.tab === "Varyant & fiyat") return "Genel bilgiler";
+  if (invalid.tab !== "Besin ve saklama") return invalid.tab;
+  const field = productInformationFields.find((info) =>
+    invalid.message.startsWith(info.label),
+  );
+  return (
+    productDetailSteps.find((step) => step.key === field?.key)?.label ||
+    "Besin Değerleri"
+  );
 }

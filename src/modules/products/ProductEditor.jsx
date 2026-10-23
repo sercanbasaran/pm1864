@@ -18,7 +18,12 @@ import { validateProduct } from "../../catalog.js";
 import { money } from "../../catalog-tools.js";
 import { effectiveSales, salesChannels } from "../../sales-availability.js";
 import { productCardPath } from "../../product-card.js";
-import { productInformationFields } from "../../product-information.js";
+import NutritionTable from "./NutritionTable.jsx";
+import {
+  productInformationFields,
+  productDetailSteps,
+  stepForProductError,
+} from "../../product-information.js";
 import { categoryOf, rootOf } from "../../hierarchy.js";
 import CategoryFields from "../categories/CategoryFields.jsx";
 import VariantFields from "../variants/VariantFields.jsx";
@@ -51,7 +56,11 @@ export default function ProductEditor({
   } = catalog;
   const current = products.find((p) => p.id === product.id) || product;
   const [draft, setDraft] = useState(() => normalize(product));
-  const [active, setActive] = useState(tab),
+  const [active, setActive] = useState(
+      productDetailSteps.some((step) => step.label === tab)
+        ? tab
+        : "Genel bilgiler",
+    ),
     [error, setError] = useState("");
   const [editingField, setEditingField] = useState(
     !product.isNew &&
@@ -140,7 +149,7 @@ export default function ProductEditor({
     if (busy || readOnly) return;
     const invalid = validateProduct(draft, categories, variantTypes);
     if (invalid) {
-      setActive(invalid.tab);
+      setActive(stepForProductError(invalid));
       setError(invalid.message);
       return;
     }
@@ -195,24 +204,22 @@ export default function ProductEditor({
       busy={busy}
       onClose={onClose}
     >
-      <div className="editor-tabs" role="group" aria-label="Ürün bölümleri">
-        {["Genel bilgiler", "Besin ve saklama", "Varyant & fiyat"].map(
-          (label) => (
-            <Button
-              type="button"
-              key={label}
-              className={active === label ? "selected" : ""}
-              aria-pressed={active === label}
-              disabled={busy}
-              onClick={() => {
-                if (!draft.isNew) cancel();
-                setActive(label);
-              }}
-            >
-              {label}
-            </Button>
-          ),
-        )}
+      <div className="editor-tabs product-detail-steps" role="group" aria-label="Ürün bölümleri">
+        {productDetailSteps.map(({ label }) => (
+          <Button
+            type="button"
+            key={label}
+            className={active === label ? "selected" : ""}
+            aria-pressed={active === label}
+            disabled={busy}
+            onClick={() => {
+              if (!draft.isNew) cancel();
+              setActive(label);
+            }}
+          >
+            {label}
+          </Button>
+        ))}
       </div>
       <form onSubmit={save} noValidate>
         {saveAction && <ActionBar>{saveAction}</ActionBar>}
@@ -411,63 +418,83 @@ export default function ProductEditor({
                     }
                   />
                 </section>
-              </>
-            ) : active === "Besin ve saklama" ? (
-              <>
-                {productInformationFields.map((info) =>
-                  field(
-                    info.key,
-                    info.label,
-                    draft[info.key],
-                    <Textarea
-                      label={info.label + " düzenleyin"}
-                      aria-label={info.label}
-                      rows={info.key === "nutrition" ? 4 : 3}
-                      maxLength={info.maxLength}
-                      placeholder={info.placeholder}
-                      value={draft[info.key] || ""}
-                      onChange={(e) =>
-                        setDraft({ ...draft, [info.key]: e.target.value })
-                      }
-                    />,
-                  ),
+                {field(
+                  "variants",
+                  "Varyantlar ve fiyatlar",
+                  <div className="product-variant-summary">
+                    {draft.variants.map((variant, i) => (
+                      <div key={variant.id || i}>
+                        <strong>{variant.size || "Yeni varyant"}</strong>{" "}
+                        <SlBadge
+                          variant={
+                            variant.active !== false ? "success" : "neutral"
+                          }
+                        >
+                          {variant.active !== false ? "Aktif" : "Pasif"}
+                        </SlBadge>
+                        <p>
+                          {money(variant.price)} · {variant.weight} g ·{" "}
+                          {variant.unit || "Adet"}
+                        </p>
+                        {variant.packaging && <p>{variant.packaging}</p>}
+                        {variant.sku && (
+                          <SlBadge variant="neutral">{variant.sku}</SlBadge>
+                        )}
+                      </div>
+                    ))}
+                  </div>,
+                  <VariantFields
+                    categories={categories}
+                    disabled={busy || readOnly}
+                    product={draft}
+                    variantTypes={variantTypes}
+                    onChange={setDraft}
+                  />,
+                  !draft.variants.length,
                 )}
               </>
             ) : (
-              field(
-                "variants",
-                "Varyantlar ve fiyatlar",
-                <div className="product-variant-summary">
-                  {draft.variants.map((variant, i) => (
-                    <div key={variant.id || i}>
-                      <strong>{variant.size || "Yeni varyant"}</strong>{" "}
-                      <SlBadge
-                        variant={
-                          variant.active !== false ? "success" : "neutral"
+              productInformationFields
+                .filter(
+                  (info) =>
+                    info.key ===
+                    productDetailSteps.find((step) => step.label === active)
+                      ?.key,
+                )
+                .map((info) =>
+                  field(
+                    info.key,
+                    productDetailSteps.find((step) => step.label === active)
+                      .label,
+                    info.key === "nutrition" ? (
+                      <NutritionTable value={draft.nutrition || ""} />
+                    ) : (
+                      draft[info.key]
+                    ),
+                    info.key === "nutrition" ? (
+                      <NutritionTable
+                        key={editingField || "nutrition-view"}
+                        value={draft.nutrition || ""}
+                        editing
+                        onChange={(value) =>
+                          setDraft({ ...draft, nutrition: value })
                         }
-                      >
-                        {variant.active !== false ? "Aktif" : "Pasif"}
-                      </SlBadge>
-                      <p>
-                        {money(variant.price)} · {variant.weight} g ·{" "}
-                        {variant.unit || "Adet"}
-                      </p>
-                      {variant.packaging && <p>{variant.packaging}</p>}
-                      {variant.sku && (
-                        <SlBadge variant="neutral">{variant.sku}</SlBadge>
-                      )}
-                    </div>
-                  ))}
-                </div>,
-                <VariantFields
-                  categories={categories}
-                  disabled={busy || readOnly}
-                  product={draft}
-                  variantTypes={variantTypes}
-                  onChange={setDraft}
-                />,
-                !draft.variants.length,
-              )
+                      />
+                    ) : (
+                      <Textarea
+                        label={info.label + " düzenleyin"}
+                        aria-label={info.label}
+                        rows={4}
+                        maxLength={info.maxLength}
+                        placeholder={info.placeholder}
+                        value={draft[info.key] || ""}
+                        onChange={(e) =>
+                          setDraft({ ...draft, [info.key]: e.target.value })
+                        }
+                      />
+                    ),
+                  ),
+                )
             )}
           </div>
         </fieldset>

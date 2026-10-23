@@ -59,6 +59,8 @@ test("product gallery persists, maintains its cover, protects media and gates pa
       expectedRevision: catalog.revision,
       product: {
         name: "Galeri ürünü",
+        ingredients: "Un, fıstık, tereyağı",
+        servingSuggestion: "Oda sıcaklığında servis edin.",
         category: "Baklavalar",
         status: "Aktif",
         images: [a, b],
@@ -94,6 +96,8 @@ test("product gallery persists, maintains its cover, protects media and gates pa
     ).catalog;
     const published = await call(path, "GET", undefined, true);
     assert.equal(published.status, 200);
+    assert.equal(published.product.ingredients, "Un, fıstık, tereyağı");
+    assert.equal(published.product.servingSuggestion, "Oda sıcaklığında servis edin.");
     assert.equal(published.product.images.length, 2);
     assert.equal("logs" in published.product, false);
     assert.equal("channels" in published.product, false);

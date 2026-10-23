@@ -156,7 +156,6 @@ test("private/public control uses the publication API and read-only product scre
 });
 test("variant editing starts in a summary card and preserves IDs and other product fields", async () => {
   const { fetch } = await show();
-  await action("Varyant & fiyat");
   expect(document.querySelectorAll("sl-input")).toHaveLength(0);
   await clickLabel("Varyantlar ve fiyatlar düzenle");
   const price = [...document.querySelectorAll("sl-input")].find(
@@ -202,4 +201,52 @@ test("new products retain the complete creation form with required fields and pr
       (c) => c.textContent === "Ürünü oluştur",
     ),
   ).toBe(true);
+});
+test("seven detail steps isolate ingredients and edit nutrition in a table", async () => {
+  const { fetch } = await show();
+  expect(
+    [
+      ...document
+        .querySelector('[aria-label="Ürün bölümleri"]')
+        .querySelectorAll("sl-button"),
+    ].map((n) => n.textContent),
+  ).toEqual([
+    "Genel bilgiler",
+    "İçindekiler",
+    "Alerjen uyarısı",
+    "Besin Değerleri",
+    "Servis Önerisi",
+    "Saklama Koşulları",
+    "Uzun Süreli Muhafaza",
+  ]);
+  await action("İçindekiler");
+  await clickLabel("İçindekiler ekle");
+  const ingredients = document.querySelector("sl-textarea");
+  ingredients.value = "Un, fıstık, tereyağı";
+  fireEvent(ingredients, new CustomEvent("sl-input", { bubbles: true }));
+  await settle();
+  await action("Kaydet");
+  const ingredientsCall = fetch.mock.calls.find(
+    ([url]) => url === "/api/products/1",
+  );
+  expect(JSON.parse(ingredientsCall[1].body).product.ingredients).toBe(
+    "Un, fıstık, tereyağı",
+  );
+  await action("Besin Değerleri");
+  expect(document.querySelector("table")).not.toBeNull();
+  expect(document.querySelectorAll("sl-input")).toHaveLength(0);
+  await clickLabel("Besin Değerleri ekle");
+  const energy = [...document.querySelectorAll("sl-input")].find(
+    (c) => c.getAttribute("aria-label") === "Enerji (kcal)",
+  );
+  energy.value = "297.5";
+  fireEvent(energy, new CustomEvent("sl-input", { bubbles: true }));
+  await settle();
+  await action("Kaydet");
+  const saved = fetch.mock.calls
+    .filter(([url]) => url === "/api/products/1")
+    .at(-1);
+  expect(JSON.parse(saved[1].body).product.nutrition).toBe(
+    "100 g için: Enerji 297,5 kcal.",
+  );
 });

@@ -5,7 +5,8 @@ import Card from "../../components/ui/Card.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
 import { money } from "../../catalog-tools.js";
-import { productInformationFields } from "../../product-information.js";
+import NutritionTable from "./NutritionTable.jsx";
+import { productDetailSteps } from "../../product-information.js";
 
 export default function ProductDetails({ product }) {
   return (
@@ -84,10 +85,10 @@ export default function ProductDetails({ product }) {
           <p className="muted">Görüntülenecek aktif varyant bulunmuyor.</p>
         )}
       </Card>
-      {productInformationFields.some((field) => product[field.key]) && (
+      {productDetailSteps.some((field) => product[field.key]) && (
         <Card className="product-detail-card product-detail-information">
           <h3>Ürün bilgileri</h3>
-          {productInformationFields
+          {productDetailSteps
             .filter((field) => product[field.key])
             .map((field) => (
               <SlDetails
@@ -95,7 +96,11 @@ export default function ProductDetails({ product }) {
                 summary={field.label}
                 open={field.key === "allergens"}
               >
-                <p>{product[field.key]}</p>
+                {field.key === "nutrition" ? (
+                  <NutritionTable value={product.nutrition} />
+                ) : (
+                  <p>{product[field.key]}</p>
+                )}
               </SlDetails>
             ))}
         </Card>

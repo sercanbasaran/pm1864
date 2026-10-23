@@ -312,3 +312,10 @@ sl-textarea::part(textarea) {
 .product-variant-summary { display: grid; gap: 12px; }
 .product-variant-summary > div { padding: 12px; border: 1px solid var(--sl-color-neutral-200); border-radius: 8px; min-width: 0; }
 .product-variant-summary p { margin: 8px 0; }
+
+.product-detail-steps { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-block: 4px; margin: 0 0 20px; }
+.product-detail-steps > sl-button { flex: 0 0 auto; }
+.nutrition-table { min-width: 0; }
+.nutrition-table table { width: 100%; }
+.nutrition-table td sl-input { min-width: 100px; max-width: 180px; }
+.nutrition-table > sl-textarea { margin-top: 12px; }
