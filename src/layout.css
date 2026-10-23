@@ -1294,3 +1294,56 @@ sl-button > svg[slot="suffix"] {
 .variant-type-manager table {
   min-width: 30rem;
 }
+
+/* Module hierarchy: Shoelace owns appearance; these rules only arrange content. */
+.workspace-module-group {
+  min-width: 0;
+}
+.workspace-module-group::part(content) {
+  padding: 0 var(--sl-spacing-small) var(--sl-spacing-small);
+}
+.workspace-group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-spacing-small);
+  min-width: 0;
+}
+.workspace-group-title svg {
+  flex: none;
+}
+.workspace-submodules {
+  display: grid;
+  gap: var(--sl-spacing-x-small);
+  min-width: 0;
+}
+.workspace-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-spacing-small);
+  flex-wrap: wrap;
+  margin-bottom: var(--sl-spacing-medium);
+}
+.module-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--sl-spacing-large);
+  min-width: 0;
+}
+.module-home-card::part(body) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sl-spacing-medium);
+  height: 100%;
+  box-sizing: border-box;
+}
+.module-home-card::part(base) {
+  height: 100%;
+}
+.module-home-card h2,
+.module-home-card p {
+  margin: 0;
+}
+.module-home-card sl-button {
+  margin-top: auto;
+}

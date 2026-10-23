@@ -7,7 +7,7 @@ import { Button } from "../components/ui/Controls.jsx";
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Info, X } from "@phosphor-icons/react";
 import { CatalogProvider, useCatalog } from "./CatalogContext.jsx";
-import { modules, legacyPages } from "./modules.js";
+import { moduleGroups, modules, legacyPages } from "./modules.js";
 import { can, roleFor } from "../permissions.js";
 import { selectable } from "../hierarchy.js";
 import { newVariant } from "../modules/variants/VariantFields.jsx";
@@ -15,6 +15,8 @@ import AppShell from "../components/layout/AppShell.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import ModuleBoundary from "../components/ui/ModuleBoundary.jsx";
 import ProductEditor from "../modules/products/ProductEditor.jsx";
+import ModuleHome from "../modules/workspace/ModuleHome.jsx";
+import PlannedModule from "../modules/workspace/PlannedModule.jsx";
 import BulkPriceDialog from "../modules/pricing/BulkPriceDialog.jsx";
 const CategoryManagement = lazy(
   () => import("../modules/categories/CategoryManagement.jsx"),
@@ -304,7 +306,15 @@ function Workspace({ user, onLogout, onUserUpdated }) {
       </Card>
     ),
   };
-  let pageContent = content[page];
+  const group = moduleGroups.find((module) => module.id === page);
+  const currentModule = modules.find((module) => module.id === page);
+  let pageContent = group ? (
+    <ModuleHome group={group} user={user} onNavigate={navigate} />
+  ) : currentModule?.status === "planned" ? (
+    <PlannedModule module={currentModule} onNavigate={navigate} />
+  ) : (
+    content[page]
+  );
   if (["products", "variants"].includes(page) && record) {
     const missing = (
       <EditorPage title="Kayıt bulunamadı" onClose={closeEditor}>

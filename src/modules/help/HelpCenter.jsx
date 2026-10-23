@@ -8,6 +8,12 @@ export default function HelpCenter({ user, onNavigate }) {
   const [query, setQuery] = useState("");
   const entries = [
     [
+      "Ana modüller ve alt modüller",
+      "Ürün yönetimi ana modülü",
+      "catalog.read",
+      "Ürün yönetimi altında kategori, ürün, varyant ve kod/SKU; Satış yönetimi altında fiyat, satış grupları ve menü; Kanal yönetimi altında mağazalar, dijital mağazalar ve yemek sipariş platformları bulunur. Menüde ana modül başlığına tıklayarak alt modülleri açın. Modüle genel bakış sayfasından alt modüllere geçebilirsiniz. Hazırlık aşamasında yazan alanlarda kayıt işlemleri henüz devrede değildir.",
+    ],
+    [
       "Kategori oluşturma",
       "Kategori yönetimi",
       "categories.write",

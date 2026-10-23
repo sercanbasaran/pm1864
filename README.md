@@ -160,3 +160,18 @@ Arayüz testleri Shadow DOM sorguları ve gerçek API kullanır. Vitest, @lit/re
 
 Ürün güncellemeleri aynı QR bağlantısına yansır. Anahtarı kapatmak public kartı ve bağlı görselini erişime kapatır. Taslak ürünler, pasif kategoriler ve aktif varyantı olmayan ürünler gösterilmez. Public sayfa kullanıcı/işlem geçmişi gibi yönetim verilerini paylaşmaz. Netlify’da `/p/*` yönlendirmesi tanımlıdır; ek ortam değişkeni veya manuel SQL kurulumu gerekmez. Bağlantının çalışması için güncel frontend ve API birlikte deploy edilmelidir.
 
+
+
+## Ana modül ve alt modül mimarisi
+
+Navigasyon tanımları `src/app/modules.js` içindedir. `moduleGroups` ana modülleri ve alt modül kimliklerini, `modules` ise yetki ve yönlendirme kayıtlarını tutar. Ekran ve düzenleme bağlantılarının mevcut kimlikleri korunmuştur (`#products`, `#products/:id/edit`, `#categories`, `#variants`, `#prices`). Ana modül sayfaları `#product-management`, `#sales-management`, `#channel-management` adreslerindedir.
+
+| Ana modül | Alt modüller |
+| --- | --- |
+| Ürün yönetimi | Kategori yönetimi, Ürün yönetimi, Varyant yönetimi, Ürün kodu ve SKU yönetimi |
+| Satış yönetimi | Fiyat yönetimi, Satış grupları, Menü |
+| Kanal yönetimi | Mağazalar, Dijital mağazalar, Yemek sipariş platformları |
+
+Genel bakış en üstte; kullanıcı ve medya ortak çalışma alanındadır. Profil, yardım, ayarlar ve işlem geçmişi profil menüsünde kalır. Masaüstü ve mobil menüler aynı kayıtları ve izin denetimini kullanır. Aktif ekranın ana modülü otomatik açılır; modül yolu ana modüle dönüş sağlar.
+
+Kategori, ürün, varyant, kod/SKU ve fiyat ekranları mevcut API'leri kullanır. Satış grupları, menü ve kanal alt modülleri bu aşamada yalnızca mimari sayfalardır; arayüzde “Hazırlık aşamasında” olarak belirtilir. Bu alanlara ait kalıcı veri modeli, kayıt işlemleri veya platform bağlantısı henüz eklenmemiştir. Sahte kayıt veya otomatik platform yayını yapılmaz. Yeni işlev eklerken ekranın yanı sıra sunucu yetkisi ve kalıcı veri modeli de uygulanmalıdır.

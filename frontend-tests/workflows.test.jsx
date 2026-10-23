@@ -22,7 +22,7 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{cleanup();vi.unstubAllGlobals();await api.close()});
 async function show(){const {catalog}=await(await fetch('/api/catalog')).json();function Harness(){const [current,setCurrent]=useState(user),[snapshot,setSnapshot]=useState(catalog);async function update(next){setSnapshot((await(await fetch('/api/catalog')).json()).catalog);setCurrent(next)}return <App user={current} snapshot={snapshot} onLogout={vi.fn()} onUserUpdated={update}/>};render(<Harness/>);await screen.findByRole('heading',{name:'Genel bakış',level:1});await screen.findByRole('heading',{name:'Kataloğunuzu tamamlayın.'});await settle()}
-async function navigate(name){const labels={'Kategoriler':'Kategori yönetimi','Ürün kataloğu':'Ürün yönetimi','Kullanıcılar ve yetkiler':'Kullanıcı yönetimi','İşlem geçmişi':'Ayarlar'};name=labels[name]||name;if(['Hesabım','Yardım merkezi','Ayarlar'].includes(name)){await click.click(screen.getByRole('button',{name:'Profil menüsünü aç'}));await click.click(screen.getByRole('menuitem',{name,exact:true}))}else await click.click(within(screen.getByRole('navigation',{name:'Yönetim modülleri'})).getByText(name,{exact:true}));await screen.findByRole('heading',{name,level:1});await waitFor(()=>expect(screen.queryByText('Bölüm yükleniyor…')).toBeNull());await settle()}
+async function navigate(name){const labels={'Kategoriler':'Kategori yönetimi','Ürün kataloğu':'Ürün yönetimi','Kullanıcılar ve yetkiler':'Kullanıcı yönetimi','İşlem geçmişi':'Ayarlar'};name=labels[name]||name;if(['Hesabım','Yardım merkezi','Ayarlar'].includes(name)){await click.click(screen.getByRole('button',{name:'Profil menüsünü aç'}));await click.click(screen.getByRole('menuitem',{name,exact:true}))}else {const nav=screen.getByRole('navigation',{name:'Yönetim modülleri'});const groups={'Kategori yönetimi':'Ürün yönetimi','Ürün yönetimi':'Ürün yönetimi','Varyant yönetimi':'Ürün yönetimi','Ürün kodu ve SKU yönetimi':'Ürün yönetimi','Fiyat yönetimi':'Satış yönetimi'};if(groups[name]){const details=[...document.querySelectorAll('sl-details.workspace-module-group')].find(node=>node.querySelector('[slot=summary]')?.textContent===groups[name]);if(!details.open){await click.click(details.querySelector('[slot=summary]'));await settle()}}await click.click(within(groups[name]?screen.getByRole('group',{name:groups[name]+' alt modülleri'}):nav).getByRole('button',{name,exact:true}));}await screen.findByRole('heading',{name,level:1});await waitFor(()=>expect(screen.queryByText('Bölüm yükleniyor…')).toBeNull());await settle()}
 test('overview and notifications navigate to real filtered catalog, search shortcut and product details work',async()=>{
  await show();expect(screen.getByText('1 ürün, 2 varyant ve 5 aktif ana kategori. Bu panel kayıtlı verilerinizle güncellenir.')).toBeTruthy();
  await click.click(screen.getByRole('button',{name:/Görseli olmayan ürünler/}));expect(decodeURIComponent((await screen.findByRole('combobox',{name:'İçerik eksikliği'})).getRootNode().host.value)).toBe('image');expect(screen.getByRole('button',{name:/Kontrol Baklava.*HM-/})).toBeTruthy();
@@ -73,7 +73,7 @@ test('repeated variant duplication generates distinct names and new persisted id
  await click.click(within(dialog).getAllByRole('button',{name:'Değişiklikleri kaydet'}).at(-1));await waitFor(()=>expect(openEditor()).toBeNull());const {catalog}=await(await fetch('/api/catalog')).json();const variants=catalog.products[0].variants;expect(new Set(variants.map(v=>v.id)).size).toBe(4);expect(new Set(variants.map(v=>v.sku)).size).toBe(4);
 });
 test('primary modules follow requested order and media uploads can be renamed and linked to products',async()=>{
- await show();const buttons=within(screen.getByRole('navigation',{name:'Yönetim modülleri'})).getAllByRole('button');expect(buttons.slice(0,7).map(b=>b.getRootNode().host?.textContent||b.textContent)).toEqual(['Genel bakış','Kategori yönetimi','Ürün yönetimi','Varyant yönetimi','Ürün kodu ve SKU yönetimi','Kullanıcı yönetimi','Medya']);
+ await show();expect([...document.querySelectorAll('.workspace-group-title')].map(node=>node.textContent)).toEqual(['Ürün yönetimi','Satış yönetimi','Kanal yönetimi']);
  await navigate('Medya');const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6B9sAAAAASUVORK5CYII=';const file=new File([Uint8Array.from(Buffer.from(image,'base64'))],'catalog.png',{type:'image/png'});await click.upload(await screen.findByLabelText('Medya dosyası'),file);await screen.findByText('catalog.png');let assets=(await(await fetch('/api/media')).json()).assets;expect(assets).toHaveLength(1);
  await click.click(screen.getByRole('button',{name:'catalog.png adını düzenle'}));let dialog=screen.getByRole('dialog',{name:'Medya adını düzenle'});const field=within(dialog).getByLabelText('Dosya adı');await click.clear(field);await click.type(field,'Baklava ürün.png');await click.click(within(dialog).getAllByRole('button',{name:'Kaydet'}).at(-1));await waitFor(()=>expect(openEditor()).toBeNull());await screen.findByText('Baklava ürün.png');
  await navigate('Ürün yönetimi');await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));dialog=screen.getByRole('region',{name:'Ürün düzenle'});await click.selectOptions(within(dialog).getByLabelText('Ürün medya görseli'),assets[0].id);await click.click(within(dialog).getAllByRole('button',{name:'Değişiklikleri kaydet'}).at(-1));await waitFor(()=>expect(openEditor()).toBeNull());let catalog=(await(await fetch('/api/catalog')).json()).catalog;expect(catalog.products[0].mediaId).toBe(assets[0].id);expect(catalog.products[0].customImage).toBe(assets[0].url);
@@ -164,3 +164,26 @@ test('variant types can be added and removed; new product enforces type and slic
  await click.selectOptions(within(editor).getByLabelText('Varyant tipi'),'type-slice');const count=within(editor).getByLabelText('Dilim adedi');expect(count.min).toBe('1');await click.clear(within(editor).getByLabelText('Fiyat (₺)'));await click.type(within(editor).getByLabelText('Fiyat (₺)'),'250');await click.click(within(editor).getAllByRole('button',{name:'Ürünü oluştur'}).at(-1));expect(await within(editor).findByText('Dilim tipi için 1–100.000 arasında tam sayı dilim adedi girin.')).toBeTruthy();await click.clear(count);await click.type(count,'12');await click.click(within(editor).getAllByRole('button',{name:'Ürünü oluştur'}).at(-1));await waitFor(()=>expect(openEditor()).toBeNull());
  const catalog=(await(await fetch('/api/catalog')).json()).catalog;const product=catalog.products.find(p=>p.name==='Dilim tipi test');expect(product.variants[0].typeId).toBe('type-slice');expect(product.variants[0].slices).toBe(12);await navigate('Varyant yönetimi');expect(screen.getByRole('button',{name:'Dilim varyant tipini kaldır'}).disabled).toBe(true);await click.selectOptions(screen.getByRole('combobox',{name:'Varyant tipi filtresi'}),'type-slice');expect(screen.getByText('Dilim tipi test',{exact:true})).toBeTruthy();expect(screen.queryByText('Kontrol Baklava',{exact:true})).toBeNull();
 });
+
+ test('module hierarchy opens overview, planned pages and preserves legacy product routes',async()=>{
+ await show();
+ const groups=[...document.querySelectorAll('sl-details.workspace-module-group')];
+ await click.click(groups[1].querySelector('[slot=summary]'));
+ const sales=await screen.findByRole('group',{name:'Satış yönetimi alt modülleri'});
+ await click.click(within(sales).getByRole('button',{name:'Modüle genel bakış'}));
+ await screen.findByRole('heading',{name:'Satış yönetimi',level:1});
+ expect(screen.getAllByText('Hazırlık aşamasında')).toHaveLength(2);
+ await click.click(screen.getByRole('button',{name:'Menü alt modülünü aç'}));
+ await screen.findByRole('heading',{name:'Menü',level:1});
+ expect(screen.getByText(/kayıt oluşturma ve düzenleme işlemleri henüz devrede değil/)).toBeTruthy();
+ expect(window.location.hash).toBe('#menus');
+ const channel=[...document.querySelectorAll('sl-details.workspace-module-group')][2];
+ await click.click(channel.querySelector('[slot=summary]'));
+ const channelGroup=await screen.findByRole('group',{name:'Kanal yönetimi alt modülleri'});
+ await click.click(within(channelGroup).getByRole('button',{name:'Dijital mağazalar',exact:true}));
+ await screen.findByRole('heading',{name:'Dijital mağazalar',level:1});
+ expect(screen.getByRole('navigation',{name:'Modül yolu'})).toBeTruthy();
+ window.history.pushState(null,'','#products/1/edit?tab=variants');window.dispatchEvent(new Event('hashchange'));await settle();
+ expect(await screen.findByRole('region',{name:'Ürün düzenle'})).toBeTruthy();
+ expect(document.querySelector('sl-details.workspace-module-group').open).toBe(true);
+ });

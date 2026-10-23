@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
 import SlDrawer from "@shoelace-style/shoelace/dist/react/drawer/index.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import SlProgressBar from "@shoelace-style/shoelace/dist/react/progress-bar/index.js";
@@ -11,7 +12,9 @@ import BrandLogo from "../ui/BrandLogo.jsx";
 import ProfileMenu from "./ProfileMenu.jsx";
 import {
   primaryModules,
-  secondaryModules,
+  sharedModules,
+  parentFor,
+  visibleChildren,
   modules,
 } from "../../app/modules.js";
 import { can } from "../../permissions.js";
@@ -26,7 +29,8 @@ export default function AppShell({
 }) {
   const [mobile, setMobile] = useState(false),
     { busy, refreshing, connectionError, refresh, notify } = useCatalog(),
-    current = modules.find((m) => m.id === page);
+    current = modules.find((m) => m.id === page),
+    parent = parentFor(page);
   function navigate(id) {
     onNavigate(id);
     setMobile(false);
@@ -49,7 +53,7 @@ export default function AppShell({
   const sidebar = (
     <div className="workspace-sidebar-content">
       <div className="workspace-brand">
-        <BrandLogo className="workspace-logo"/>
+        <BrandLogo className="workspace-logo" />
         <small>USTA · Ürün yönetimi</small>
       </div>
       <ProfileMenu
@@ -61,21 +65,50 @@ export default function AppShell({
       <SlDivider />
       <nav aria-label="Yönetim modülleri">
         <p>Yönetim modülleri</p>
-        {links(primaryModules)}
+        {links(primaryModules.filter((module) => !module.children))}
+        {primaryModules
+          .filter((module) => module.children && can(user, module.permission))
+          .map((group) => (
+            <SlDetails
+              key={
+                group.id +
+                (parent?.id === group.id || page === group.id ? "-active" : "")
+              }
+              open={parent?.id === group.id || page === group.id}
+              className="workspace-module-group"
+            >
+              <span slot="summary" className="workspace-group-title">
+                <group.icon size={21} />
+                <span>{group.label}</span>
+              </span>
+              <div
+                className="workspace-submodules"
+                role="group"
+                aria-label={group.label + " alt modülleri"}
+              >
+                <Button
+                  type="button"
+                  className={
+                    "workspace-nav-item " +
+                    (page === group.id ? "is-active" : "")
+                  }
+                  aria-current={page === group.id ? "page" : undefined}
+                  onClick={() => navigate(group.id)}
+                >
+                  Modüle genel bakış
+                </Button>
+                {links(visibleChildren(group, user, can))}
+              </div>
+            </SlDetails>
+          ))}
         <p>Çalışma alanı</p>
-        {links(
-          secondaryModules.filter(
-            (m) => !["account", "help", "settings", "activity"].includes(m.id),
-          ),
-        )}
+        {links(sharedModules)}
       </nav>
     </div>
   );
   return (
     <div className="pm-workspace">
-      <aside className="workspace-sidebar">
-        {sidebar}
-      </aside>
+      <aside className="workspace-sidebar">{sidebar}</aside>
       {mobile && (
         <SlDrawer
           open
@@ -147,6 +180,19 @@ export default function AppShell({
             <SlAlert open variant="danger">
               Güncel veriler alınamadı. Yenile düğmesiyle tekrar deneyin.
             </SlAlert>
+          )}
+          {parent && (
+            <nav className="workspace-breadcrumb" aria-label="Modül yolu">
+              <Button
+                type="button"
+                size="small"
+                onClick={() => navigate(parent.id)}
+              >
+                {parent.label}
+              </Button>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">{current?.label}</span>
+            </nav>
           )}
           <div className="workspace-page-heading">
             <h1>{current?.label}</h1>

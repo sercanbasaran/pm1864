@@ -11,8 +11,14 @@ import {
   UserCircle,
   Question,
   Gear,
+  Storefront,
+  Globe,
+  Motorcycle,
+  ListBullets,
+  ChartLine,
+  TreeStructure,
 } from "@phosphor-icons/react";
-export const primaryModules = [
+const existingModules = [
   {
     id: "overview",
     label: "Genel bakış",
@@ -95,8 +101,85 @@ export const secondaryModules = [
     permission: "catalog.read",
   },
 ];
-export const modules = [...primaryModules, ...secondaryModules];
+// Stable leaf IDs keep existing bookmarks, editors and public card links valid.
+const plannedModules = [
+  {
+    id: "sales-groups",
+    label: "Satış grupları",
+    icon: UsersThree,
+    description: "Satışa sunulacak ürünlerin gruplandırılması.",
+  },
+  {
+    id: "menus",
+    label: "Menü",
+    icon: ListBullets,
+    description: "Ürün ve satış gruplarından oluşan menülerin yönetimi.",
+  },
+  {
+    id: "stores",
+    label: "Mağazalar",
+    icon: Storefront,
+    description: "Fiziksel mağazaların ve şubelerin yönetimi.",
+  },
+  {
+    id: "digital-stores",
+    label: "Dijital mağazalar",
+    icon: Globe,
+    description: "E-ticaret mağazalarının yönetimi.",
+  },
+  {
+    id: "food-platforms",
+    label: "Yemek sipariş platformları",
+    icon: Motorcycle,
+    description: "Yemek sipariş platformlarındaki satış kanallarının yönetimi.",
+  },
+].map((module) => ({
+  ...module,
+  permission: "catalog.read",
+  status: "planned",
+}));
+export const moduleGroups = [
+  {
+    id: "product-management",
+    label: "Ürün yönetimi",
+    icon: Package,
+    description: "Kategori, ürün, varyant ve kod yapısını yönetin.",
+    children: ["categories", "products", "variants", "codes"],
+  },
+  {
+    id: "sales-management",
+    label: "Satış yönetimi",
+    icon: ChartLine,
+    description: "Fiyat, satış grubu ve menü yapısını yönetin.",
+    children: ["prices", "sales-groups", "menus"],
+  },
+  {
+    id: "channel-management",
+    label: "Kanal yönetimi",
+    icon: TreeStructure,
+    description: "Fiziksel ve dijital satış kanallarını yönetin.",
+    children: ["stores", "digital-stores", "food-platforms"],
+  },
+].map((group) => ({ ...group, permission: "catalog.read" }));
+export const primaryModules = [existingModules[0], ...moduleGroups];
+export const sharedModules = existingModules.filter((module) =>
+  ["users", "media"].includes(module.id),
+);
+export const modules = [
+  ...existingModules,
+  ...secondaryModules,
+  ...plannedModules,
+  ...moduleGroups,
+];
+export const moduleFor = (id) => modules.find((module) => module.id === id);
+export const parentFor = (id) =>
+  moduleGroups.find((group) => group.children.includes(id));
+export const visibleChildren = (group, user, can) =>
+  group.children
+    .map(moduleFor)
+    .filter((module) => module && can(user, module.permission));
 export const legacyPages = {
+  "Ürün yönetimi ana modülü": "product-management",
   Kategoriler: "categories",
   "Kategori yönetimi": "categories",
   "Ürün kataloğu": "products",
