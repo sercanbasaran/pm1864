@@ -329,3 +329,63 @@ sl-textarea::part(textarea) {
 .variant-table-actions { display: flex; flex-wrap: wrap; gap: 4px; min-width: 90px; }
 .product-detail-identifiers { flex-wrap: wrap; overflow-wrap: anywhere; }
 .category-field-content > *, .nutrition-table > *, .product-variants-table > * { max-width: 100%; box-sizing: border-box; }
+
+/* Tab panels and card shadow roots must not inherit the table's intrinsic width. */
+.variant-module > sl-tab-group,
+.variant-module sl-tab-panel,
+.variant-module sl-card {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.variant-module sl-tab-group::part(base),
+.variant-module sl-tab-group::part(body),
+.variant-module sl-tab-group::part(nav),
+.variant-module sl-tab-panel::part(base),
+.variant-module sl-card::part(base),
+.variant-module sl-card::part(body) {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.variant-module .module-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+.variant-module .module-toolbar .search {
+  grid-column: 1 / -1;
+}
+.variant-module .module-toolbar > *,
+.variant-module .variant-add-bar > *,
+.variant-module .variant-type-form > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.variant-module .module-toolbar sl-select,
+.variant-module .variant-add-bar sl-select {
+  width: 100%;
+  min-width: 0;
+}
+.variant-module .variant-add-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 18rem) auto;
+}
+.variant-module .table-scroll {
+  min-width: 0;
+  overscroll-behavior-x: contain;
+}
+@media (max-width: 600px) {
+  .variant-module .module-toolbar,
+  .variant-module .variant-add-bar,
+  .variant-module .variant-type-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .variant-module .panel-title > sl-button,
+  .variant-module .variant-add-bar > sl-button,
+  .variant-module .variant-type-form > sl-button {
+    width: 100%;
+  }
+}
