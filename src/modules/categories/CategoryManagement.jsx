@@ -43,6 +43,65 @@ import {
   validateCategory,
 } from "../../catalog.js";
 import { roots } from "../../hierarchy.js";
+function EditableField({
+  children,
+  label,
+  enabled,
+  editing,
+  busy,
+  onEdit,
+  onSave,
+  onCancel,
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        alignItems: "flex-start",
+        flexWrap: "wrap",
+      }}
+    >
+      <div style={{ flex: "1 1 240px", minWidth: 0 }}>{children}</div>
+      {enabled && (
+        <div style={{ display: "flex", gap: 8 }}>
+          {editing ? (
+            <>
+              <Button
+                type="button"
+                size="small"
+                variant="primary"
+                disabled={busy}
+                onClick={onSave}
+              >
+                Kaydet
+              </Button>
+              <Button
+                type="button"
+                size="small"
+                disabled={busy}
+                onClick={onCancel}
+              >
+                Vazgeç
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              size="small"
+              aria-label={label + " düzenle"}
+              disabled={busy}
+              onClick={onEdit}
+            >
+              <PencilSimple size={15} />
+              Düzenle
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 export default function CategoryManager({
   categories,
   products,
@@ -61,6 +120,7 @@ export default function CategoryManager({
     [sort, setSort] = useState({ key: "hierarchy", direction: "asc" }),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
+  const [editingField, setEditingField] = useState(null);
   const main = roots(categories);
   const suggestedSlug = (name, parentId) =>
     slugify(
@@ -98,6 +158,7 @@ export default function CategoryManager({
       return;
     }
     setError("");
+    setEditingField(null);
     setDraft(
       category
         ? {
@@ -124,8 +185,69 @@ export default function CategoryManager({
           },
     );
   }, [route, readOnly]);
+  function cancelField() {
+    const original = categories.find((c) => c.id === draft.id);
+    if (original)
+      setDraft({
+        ...original,
+        salesAvailability: salesAvailability(
+          original.salesAvailability,
+          undefined,
+          true,
+        ),
+        isNew: false,
+      });
+    setEditingField(null);
+    setError("");
+  }
+  async function saveField(field) {
+    if (saving || editingField !== field) return;
+    const original = categories.find((c) => c.id === draft.id);
+    if (!original) return;
+    const value =
+      field === "name"
+        ? draft.name.trim().replace(/\s+/g, " ")
+        : field === "slug"
+          ? slugify(draft.slug)
+          : draft[field];
+    const clean = { ...original, [field]: value };
+    const message = validateCategory(clean, categories);
+    if (message) {
+      setError(message);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      if (await onSave(clean, false)) {
+        setDraft({ ...clean, isNew: false });
+        setEditingField(null);
+      } else
+        setError("Kategori kaydedilemedi. Bildirimdeki hatayı kontrol edin.");
+    } finally {
+      setSaving(false);
+    }
+  }
+  function fieldProps(field, label, locked = false) {
+    return {
+      label,
+      enabled: !draft.isNew && !locked,
+      editing: editingField === field,
+      busy: saving,
+      onEdit: () => {
+        cancelField();
+        setEditingField(field);
+      },
+      onSave: () => saveField(field),
+      onCancel: cancelField,
+    };
+  }
   async function save(e) {
     e.preventDefault();
+    if (!draft.isNew) {
+      if (editingField) await saveField(editingField);
+      return;
+    }
     if (saving) return;
     setError("");
     const message = validateCategory(draft, categories);
@@ -160,7 +282,7 @@ export default function CategoryManager({
     </Button>
   ) : null;
   const noCodeAvailable = Boolean(draft?.isNew && !draft.code);
-  const saveAction = draft ? (
+  const saveAction = draft?.isNew ? (
     <Button
       variant="primary"
       className="btn"
@@ -423,12 +545,17 @@ export default function CategoryManager({
             <ActionBar>{saveAction}</ActionBar>
             <fieldset className="editor-fields" disabled={saving}>
               <div className="editor-content">
-                <div>
+                <EditableField
+                  {...fieldProps("parentId", "Ana kategori", !draft.parentId)}
+                >
                   <Select
+                    disabled={
+                      !draft.isNew &&
+                      (editingField !== "parentId" || !draft.parentId)
+                    }
                     label="Ana kategori"
                     aria-label="Ana kategori"
                     value={draft.parentId}
-                    disabled={!draft.isNew && !draft.parentId}
                     onChange={(e) =>
                       setDraft({
                         ...draft,
@@ -458,7 +585,7 @@ export default function CategoryManager({
                         </option>
                       ))}
                   </Select>
-                </div>
+                </EditableField>
                 {error && (
                   <SlAlert open variant="danger" className="form-error">
                     {error}
@@ -471,8 +598,9 @@ export default function CategoryManager({
                       : "Kullanılabilir kategori kodu bulunamadı."}
                   </SlAlert>
                 )}
-                <div>
+                <EditableField {...fieldProps("name", "Kategori adı")}>
                   <Input
+                    disabled={!draft.isNew && editingField !== "name"}
                     label="Kategori adı"
                     required
                     autoFocus={draft.isNew}
@@ -493,7 +621,7 @@ export default function CategoryManager({
                       });
                     }}
                   />
-                </div>
+                </EditableField>
                 <div>
                   <div>
                     <Input
@@ -523,8 +651,9 @@ export default function CategoryManager({
                     </small>
                   </div>
                 </div>
-                <div>
+                <EditableField {...fieldProps("slug", "Kategori bağlantısı")}>
                   <Input
+                    disabled={!draft.isNew && editingField !== "slug"}
                     label="Kategori bağlantısı"
                     required
                     value={draft.slug}
@@ -532,9 +661,10 @@ export default function CategoryManager({
                       setDraft({ ...draft, slug: slugify(e.target.value) })
                     }
                   />
-                </div>
-                <div>
+                </EditableField>
+                <EditableField {...fieldProps("description", "Açıklama")}>
                   <Textarea
+                    disabled={!draft.isNew && editingField !== "description"}
                     label="Açıklama"
                     rows={3}
                     maxLength={400}
@@ -543,9 +673,10 @@ export default function CategoryManager({
                       setDraft({ ...draft, description: e.target.value })
                     }
                   />
-                </div>
-                <div className="category-active">
+                </EditableField>
+                <EditableField {...fieldProps("active", "Kategori aktif")}>
                   <Input
+                    disabled={!draft.isNew && editingField !== "active"}
                     label="Kategori aktif"
                     type="checkbox"
                     checked={draft.active}
@@ -559,15 +690,22 @@ export default function CategoryManager({
                       eklenemez.
                     </p>
                   </div>
-                </div>
-                <CategoryChannelSwitches
-                  category={draft}
-                  categories={categories}
-                  disabled={saving}
-                  onChange={(salesAvailability) =>
-                    setDraft({ ...draft, salesAvailability })
-                  }
-                />
+                </EditableField>
+                <EditableField
+                  {...fieldProps("salesAvailability", "Satış kanalları")}
+                >
+                  <CategoryChannelSwitches
+                    category={draft}
+                    categories={categories}
+                    disabled={
+                      saving ||
+                      (!draft.isNew && editingField !== "salesAvailability")
+                    }
+                    onChange={(salesAvailability) =>
+                      setDraft({ ...draft, salesAvailability })
+                    }
+                  />
+                </EditableField>
                 <div className="sku-preview">
                   <div>
                     <small>HİYERARŞİ</small>
