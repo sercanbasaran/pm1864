@@ -126,7 +126,7 @@ export default function CategoryManager({
   }, [route, readOnly]);
   async function save(e) {
     e.preventDefault();
-    if (saving) return;
+    if (saving || !draft?.isNew) return;
     setError("");
     const message = validateCategory(draft, categories);
     if (message) {
@@ -164,7 +164,7 @@ export default function CategoryManager({
     <Button
       variant="primary"
       className="btn"
-      disabled={saving || noCodeAvailable}
+      disabled={saving || noCodeAvailable || !draft.isNew}
       type="submit"
     >
       <Check size={17} />
@@ -421,7 +421,7 @@ export default function CategoryManager({
         >
           <form onSubmit={save}>
             <ActionBar>{saveAction}</ActionBar>
-            <fieldset className="editor-fields" disabled={saving}>
+            <fieldset className="editor-fields" disabled={saving || !draft.isNew}>
               <div className="editor-content">
                 <div>
                   <Select
@@ -475,7 +475,7 @@ export default function CategoryManager({
                   <Input
                     label="Kategori adı"
                     required
-                    autoFocus
+                    autoFocus={draft.isNew}
                     maxLength={70}
                     value={draft.name}
                     onChange={(e) => {
@@ -562,7 +562,7 @@ export default function CategoryManager({
                 <CategoryChannelSwitches
                   category={draft}
                   categories={categories}
-                  disabled={saving}
+                  disabled={saving || !draft.isNew}
                   onChange={(salesAvailability) =>
                     setDraft({ ...draft, salesAvailability })
                   }

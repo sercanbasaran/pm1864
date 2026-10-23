@@ -7,7 +7,7 @@ const all={store:true,online:true,foodDelivery:true};
 const root={id:'r',name:'Baklava',slug:'baklava',code:'100',active:true,parentId:'',salesAvailability:{...all,online:false}};
 const child={id:'c',name:'Fistikli',slug:'fistikli',code:'101',active:true,parentId:'r',salesAvailability:all};
 afterEach(cleanup);
-test('category editor shows inherited switches and persists independent channel preferences',async()=>{
+test('existing category editor disables fields and channel switches and cannot submit',async()=>{
   const onSave=vi.fn(async()=>true),onClose=vi.fn();
   render(<CategoryManagement categories={[root,child]} products={[]} route="categories/c/edit" onSave={onSave} onClose={onClose} onNavigate={vi.fn()}/>);
   await settle();
@@ -15,12 +15,13 @@ test('category editor shows inherited switches and persists independent channel 
   expect(controls).toHaveLength(3);
   const online=controls.find(c=>c.getAttribute('aria-label')==='E-Mağaza');
   expect(online.disabled).toBe(true);expect(online.checked).toBe(false);
-  const store=controls.find(c=>c.getAttribute('aria-label')==='Mağaza');
-  store.checked=false;fireEvent(store,new CustomEvent('sl-change',{bubbles:true}));await settle();
+  expect(controls.every(c=>c.disabled)).toBe(true);
+  expect([...document.querySelectorAll('sl-input,sl-select,sl-textarea,sl-checkbox')].every(c=>c.disabled)).toBe(true);
+  expect([...document.querySelectorAll('sl-button')].filter(b=>b.type==='submit').every(b=>b.disabled)).toBe(true);
   fireEvent.submit(document.querySelector('form'));
-  await waitFor(()=>expect(onSave).toHaveBeenCalled());
-  expect(onSave.mock.calls[0][0].salesAvailability).toEqual({...all,store:false});
-  expect(onClose).toHaveBeenCalled();
+  await settle();
+  expect(onSave).not.toHaveBeenCalled();
+  expect(onClose).not.toHaveBeenCalled();
 });
 test('category list shows channel status and read-only mode has no editing switches',async()=>{
   render(<CategoryManagement categories={[root,child]} products={[]} readOnly route="categories" onNavigate={vi.fn()}/>);
