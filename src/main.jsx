@@ -5,8 +5,8 @@ import PublicProductPage from "./modules/products/PublicProductPage.jsx";
 import BackendGate from "./app/BackendGate.jsx";
 import { App } from "./app/App.jsx";
 import "./theme/primary.css";
-import "./layout.css";
-import "./custom.css";
+import "./css/layout.css";
+import "./css/custom.css";
 export { App } from "./app/App.jsx";
 export function RootApp() {
   return (

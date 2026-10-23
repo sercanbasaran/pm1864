@@ -55,12 +55,6 @@ export default function AppShell({
         <BrandLogo className="workspace-logo" />
         <small>1864 USTA</small>
       </div>
-      <ProfileMenu
-        user={user}
-        onNavigate={navigate}
-        onLogout={onLogout}
-        onError={notify}
-      />
       <nav aria-label="Yönetim modülleri">
         {links(primaryModules.filter((module) => !module.children))}
         {primaryModules
@@ -184,6 +178,12 @@ export default function AppShell({
               <Bell size={21} />
             </Button>
           </SlTooltip>
+           <ProfileMenu
+        user={user}
+        onNavigate={navigate}
+        onLogout={onLogout}
+        onError={notify}
+      />
         </header>
         {busy && (
           <SlProgressBar indeterminate aria-label="Sunucuya kaydediliyor" />

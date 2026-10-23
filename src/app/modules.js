@@ -26,7 +26,7 @@ import {
 const existingModules = [
   {
     id: "overview",
-    label: "Genel Bakış",
+    label: "GENEL BAKIŞ",
     icon: SquaresFour,
     permission: "catalog.read",
   },
@@ -166,35 +166,35 @@ const plannedModules = [
 export const moduleGroups = [
   {
     id: "product-management",
-    label: "Ürün Yönetimi",
+    label: "ÜRÜN YÖNETİMİ",
     icon: Package,
     description: "Kategori, ürün ve varyant yapısını yönetin.",
     children: ["categories", "products", "variants"],
   },
   {
     id: "sales-management",
-    label: "Satış Yönetimi",
+    label: "SATIŞ YÖNETİMİ",
     icon: ChartLine,
     description: "Fiyat, satış grubu ve menü yapısını yönetin.",
     children: ["prices", "sales-groups", "menus"],
   },
   {
     id: "channel-management",
-    label: "Kanal Yönetimi",
+    label: "KANAL YÖNETİMİ",
     icon: TreeStructure,
     description: "Fiziksel ve dijital satış kanallarını yönetin.",
     children: ["stores", "digital-stores", "food-platforms"],
   },
   {
     id: "system-settings",
-    label: "Sistem Ayarları",
+    label: "SİSTEM AYARLARI",
     icon: Gear,
     description: "Kod/SKU, para birimi ve dil tanımlarını yönetin.",
     children: ["codes", "currencies", "languages"],
   },
   {
     id: "user-management",
-    label: "Kullanıcı Yönetimi",
+    label: "KULLANICI YÖNETİMİ",
     icon: UsersThree,
     permission: "users.manage",
     description: "Ekip hesaplarını ve kullanıcı rollerini yönetin.",
@@ -202,7 +202,7 @@ export const moduleGroups = [
   },
   {
     id: "library",
-    label: "Kütüphane",
+    label: "KÜTÜPHANE",
     icon: Books,
     description: "Görselleri ve dokümanları tek bir kütüphanede toplayın.",
     children: ["media", "documents"],

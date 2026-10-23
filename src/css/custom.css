@@ -80,6 +80,44 @@
   box-shadow: none;
 }
 .workspace-module-group .workspace-group-title > span {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
+}
+
+.workspace-brand{
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--sl-panel-background-color);
+  padding-block: 16px;
+}
+.profile-area{
+ position: sticky;
+ top: 230px;
+ z-index: 11;
+ background-color: var(--sl-panel-background-color);
+ 
+}
+.workspace-sidebar{
+    background-color: var(--sl-panel-background-color);
+}
+
+.sl-toast-stack {
+  top: 20px;
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: min(420px, calc(100vw - 32px));
+}
+
+.sl-toast-stack {
+  position: fixed;
+  top: 20px;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, calc(100vw - 32px));
+  z-index: 10000;
 }

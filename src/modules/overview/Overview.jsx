@@ -38,8 +38,6 @@ export default function Overview({
   return (
     <div className="overview-grid">
       <Card className="panel overview-lead">
-        <ActionBar>{addAction}</ActionBar>
-        <div className="eyebrow">KATALOĞUNUZ BUGÜN</div>
         <h2>
           {products.length
             ? "Kataloğunuzu tamamlayın."
@@ -52,10 +50,12 @@ export default function Overview({
         </p>
         <div className="overview-actions">
           <Button className="btn" onClick={() => onBrowse({})}>
-            Kataloğu aç
+            Ürünleri git
             <ArrowRight size={16} />
           </Button>
-          {canCreate && <ActionBar position="bottom">{addAction}</ActionBar>}
+          {canCreate && <ActionBar position="middle">
+            {addAction}</ActionBar>
+          }
         </div>
       </Card>
       <Card className="panel">
