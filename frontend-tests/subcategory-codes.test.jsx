@@ -77,7 +77,7 @@ test("parent selector is first, labels include codes and switching parent recalc
     ).value,
   ).toBe("0200");
 });
-test("direct child creation uses the same suggestion; existing category fields are disabled", async () => {
+test("direct child creation uses the same suggestion; existing code is disabled while parent remains editable", async () => {
   const view = render(
     <CategoryManagement {...props} route="categories/new?parent=r" />,
   );
@@ -89,7 +89,8 @@ test("direct child creation uses the same suggestion; existing category fields a
   ).toBe("102");
   view.rerender(<CategoryManagement {...props} route="categories/c/edit" />);
   await settle();
-  expect(document.querySelector("sl-select").disabled).toBe(true);
+  expect(document.querySelector("sl-select").disabled).toBe(false);
+  await choose("r2");
   const code = [...document.querySelectorAll("sl-input")].find(
     (node) => node.label === "Kategori kodu",
   );

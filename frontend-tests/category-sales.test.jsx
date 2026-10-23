@@ -7,7 +7,7 @@ const all={store:true,online:true,foodDelivery:true};
 const root={id:'r',name:'Baklava',slug:'baklava',code:'100',active:true,parentId:'',salesAvailability:{...all,online:false}};
 const child={id:'c',name:'Fistikli',slug:'fistikli',code:'101',active:true,parentId:'r',salesAvailability:all};
 afterEach(cleanup);
-test('existing category editor disables fields and channel switches and cannot submit',async()=>{
+test('existing category locks only its code and saves editable fields and channel preferences',async()=>{
   const onSave=vi.fn(async()=>true),onClose=vi.fn();
   render(<CategoryManagement categories={[root,child]} products={[]} route="categories/c/edit" onSave={onSave} onClose={onClose} onNavigate={vi.fn()}/>);
   await settle();
@@ -15,13 +15,21 @@ test('existing category editor disables fields and channel switches and cannot s
   expect(controls).toHaveLength(3);
   const online=controls.find(c=>c.getAttribute('aria-label')==='E-Mağaza');
   expect(online.disabled).toBe(true);expect(online.checked).toBe(false);
-  expect(controls.every(c=>c.disabled)).toBe(true);
-  expect([...document.querySelectorAll('sl-input,sl-select,sl-textarea,sl-checkbox')].every(c=>c.disabled)).toBe(true);
-  expect([...document.querySelectorAll('sl-button')].filter(b=>b.type==='submit').every(b=>b.disabled)).toBe(true);
+  const code=[...document.querySelectorAll('sl-input')].find(c=>c.label==='Kategori kodu');
+  expect(code.disabled).toBe(true);
+  expect([...document.querySelectorAll('sl-input,sl-select,sl-textarea,sl-checkbox')].filter(c=>c!==code).every(c=>!c.disabled)).toBe(true);
+  expect([...document.querySelectorAll('sl-button')].filter(b=>b.type==='submit').every(b=>!b.disabled)).toBe(true);
+  const name=[...document.querySelectorAll('sl-input')].find(c=>c.label==='Kategori adı');
+  name.value='Yeni Fistikli';fireEvent(name,new CustomEvent('sl-input',{bubbles:true}));await settle();
+  const store=controls.find(c=>c.getAttribute('aria-label')==='Mağaza');
+  expect(store.disabled).toBe(false);
+  store.checked=false;fireEvent(store,new CustomEvent('sl-change',{bubbles:true}));await settle();
   fireEvent.submit(document.querySelector('form'));
-  await settle();
-  expect(onSave).not.toHaveBeenCalled();
-  expect(onClose).not.toHaveBeenCalled();
+  await waitFor(()=>expect(onSave).toHaveBeenCalled());
+  expect(onSave.mock.calls[0][0].name).toBe('Yeni Fistikli');
+  expect(onSave.mock.calls[0][0].code).toBe('101');
+  expect(onSave.mock.calls[0][0].salesAvailability).toEqual({...all,store:false});
+  expect(onClose).toHaveBeenCalled();
 });
 test('category list shows channel status and read-only mode has no editing switches',async()=>{
   render(<CategoryManagement categories={[root,child]} products={[]} readOnly route="categories" onNavigate={vi.fn()}/>);

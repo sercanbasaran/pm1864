@@ -126,7 +126,7 @@ export default function CategoryManager({
   }, [route, readOnly]);
   async function save(e) {
     e.preventDefault();
-    if (saving || !draft?.isNew) return;
+    if (saving) return;
     setError("");
     const message = validateCategory(draft, categories);
     if (message) {
@@ -164,7 +164,7 @@ export default function CategoryManager({
     <Button
       variant="primary"
       className="btn"
-      disabled={saving || noCodeAvailable || !draft.isNew}
+      disabled={saving || noCodeAvailable}
       type="submit"
     >
       <Check size={17} />
@@ -421,7 +421,7 @@ export default function CategoryManager({
         >
           <form onSubmit={save}>
             <ActionBar>{saveAction}</ActionBar>
-            <fieldset className="editor-fields" disabled={saving || !draft.isNew}>
+            <fieldset className="editor-fields" disabled={saving}>
               <div className="editor-content">
                 <div>
                   <Select
@@ -502,6 +502,7 @@ export default function CategoryManager({
                       required
                       pattern={draft.parentId ? "[0-9]{3}" : "[0-9]{4}"}
                       readOnly={!draft.isNew}
+                      disabled={!draft.isNew}
                       maxLength={draft.parentId ? 3 : 4}
                       value={draft.code}
                       onChange={(e) =>
@@ -562,7 +563,7 @@ export default function CategoryManager({
                 <CategoryChannelSwitches
                   category={draft}
                   categories={categories}
-                  disabled={saving || !draft.isNew}
+                  disabled={saving}
                   onChange={(salesAvailability) =>
                     setDraft({ ...draft, salesAvailability })
                   }
