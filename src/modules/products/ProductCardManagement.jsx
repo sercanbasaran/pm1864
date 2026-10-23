@@ -117,7 +117,7 @@ export default function ProductCardManagement({ product, user, onClose }) {
           )}
           {!eligible && (
             <SlAlert open variant="neutral">
-              Yayınlamak için ürün, ana kategori ve alt kategori aktif olmalı;
+              Yayınlamak için ürün ve bağlı olduğu kategoriler aktif olmalı;
               en az bir aktif varyant bulunmalıdır.
             </SlAlert>
           )}

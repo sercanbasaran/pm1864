@@ -186,3 +186,7 @@ Sistem Ayarları (`#system-settings`), Kullanıcı Yönetimi (`#user-management`
 ## Güncel SKU düzeni
 
 Varyant gösterimi **000.000000.00**: kategori (3), alt kategori (3), ürün (3), varyant (2) rakam. Örnek **100.101001.01**. Veritabanında sabit `HM` önekiyle saklanır; ekranlar ve CSV öneksizdir. Önek değiştirme alanı kaldırılmıştır. Ürün numarası alt kategori içinde, varyant numarası ürün içinde artar. Mevcut katalog otomatik geçirilir; eski kodlar belge içinde yedeklenir, kayıt kimlikleri ve QR adresleri korunur. [Geçiş, sınırlar ve ayrıntılar](docs/SKU_PATTERN.md).
+
+### Ana kategoriye doğrudan ürün ekleme
+
+Ürün formunda ana kategori zorunludur; alt kategori isteğe bağlıdır. Alt kategori seçilmezse ürün ana kategoriye bağlanır ve SKU alt kategori bölümü `000` olur. Örneğin ana kategori `100` için ilk iki varyant SKU’su `100.000001.01` ve `100.000002.01` biçimindedir. `000` sabit alt kategori bölümüdür; ürün sırası her kod grubunda `001`–`999` aralığında artar. Gerçek bir alt kategori seçildiğinde onun kodu kullanılır ve ürün sırası ayrı tutulur. Veritabanında `HM` ön eki korunur. Mevcut ürünlerin SKU ve QR adresleri değişmez; veritabanı temizliği gerekmez.

@@ -30,7 +30,7 @@ export function categoryMatches(product, filter, categories) {
 }
 export function selectable(category, categories) {
   const root = rootOf(category, categories);
-  return !!category?.parentId && category.active && !!root?.active;
+  return !!category?.active && !!root?.active;
 }
 export function defaultSubcategory(doc, root) {
   let child = doc.categories.find(
@@ -90,7 +90,8 @@ export function upgradeHierarchy(doc) {
         c.id ===
         (p.categoryId || previous.find((old) => old.name === p.category)?.id),
     );
-    if (c && !c.parentId) c = defaultSubcategory(doc, c);
+    if (doc.schemaVersion !== 2 && c && !c.parentId)
+      c = defaultSubcategory(doc, c);
     if (c) {
       p.categoryId = c.id;
       p.category = c.name;

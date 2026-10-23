@@ -206,7 +206,7 @@ export default function CategoryManager({
               },
             ]}
             title="Kategorilerinizi yönetin"
-            description="Ana kategorileri ve ürünlerin bağlanacağı alt kategorileri oluşturun."
+            description="Ürünlerinizi ana kategorilere veya isteğe bağlı alt kategorilere bağlayın."
             action={addAction}
           />
           <Card className="category-list-card">
@@ -338,7 +338,7 @@ export default function CategoryManager({
                               {isChild ? "Ürünler" : "Tüm ürünler"}
                               <ArrowRight size={15} />
                             </Button>
-                            {isChild && canCreateProduct && (
+                            {canCreateProduct && (
                               <Button
                                 type="button"
                                 size="small"
@@ -509,7 +509,7 @@ export default function CategoryManager({
                   />
                   <div>
                     <p>
-                      Pasif ana kategorinin alt kategorilerine yeni ürün
+                      Pasif ana kategoriye ve alt kategorilerine yeni ürün
                       eklenemez.
                     </p>
                   </div>

@@ -6,10 +6,10 @@ export default function CategoryFields({ product, categories, onChange }) {
     parent = product.mainCategoryId || rootOf(c, categories)?.id || "",
     children = categories.filter((c) => c.parentId === parent);
   function choose(id) {
-    const leaf = categories.find((c) => c.id === id);
+    const leaf = categories.find((c) => c.id === (id || parent));
     onChange({
       ...product,
-      categoryId: id,
+      categoryId: leaf?.id || "",
       category: leaf?.name || "",
       mainCategoryId: parent,
     });
@@ -25,8 +25,8 @@ export default function CategoryFields({ product, categories, onChange }) {
             onChange({
               ...product,
               mainCategoryId: e.target.value,
-              categoryId: "",
-              category: "",
+              categoryId: e.target.value,
+              category: categories.find((c) => c.id === e.target.value)?.name || "",
             })
           }
         >
@@ -50,7 +50,7 @@ export default function CategoryFields({ product, categories, onChange }) {
           value={c?.parentId === parent ? c.id : ""}
           onChange={(e) => choose(e.target.value)}
         >
-          <option value="">Alt kategori seçin</option>
+          <option value="">Alt kategori yok (000)</option>
           {children.map((child) => (
             <option
               key={child.id}
@@ -67,7 +67,7 @@ export default function CategoryFields({ product, categories, onChange }) {
         </Select>
         {parent && !children.length && (
           <small className="input-help">
-            Bu ana kategoriye önce bir alt kategori ekleyin.
+            Ürün doğrudan ana kategoriye eklenir. SKU alt kategori kodu 000 olur.
           </small>
         )}
       </div>

@@ -62,13 +62,13 @@ test("SKU schema has fixed widths and database-only prefix with separate product
     assert.equal(r.status, 200);
     const first = r.catalog.products[0];
     assert.equal(first.productCode, "001");
-    assert.equal(first.sku, "100.101001");
-    assert.equal(first.variants[0].sku, "100.101001.01");
-    assert.equal(first.variants[1].sku, "100.101001.02");
+    assert.equal(first.sku, "100.000001");
+    assert.equal(first.variants[0].sku, "100.000001.01");
+    assert.equal(first.variants[1].sku, "100.000001.02");
     r = await f.create();
-    assert.equal(r.catalog.products[0].sku, "100.101002");
+    assert.equal(r.catalog.products[0].sku, "100.000002");
     r = await f.create("Lokumlar");
-    assert.equal(r.catalog.products[0].sku, "200.201001");
+    assert.equal(r.catalog.products[0].sku, "200.000001");
     assert.equal(r.catalog.products[0].productCode, "001");
     const doc = JSON.parse(
       (await f.app.db.query("SELECT document FROM app_catalog WHERE id=1"))
@@ -76,11 +76,11 @@ test("SKU schema has fixed widths and database-only prefix with separate product
     );
     assert.equal(
       doc.products.find((p) => p.id === first.id).sku,
-      "HM100.101001",
+      "HM100.000001",
     );
     assert.equal(
       doc.products.find((p) => p.id === first.id).variants[0].sku,
-      "HM100.101001.01",
+      "HM100.000001.01",
     );
     assert.equal(JSON.stringify(r.catalog.products).includes("HM100."), false);
     assert.equal(productCardPath(first), "/p/P000001");
@@ -91,8 +91,8 @@ test("SKU schema has fixed widths and database-only prefix with separate product
     assert.equal(enabled.status, 200);
     const card = await f.call("/public/products/P000001");
     assert.equal(card.status, 200);
-    assert.equal(card.product.sku, "100.101001");
-    assert.equal(card.product.variants[0].sku, "100.101001.01");
+    assert.equal(card.product.sku, "100.000001");
+    assert.equal(card.product.variants[0].sku, "100.000001.01");
   } finally {
     await f.app.close();
   }
@@ -115,9 +115,9 @@ test("reorder, rename, category edit and variant deletion preserve identities an
     });
     p = r.catalog.products[0];
     assert.equal(p.variants[0].sku, second.sku);
-    assert.equal(p.variants[1].sku, "100.101001.03");
+    assert.equal(p.variants[1].sku, "100.000001.03");
     assert.notEqual(p.variants[1].id, first.id);
-    assert.equal(p.sku, "100.101001");
+    assert.equal(p.sku, "100.000001");
     assert.equal(productCardCode(p), "P000001");
     const c = r.catalog.categories.find((c) => c.id === p.categoryId);
     r = await f.call("/categories/" + c.id, "PUT", {
@@ -137,7 +137,7 @@ test("product and variant capacity limits reject atomically and stale writes do 
       (await f.app.db.query("SELECT document FROM app_catalog WHERE id=1"))
         .rows[0].document,
     );
-    doc.nextProductNumbers["100.101"] = 1000;
+    doc.nextProductNumbers["100.000"] = 1000;
     doc.products[0].nextVariantNumber = 100;
     await f.app.db.query("UPDATE app_catalog SET document=? WHERE id=1", [
       JSON.stringify(doc),

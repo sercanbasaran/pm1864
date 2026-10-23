@@ -23,7 +23,6 @@ import {
 import {
   categoryOf,
   rootOf,
-  defaultSubcategory,
   upgradeHierarchy,
   selectable,
 } from "../src/hierarchy.js";
@@ -276,17 +275,12 @@ export function createCatalogService(db) {
         ? doc.categories.find((c) => c.id === input.categoryId)
         : doc.categories.find((c) => c.name === input.category);
       if (input.categoryId && !c)
-        throw new ApiError(422, "Alt kategori bulunamadı.");
-      if (c && !c.parentId) {
-        if (input.categoryId)
-          throw new ApiError(422, "Ürün için bir alt kategori seçin.");
-        c = defaultSubcategory(doc, c);
-      }
-      if (!c) throw new ApiError(422, "Alt kategori seçin.");
+        throw new ApiError(422, "Kategori bulunamadı.");
+      if (!c) throw new ApiError(422, "Kategori seçin.");
       if ((!old || old.categoryId !== c.id) && !selectable(c, doc.categories))
         throw new ApiError(
           422,
-          "Aktif bir ana kategori ve alt kategori seçin.",
+          "Aktif bir kategori seçin.",
         );
       const productId = old?.id || doc.nextProductId,
         p = {
@@ -565,7 +559,7 @@ export function createCatalogService(db) {
       if (body.enabled && !productCardEligible(product, doc.categories))
         throw new ApiError(
           422,
-          "Yayınlamak için ürün, ana kategori ve alt kategori aktif olmalı; en az bir aktif varyant bulunmalıdır.",
+          "Yayınlamak için ürün ve bağlı olduğu kategoriler aktif olmalı; en az bir aktif varyant bulunmalıdır.",
         );
       if ((product.publicCardEnabled === true) === body.enabled) return;
       product.publicCardEnabled = body.enabled;

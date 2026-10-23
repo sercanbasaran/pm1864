@@ -149,7 +149,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
       ) || categories.find((c) => selectable(c, categories));
     if (!category) {
       notify(
-        "Ürün eklemek için önce aktif bir ana kategori ve alt kategori oluşturun.",
+        "Ürün eklemek için önce aktif bir ana kategori oluşturun.",
       );
       navigate("categories");
       return;

@@ -33,7 +33,7 @@ export default function ProductEditor({
     const invalid = !draft.categoryId
       ? {
           tab: "Genel bilgiler",
-          message: "Ana kategori ve alt kategori seçin.",
+          message: "Ana kategori seçin.",
         }
       : validateProduct(draft, categories, variantTypes);
     if (invalid) {

@@ -6,10 +6,13 @@ export const productSkuPattern = /^HM\d{3}\.\d{6}$/;
 export const variantSkuPattern = /^HM\d{3}\.\d{6}\.\d{2}$/;
 
 export function allocateProductCode(doc, category) {
-  const root = doc.categories.find((c) => c.id === category.parentId);
-  if (!root || !/^\d{3}$/.test(root.code) || !/^\d{3}$/.test(category.code))
+  const root = category?.parentId
+    ? doc.categories.find((c) => c.id === category.parentId)
+    : category;
+  const subcategoryCode = category?.parentId ? category.code : "000";
+  if (!root || !/^\d{3}$/.test(root.code) || !/^\d{3}$/.test(subcategoryCode))
     throw new Error("SKU için geçerli ana ve alt kategori kodları gerekli.");
-  const group = root.code + "." + category.code;
+  const group = root.code + "." + subcategoryCode;
   doc.nextProductNumbers ||= {};
   let next = Math.max(1, Number(doc.nextProductNumbers[group]) || 1);
   for (const p of doc.products) {
@@ -17,7 +20,7 @@ export function allocateProductCode(doc, category) {
       next = Math.max(next, Number(p.sku.slice(-3)) + 1);
   }
   if (next > 999)
-    throw new Error("Bu alt kategoride 999 ürün kodu sınırına ulaşıldı.");
+    throw new Error("Bu kategori kod grubunda 999 ürün kodu sınırına ulaşıldı.");
   doc.nextProductNumbers[group] = next + 1;
   const productCode = String(next).padStart(3, "0");
   return { productCode, sku: SKU_PREFIX + group + productCode };
@@ -40,9 +43,9 @@ export function upgradeSku(doc) {
   const ordered = [...doc.products].sort((a, b) => Number(a.id) - Number(b.id));
   for (const p of ordered) {
     const category = doc.categories.find((c) => c.id === p.categoryId);
-    if (!category?.parentId)
+    if (!category)
       throw new Error(
-        "SKU geçişi için ürünün alt kategorisi bulunamadı: " + p.id,
+        "SKU geçişi için ürünün kategorisi bulunamadı: " + p.id,
       );
     if (p.variants.length > 99)
       throw new Error("SKU geçişinde 99 varyant sınırı aşıldı: " + p.id);

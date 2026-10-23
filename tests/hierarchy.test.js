@@ -18,8 +18,8 @@ test('products belong to child ids; sibling names may repeat across roots; repar
  const f=await fixture();try{let c=(await f.call('/catalog')).catalog;const root=c.categories[0],other=c.categories[1],a=await sub(f,root),b=await sub(f,other,'Fıstıklı','201');
  let r=await save(f,a.id);assert.equal(r.status,200);const p=r.catalog.products[0];assert.equal(p.categoryId,a.id);assert.equal(categoryPath(categoryOf(p,r.catalog.categories),r.catalog.categories),'Baklavalar / Fıstıklı');assert.equal(categoryMatches(p,root.id,r.catalog.categories),true);assert.equal(categoryMatches(p,b.id,r.catalog.categories),false);
  r=await f.call('/categories/'+a.id,'PUT',{expectedRevision:r.catalog.revision,category:{...a,name:'Özel Fıstıklı',parentId:other.id}});assert.equal(r.status,200);assert.equal(r.catalog.products[0].categoryId,p.categoryId);assert.equal(r.catalog.products[0].sku,p.sku);assert.equal(categoryMatches(r.catalog.products[0],other.id,r.catalog.categories),true);
- assert.equal((await save(f,root.id)).status,422);assert.equal((await save(f,'missing')).status,422);
- c=r.catalog;assert.equal((await f.call('/categories','POST',{expectedRevision:c.revision,category:{name:'Üçüncü',code:'301',slug:'third',parentId:a.id,active:true}})).status,422);
+ assert.equal((await save(f,root.id)).status,200);assert.equal((await save(f,'missing')).status,422);
+ c=(await f.call('/catalog')).catalog;assert.equal((await f.call('/categories','POST',{expectedRevision:c.revision,category:{name:'Üçüncü',code:'301',slug:'third',parentId:a.id,active:true}})).status,422);
  assert.equal((await f.call('/categories/'+a.id,'PUT',{expectedRevision:c.revision,category:{...a,parentId:''}})).status,422);
  }finally{await f.app.close()}
 });
@@ -73,5 +73,21 @@ test('sales switches persist with parent gating, draft/inactive overrides, and b
  r=await save(f,child.id,[],{...r.catalog.products[0],status:'Taslak',salesAvailability:{store:true}});p=r.catalog.products[0];assert.equal(p.effectiveSales.store,false);assert.equal(p.variants[0].effectiveSales.store,false);
  const before=(await f.call('/catalog')).catalog;for(const value of [null,[],{online:'true'},{unknown:true}])assert.equal((await save(f,child.id,[],{...p,salesAvailability:value})).status,422);
  assert.equal((await save(f,child.id,[],{...p,variants:[{...p.variants[0],salesAvailability:{store:1}}]})).status,422);assert.deepEqual((await f.call('/catalog')).catalog,before);
+ }finally{await f.app.close()}
+});
+
+test('direct root products keep their category, use 000 and have independent child counters', async()=>{
+ const f=await fixture();try{
+ const root=(await f.call('/catalog')).catalog.categories[0];
+ let r=await save(f,root.id);assert.equal(r.status,200);
+ const p=r.catalog.products[0];assert.equal(p.categoryId,root.id);assert.equal(p.sku,'100.000001');assert.equal(p.variants[0].sku,'100.000001.01');
+ assert.equal(r.catalog.categories.some(c=>c.parentId===root.id),false);
+ r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'100.000002');
+ const child=await sub(f,root);r=await save(f,child.id);assert.equal(r.catalog.products[0].sku,'100.101001');
+ r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'100.000003');
+ assert.equal(r.catalog.products.find(x=>x.id===p.id).categoryId,root.id);
+ r=await f.call('/categories/'+root.id,'PUT',{expectedRevision:r.catalog.revision,category:{...root,active:false}});
+ assert.equal(r.status,200);assert.equal((await save(f,root.id)).status,422);
+ assert.equal((await f.call('/catalog')).catalog.products.find(x=>x.id===p.id).categoryId,root.id);
  }finally{await f.app.close()}
 });

@@ -32,7 +32,7 @@ export default function CodeManagement({ user }) {
         <div>
           <h2>Ürün kodları ve SKU kayıtları</h2>
           <p className="muted">
-            Ürün kodu alt kategori içindeki sıra numarasıdır. Ürün SKU'su ve her varyantın SKU'su
+            Ürün kodu kategori kod grubu içindeki sıra numarasıdır. Ürün SKU'su ve her varyantın SKU'su
             ayrı, kalıcı kodlardır.
           </p>
         </div>
