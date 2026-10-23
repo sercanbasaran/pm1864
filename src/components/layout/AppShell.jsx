@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
 import SlDrawer from "@shoelace-style/shoelace/dist/react/drawer/index.js";
-import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import SlProgressBar from "@shoelace-style/shoelace/dist/react/progress-bar/index.js";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import SlDivider from "@shoelace-style/shoelace/dist/react/divider/index.js";
@@ -113,77 +112,52 @@ export default function AppShell({
       )}
       <div className="workspace-main">
         <header className="workspace-topbar">
-          <Button
-            type="button"
-            className="icon-btn workspace-mobile-toggle"
-            aria-label="Menüyü aç"
-            onClick={() => setMobile(true)}
-          >
-            <Menu size={24} />
-          </Button>
-          {/* <strong>{current?.label}</strong> */}
-          {/*  <nav className="workspace-breadcrumb" aria-label="Modül yolu">
-              {parent ? (
-  <nav className="workspace-breadcrumb" aria-label="Modül yolu">
-    <Button
-      type="button"
-      size="small"
-      onClick={() => navigate(parent.id)}
-    >
-      {parent.label}
-    </Button>
-
-    <span aria-hidden="true">/</span>
-    <span aria-current="page">{current?.label}</span>
-  </nav>
-) : (
-  <strong>{current?.label}</strong>
-)}
-            </nav> */}
-          <SlTag
-            variant={connectionError ? "danger" : "success"}
-            className="connection-tag"
-          >
-            {refreshing
-              ? "Yenileniyor…"
-              : connectionError
-                ? "Bağlantı Kurulamıyor"
-                : "Sunucuya Bağlı"}
-          </SlTag>
-          <SlTooltip content="Yenile">
+          <div className="workspace-header-actions">
             <Button
               type="button"
-              className="icon-btn"
-              aria-label="Yenile"
-              disabled={busy || refreshing}
-              onClick={async () => {
-                try {
-                  await refresh();
-                  notify("Katalog sunucudan yenilendi.");
-                } catch (e) {
-                  notify(e.message);
-                }
-              }}
+              className="icon-btn workspace-mobile-toggle"
+              aria-label="Menüyü aç"
+              onClick={() => setMobile(true)}
             >
-              <ArrowsClockwise size={21} />
+              <Menu size={24} />
             </Button>
-          </SlTooltip>
-          <SlTooltip content="Bildirimler">
-            <Button
-              type="button"
-              className="icon-btn"
-              aria-label="Bildirimler"
-              onClick={onNotifications}
-            >
-              <Bell size={21} />
-            </Button>
-          </SlTooltip>
-          <ProfileMenu
-            user={user}
-            onNavigate={navigate}
-            onLogout={onLogout}
-            onError={notify}
-          />
+            <SlTooltip content="Yenile">
+              <Button
+                type="button"
+                className="icon-btn"
+                aria-label="Yenile"
+                disabled={busy || refreshing}
+                onClick={async () => {
+                  try {
+                    await refresh();
+                    notify("Katalog sunucudan yenilendi.");
+                  } catch (e) {
+                    notify(e.message);
+                  }
+                }}
+              >
+                <ArrowsClockwise size={21} />
+              </Button>
+            </SlTooltip>
+            <SlTooltip content="Bildirimler">
+              <Button
+                type="button"
+                className="icon-btn"
+                aria-label="Bildirimler"
+                onClick={onNotifications}
+              >
+                <Bell size={21} />
+              </Button>
+            </SlTooltip>
+          </div>
+          <div className="workspace-header-profile">
+            <ProfileMenu
+              user={user}
+              onNavigate={navigate}
+              onLogout={onLogout}
+              onError={notify}
+            />
+          </div>
         </header>
         {busy && (
           <SlProgressBar indeterminate aria-label="Sunucuya kaydediliyor" />
@@ -213,7 +187,11 @@ export default function AppShell({
             {current?.description && <p>{current.description}</p>}
           </div>*/}
           {children}
-          <footer><small style={{fontSize:"10px"}}><strong>powered by</strong> HM 1864 Digital</small></footer>
+          <footer>
+            <small style={{ fontSize: "10px" }}>
+              <strong>powered by</strong> HM 1864 Digital
+            </small>
+          </footer>
         </main>
       </div>
     </div>

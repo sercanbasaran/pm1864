@@ -33,12 +33,11 @@ export default function ProfileMenu({ user, onNavigate, onLogout, onError }) {
   }
   return (
     <div className="profile-area">
-      <UserAvatar user={user} />
       <SlDropdown
         ref={ref}
         stayOpenOnSelect
         hoist
-        placement="bottom-start"
+        placement="bottom-end"
         onSlShow={() => setOpen(true)}
         onSlHide={() => setOpen(false)}
       >
@@ -52,7 +51,8 @@ export default function ProfileMenu({ user, onNavigate, onLogout, onError }) {
           aria-expanded={open}
           disabled={busy}
         >
-          {user.name}
+          <UserAvatar user={user} />
+          <span className="profile-menu-name">{user.name}</span>
         </Button>
         <SlMenu aria-label="Profil menüsü" onSlSelect={select}>
           <div className="profile-menu-heading">

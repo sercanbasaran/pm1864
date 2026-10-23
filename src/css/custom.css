@@ -95,23 +95,16 @@
     background-color: var(--sl-panel-background-color);
 }
 
-.sl-toast-stack {
-  top: 20px;
-  bottom: auto;
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
-  width: min(420px, calc(100vw - 32px));
-}
-
-.sl-toast-stack {
+/* All transient notifications share one top-center placement. */
+.sl-toast-stack,
+.workspace-notification {
   position: fixed;
-  top: 20px;
+  top: max(16px, env(safe-area-inset-top, 0px));
   right: auto;
   bottom: auto;
   left: 50%;
   transform: translateX(-50%);
-  width: min(420px, calc(100vw - 32px));
+  width: min(28rem, calc(100vw - 32px));
   z-index: 10000;
 }
 
@@ -136,25 +129,28 @@ sl-textarea::part(textarea) {
   user-select: text;
 }
 
-/* Topbar: right-aligned controls with matching avatar/button dimensions. */
+/* Shared header controls; mobile keeps actions left and profile right. */
 .workspace-topbar {
   --topbar-control-size: 40px;
   --topbar-icon-size: 21px;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: nowrap;
 }
-
-.workspace-topbar > nav {
-  flex: 0 1 auto;
-  margin-block: 0;
+.workspace-header-actions,
+.workspace-header-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-spacing-small);
+  min-width: 0;
 }
-
+.workspace-header-actions { flex: 0 0 auto; }
+.workspace-header-profile { flex: 0 1 auto; max-width: 22rem; }
 .workspace-topbar .icon-btn {
   flex: 0 0 var(--topbar-control-size);
   width: var(--topbar-control-size);
   height: var(--topbar-control-size);
 }
-
 .workspace-topbar .icon-btn::part(base) {
   box-sizing: border-box;
   width: var(--topbar-control-size);
@@ -162,34 +158,25 @@ sl-textarea::part(textarea) {
   min-height: var(--topbar-control-size);
   padding: 0;
 }
-
 .workspace-topbar .icon-btn svg {
   width: var(--topbar-icon-size);
   height: var(--topbar-icon-size);
   flex-shrink: 0;
 }
-
-.workspace-topbar .profile-area {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: min(100%, 22rem);
-  align-items: center;
-}
-
-.workspace-topbar .profile-area > sl-avatar {
-  --size: var(--topbar-control-size);
-  flex: 0 0 var(--topbar-control-size);
-}
-
+.workspace-topbar .profile-area { min-width: 0; max-width: 100%; }
 .workspace-topbar .profile-menu-trigger::part(base) {
   height: var(--topbar-control-size);
   min-height: var(--topbar-control-size);
+  padding-inline: var(--sl-spacing-x-small);
 }
-
-.workspace-topbar .profile-menu-trigger::part(label) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.workspace-topbar .profile-menu-trigger::part(label) { overflow: hidden; }
+.profile-menu-trigger .control-content { gap: var(--sl-spacing-small); }
+.profile-menu-trigger sl-avatar { --size: 30px; flex: 0 0 auto; }
+.profile-menu-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 1000px) {
+  .workspace-topbar { justify-content: space-between; }
+  .workspace-header-profile { margin-inline-start: auto; }
+  .profile-menu-name { display: none; }
 }
 
 /* Main categories stand out without changing table geometry. */
