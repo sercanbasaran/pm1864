@@ -953,8 +953,8 @@ sl-button::part(label) {
 }
 .catalog td:nth-child(4),
 .price-manager td:nth-child(3),
-.variant-manager td:nth-child(3),
-.variant-manager td:nth-child(5) {
+.variant-manager td:nth-child(4),
+.variant-manager td:nth-child(6) {
   white-space: nowrap;
 }
 .product-cell {
@@ -1264,4 +1264,33 @@ sl-button > svg[slot="prefix"],
 sl-button > svg[slot="suffix"] {
   display: block;
   flex: none;
+}
+
+.variant-module {
+  display: grid;
+  gap: var(--sl-spacing-large);
+  min-width: 0;
+  max-width: 100%;
+}
+.variant-type-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sl-spacing-medium);
+  flex-wrap: wrap;
+  margin-block: var(--sl-spacing-large);
+}
+.variant-type-form sl-input {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+.variant-type-manager {
+  min-width: 0;
+}
+.variant-type-manager::part(base),
+.variant-type-manager::part(body) {
+  min-width: 0;
+  max-width: 100%;
+}
+.variant-type-manager table {
+  min-width: 30rem;
 }

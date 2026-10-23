@@ -1,3 +1,4 @@
+import { defaultVariantTypes } from "../src/variant-types.js";
 import {
   salesAvailability,
   effectiveSales,
@@ -20,7 +21,12 @@ import {
 } from "../src/hierarchy.js";
 import { bulkPrice } from "../src/catalog-tools.js";
 import { randomUUID } from "node:crypto";
-import { slugify, validateCategory, validateProduct } from "../src/catalog.js";
+import {
+  slugify,
+  normalizeName,
+  validateCategory,
+  validateProduct,
+} from "../src/catalog.js";
 export class ApiError extends Error {
   constructor(status, message, code = "REQUEST_ERROR") {
     super(message);
@@ -44,6 +50,7 @@ export const seedCatalog = () => ({
     parentId: "",
     active: true,
   })),
+  variantTypes: defaultVariantTypes(),
   products: [],
   logs: [],
   settings: { skuPrefix: "HM" },
@@ -55,6 +62,7 @@ export function publicCatalog(doc, revision) {
   return {
     revision,
     categories: doc.categories,
+    variantTypes: doc.variantTypes,
     products: doc.products.map(
       ({ channels, channelVersions, dirty, ...p }) => ({
         ...p,
@@ -170,6 +178,48 @@ export function createCatalogService(db) {
       );
     });
   }
+  async function addVariantType(body, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      const name =
+        typeof body.name === "string"
+          ? body.name.trim().replace(/\s+/g, " ")
+          : "";
+      if (!name || name.length > 50)
+        throw new ApiError(422, "Varyant tipi adı 1–50 karakter olmalıdır.");
+      if (
+        doc.variantTypes.some(
+          (type) => normalizeName(type.name) === normalizeName(name),
+        )
+      )
+        throw new ApiError(422, "Bu varyant tipi zaten var.");
+      if (doc.variantTypes.length >= 50)
+        throw new ApiError(422, "En fazla 50 varyant tipi oluşturabilirsiniz.");
+      doc.variantTypes.push({
+        id: randomUUID(),
+        name,
+        requiresQuantity: normalizeName(name) === "dilim",
+      });
+      audit(doc, "Varyant tipi eklendi", name, actor);
+    });
+  }
+  async function removeVariantType(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      const type = doc.variantTypes.find((type) => type.id === id);
+      if (!type) throw new ApiError(404, "Varyant tipi bulunamadı.");
+      if (
+        doc.products.some((product) =>
+          product.variants.some((variant) => variant.typeId === id),
+        )
+      )
+        throw new ApiError(
+          409,
+          "Bu varyant tipi kullanılıyor. Önce bağlı varyantların tipini değiştirin.",
+          "VARIANT_TYPE_IN_USE",
+        );
+      doc.variantTypes = doc.variantTypes.filter((type) => type.id !== id);
+      audit(doc, "Varyant tipi kaldırıldı", type.name, actor);
+    });
+  }
   async function saveProduct(body, id, actor) {
     return mutate(body.expectedRevision, actor, async (doc, tx) => {
       const old = id ? doc.products.find((p) => p.id === Number(id)) : null;
@@ -225,25 +275,24 @@ export function createCatalogService(db) {
           customImage: text(input.customImage, 2000),
           image: Number.isInteger(input.image) ? input.image : 0,
           variants: Array.isArray(input.variants)
-            ? input.variants
-                .slice(0, 50)
-                .map((v) => ({
-                  id: v.id,
-                  size: text(v.size, 30),
-                  price: v.price,
-                  weight: v.weight,
-                  salesAvailability: v.salesAvailability,
-                  unit:
-                    v.unit ??
-                    old?.variants.find((o) => o.id === v.id)?.unit ??
-                    "Adet",
-                  packaging:
-                    v.packaging ??
-                    old?.variants.find((o) => o.id === v.id)?.packaging ??
-                    "",
-                  slices: v.slices,
-                  active: v.active !== false,
-                }))
+            ? input.variants.slice(0, 50).map((v) => ({
+                id: v.id,
+                size: text(v.size, 30),
+                typeId: typeof v.typeId === "string" ? v.typeId : "",
+                price: v.price,
+                weight: v.weight,
+                salesAvailability: v.salesAvailability,
+                unit:
+                  v.unit ??
+                  old?.variants.find((o) => o.id === v.id)?.unit ??
+                  "Adet",
+                packaging:
+                  v.packaging ??
+                  old?.variants.find((o) => o.id === v.id)?.packaging ??
+                  "",
+                slices: v.slices ?? 0,
+                active: v.active !== false,
+              }))
             : [],
           isNew: !old,
         };
@@ -264,7 +313,7 @@ export function createCatalogService(db) {
         if (!["http:", "https:"].includes(url.protocol))
           throw new ApiError(422, "Görsel URL’si HTTP veya HTTPS olmalı.");
       }
-      const error = validateProduct(p, doc.categories);
+      const error = validateProduct(p, doc.categories, doc.variantTypes);
       if (error) throw new ApiError(422, error.message);
       p.salesAvailability = salesAvailability(
         p.salesAvailability,
@@ -462,7 +511,12 @@ export function createCatalogService(db) {
       : /^https?:\/\//i.test(product.customImage || "")
         ? product.customImage
         : "";
-    return productCardData(product, catalog.categories, image);
+    return productCardData(
+      product,
+      catalog.categories,
+      image,
+      catalog.variantTypes,
+    );
   }
   async function publishCard(body, id, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
@@ -492,6 +546,8 @@ export function createCatalogService(db) {
   return {
     read,
     mutate,
+    addVariantType,
+    removeVariantType,
     saveCategory,
     saveProduct,
     bulk,

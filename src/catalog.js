@@ -1,3 +1,4 @@
+import { defaultVariantTypes } from "./variant-types.js";
 import { validateSalesAvailability } from "./sales-availability.js";
 import { validateProductInformation } from "./product-information.js";
 export const variantUnits = [
@@ -73,7 +74,11 @@ export function validateCategory(draft, categories) {
   }
   return "";
 }
-export function validateProduct(product, categories) {
+export function validateProduct(
+  product,
+  categories,
+  variantTypes = defaultVariantTypes(),
+) {
   if (!product.name.trim())
     return { tab: "Genel bilgiler", message: "Ürün adı gerekli." };
   if (
@@ -110,6 +115,26 @@ export function validateProduct(product, categories) {
     return {
       tab: "Varyant & fiyat",
       message: "Varyant adları dolu ve birbirinden farklı olmalı.",
+    };
+  if (
+    product.variants.some(
+      (v) => !variantTypes.some((type) => type.id === v.typeId),
+    )
+  )
+    return {
+      tab: "Varyant & fiyat",
+      message: "Her varyant için bir varyant tipi seçin.",
+    };
+  if (
+    product.variants.some(
+      (v) =>
+        variantTypes.find((type) => type.id === v.typeId)?.requiresQuantity &&
+        (!Number.isInteger(v.slices) || v.slices < 1 || v.slices > 100000),
+    )
+  )
+    return {
+      tab: "Varyant & fiyat",
+      message: "Dilim tipi için 1–100.000 arasında tam sayı dilim adedi girin.",
     };
   if (
     product.variants.some(

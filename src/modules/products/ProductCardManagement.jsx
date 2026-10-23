@@ -17,7 +17,7 @@ import {
 import ProductDetails from "./ProductDetails.jsx";
 
 export default function ProductCardManagement({ product, user, onClose }) {
-  const { categories, busy, mutate, notify } = useCatalog(),
+  const { categories, variantTypes, busy, mutate, notify } = useCatalog(),
     qr = useRef(null),
     [error, setError] = useState(""),
     [downloading, setDownloading] = useState(false);
@@ -89,7 +89,14 @@ export default function ProductCardManagement({ product, user, onClose }) {
   return (
     <EditorPage title="Ürün kartı ve QR" onClose={onClose} busy={busy}>
       <div className="product-card-workspace">
-        <ProductDetails product={productCardData(product, categories)} />
+        <ProductDetails
+          product={productCardData(
+            product,
+            categories,
+            product.customImage,
+            variantTypes,
+          )}
+        />
         <Card className="product-card-sharing">
           <h3>QR kod ve paylaşım</h3>
           <SlTag variant={live ? "success" : "neutral"}>

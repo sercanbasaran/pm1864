@@ -1,3 +1,4 @@
+import { upgradeVariantTypes } from "../src/variant-types.js";
 import { upgradeHierarchy } from "../src/hierarchy.js";
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -88,68 +89,124 @@ export async function openDatabase(env = process.env) {
   };
 }
 
-export async function migrate(db, seed) {
-  await db.transaction(async (tx) => {
-    if (tx.dialect === "postgres")
-      await tx.query("SELECT pg_advisory_xact_lock(18641864)");
-    await tx.query(
-      "CREATE TABLE IF NOT EXISTS app_catalog (id INTEGER PRIMARY KEY, revision INTEGER NOT NULL, document TEXT NOT NULL)",
-    );
-    await tx.query(
-      "CREATE TABLE IF NOT EXISTS app_sessions (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at BIGINT NOT NULL)",
-    );
-    await tx.query(
-      "CREATE TABLE IF NOT EXISTS app_media (id TEXT PRIMARY KEY,name TEXT NOT NULL,mime_type TEXT NOT NULL,size INTEGER NOT NULL,data TEXT NOT NULL,version INTEGER NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)",
-    );
-    await tx.query(
-      "CREATE TABLE IF NOT EXISTS app_users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, active INTEGER NOT NULL, must_change_password INTEGER NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
-    );
-    if (tx.dialect === "postgres")
-      await tx.query(
-        "ALTER TABLE app_users ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'light'",
+export async function migrate(db, seed) {…10025 tokens truncated…ector("canvas");
+      if (!source?.width)
+        throw new Error("QR kod hazırlanamadı. Yeniden deneyin.");
+      const canvas = document.createElement("canvas"),
+        margin = Math.ceil(source.width * 0.1);
+      canvas.width = canvas.height = source.width + margin * 2;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Bu tarayıcı QR indirmeyi desteklemiyor.");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(source, margin, margin);
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/png"),
       );
-    else {
-      const columns = (
-        await tx.query("SELECT name FROM pragma_table_info('app_users')")
-      ).rows;
-      if (!columns.some((column) => column.name === "theme"))
-        await tx.query(
-          "ALTER TABLE app_users ADD COLUMN theme TEXT NOT NULL DEFAULT 'light'",
-        );
+      if (!blob) throw new Error("QR dosyası oluşturulamadı.");
+      const href = URL.createObjectURL(blob),
+        link = document.createElement("a");
+      link.href = href;
+      link.download = product.productCode + "-QR.png";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 1000);
+      notify("QR kod indirildi.");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDownloading(false);
     }
-    if (tx.dialect === "postgres")
-      await tx.query(
-        "ALTER TABLE app_users ADD COLUMN IF NOT EXISTS avatar_version INTEGER NOT NULL DEFAULT 0",
-      );
-    else {
-      const columns = (
-        await tx.query("SELECT name FROM pragma_table_info('app_users')")
-      ).rows;
-      if (!columns.some((column) => column.name === "avatar_version"))
-        await tx.query(
-          "ALTER TABLE app_users ADD COLUMN avatar_version INTEGER NOT NULL DEFAULT 0",
-        );
-    }
-    await tx.query(
-      "CREATE TABLE IF NOT EXISTS app_user_avatars (user_id TEXT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,mime_type TEXT NOT NULL,data TEXT NOT NULL)",
-    );
-    await tx.query(
-      "INSERT INTO app_catalog (id, revision, document) VALUES (1, 0, ?) ON CONFLICT (id) DO NOTHING",
-      [JSON.stringify({ ...seed, schemaVersion: 2 })],
-    );
-    const row = (
-      await tx.query(
-        "SELECT revision, document FROM app_catalog WHERE id=1" +
-          (tx.dialect === "postgres" ? " FOR UPDATE" : ""),
-      )
-    ).rows[0];
-    const doc = JSON.parse(row.document);
-    if (doc.schemaVersion !== 2) {
-      upgradeHierarchy(doc);
-      await tx.query(
-        "UPDATE app_catalog SET revision=?,document=? WHERE id=1",
-        [Number(row.revision) + 1, JSON.stringify(doc)],
-      );
-    }
-  });
+  }
+  return (
+    <EditorPage title="Ürün kartı ve QR" onClose={onClose} busy={busy}>
+      <div className="product-card-workspace">
+        <ProductDetails
+          product={productCardData(
+            product,
+            categories,
+            product.customImage,
+            variantTypes,
+          )}
+        />
+        <Card className="product-card-sharing">
+          <h3>QR kod ve paylaşım</h3>
+          <SlTag variant={live ? "success" : "neutral"}>
+            {live ? "Yayında" : enabled ? "Yayın durduruldu" : "Yayınlanmadı"}
+          </SlTag>
+          <p className="muted">
+            Yayınlanan kart, QR kod veya bağlantı üzerinden giriş yapmadan
+            görüntülenir. Ürün güncellemeleri aynı bağlantıya yansır.
+          </p>
+          {can(user, "products.write") && (
+            <SlSwitch
+              checked={enabled}
+              disabled={busy || (!enabled && !eligible)}
+              onSlChange={publish}
+            >
+              Ürün kartını yayınla
+            </SlSwitch>
+          )}
+          {!eligible && (
+            <SlAlert open variant="neutral">
+              Yayınlamak için ürün, ana kategori ve alt kategori aktif olmalı;
+              en az bir aktif varyant bulunmalıdır.
+            </SlAlert>
+          )}
+          {error && (
+            <SlAlert open variant="danger">
+              {error}
+            </SlAlert>
+          )}
+          <div className="product-qr-frame">
+            <SlQrCode
+              ref={qr}
+              value={url}
+              label={product.name + " ürün kartı QR kodu"}
+              size={200}
+              errorCorrection="H"
+              fill="#000000"
+              background="#ffffff"
+              radius={0}
+            />
+          </div>
+          <div>
+            <Input
+              label="Ürün kartı bağlantısı"
+              aria-label="Ürün kartı bağlantısı"
+              value={url}
+              readOnly
+            />
+          </div>
+          <div className="product-card-share-actions">
+            <Button type="button" onClick={copy}>
+              <Copy size={18} />
+              Bağlantıyı kopyala
+            </Button>
+            <Button type="button" disabled={downloading} onClick={download}>
+              <DownloadSimple size={18} />
+              QR kodu indir
+            </Button>
+            <Button
+              type="button"
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              disabled={!live}
+            >
+              <ArrowSquareOut size={18} />
+              Public kartı aç
+            </Button>
+          </div>
+          {!live && (
+            <p className="muted">
+              Bu QR kod ve bağlantı, kart yayınlandıktan sonra herkese açık
+              olarak çalışır.
+            </p>
+          )}
+        </Card>
+      </div>
+    </EditorPage>
+  );
 }

@@ -8,6 +8,7 @@ import { Plus, X, ArrowUp, ArrowDown, Copy } from "@phosphor-icons/react";
 export function newVariant() {
   return {
     size: "",
+    typeId: "",
     weight: 500,
     unit: "Adet",
     packaging: "",
@@ -16,7 +17,12 @@ export function newVariant() {
     active: true,
   };
 }
-export default function VariantFields({ product, onChange, disabled = false }) {
+export default function VariantFields({
+  product,
+  variantTypes = [],
+  onChange,
+  disabled = false,
+}) {
   function update(index, patch) {
     onChange({
       ...product,
@@ -118,11 +124,31 @@ export default function VariantFields({ product, onChange, disabled = false }) {
             </div>
           </div>
           <div className="variant-fields">
+            <div>
+              <Select
+                label="Varyant tipi"
+                required
+                value={v.typeId || ""}
+                onChange={(e) => update(i, { typeId: e.target.value })}
+              >
+                <option value="">Varyant tipi seçin</option>
+                {variantTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            {!variantTypes.length && (
+              <p className="input-help">
+                Önce Varyant yönetiminden bir varyant tipi ekleyin.
+              </p>
+            )}
+
             {[
               ["size", "Boyut / ad", "text"],
               ["weight", "Gramaj (g)", "number"],
               ["price", "Fiyat (₺)", "number"],
-              ["slices", "Dilim sayısı", "number"],
             ].map(([key, label, type]) => (
               <div key={key}>
                 <Input
@@ -144,6 +170,40 @@ export default function VariantFields({ product, onChange, disabled = false }) {
                 />
               </div>
             ))}
+            {(variantTypes.find((type) => type.id === v.typeId)
+              ?.requiresQuantity ||
+              v.slices > 0) && (
+              <div>
+                <Input
+                  label="Dilim adedi"
+                  type="number"
+                  required={
+                    variantTypes.find((type) => type.id === v.typeId)
+                      ?.requiresQuantity
+                  }
+                  min={
+                    variantTypes.find((type) => type.id === v.typeId)
+                      ?.requiresQuantity
+                      ? 1
+                      : 0
+                  }
+                  max={100000}
+                  step={1}
+                  value={v.slices ?? 0}
+                  onChange={(e) =>
+                    update(i, {
+                      slices:
+                        e.target.value === ""
+                          ? variantTypes.find((type) => type.id === v.typeId)
+                              ?.requiresQuantity
+                            ? null
+                            : 0
+                          : Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
+            )}
             <div>
               <Select
                 label="Birim"

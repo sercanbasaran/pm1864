@@ -12,7 +12,7 @@ async function fixture(){
  }
  async function call(...args){const response=await raw(...args);return {status:response.status,...await response.json()}}
  await call('/login','POST',{email:'cards@example.test',password});
- const {catalog}=await call('/products','POST',{expectedRevision:0,product:{name:'Fıstıklı Baklava',category:'Baklavalar',status:'Aktif',description:'Taze ürün',nutrition:'100 g için: Enerji 400 kcal.',allergens:'Fıstık içerir.',storageConditions:'Serin yerde.',longTermStorage:'Muhafaza talimatı.',variants:[{size:'S',price:100.25,weight:500,unit:'Kutu',packaging:'Metal kutu',slices:12},{size:'M',price:200.75,weight:900,slices:24,active:false}]}});
+ const {catalog}=await call('/products','POST',{expectedRevision:0,product:{name:'Fıstıklı Baklava',category:'Baklavalar',status:'Aktif',description:'Taze ürün',nutrition:'100 g için: Enerji 400 kcal.',allergens:'Fıstık içerir.',storageConditions:'Serin yerde.',longTermStorage:'Muhafaza talimatı.',variants:[{size:'S',typeId:'type-item',price:100.25,weight:500,unit:'Kutu',packaging:'Metal kutu',slices:12},{size:'M',typeId:'type-item',price:200.75,weight:900,slices:24,active:false}]}});
  return {app,raw,call,catalog,product:catalog.products[0],path:'/public/products/'+catalog.products[0].productCode};
 }
 test('only explicitly published eligible products are public, with an allowlist of product and active variant fields',async()=>{
@@ -22,7 +22,7 @@ test('only explicitly published eligible products are public, with an allowlist 
   const response=await f.raw(f.path,'GET',undefined,true);assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
   const {product}=await response.json();assert.deepEqual(Object.keys(product).sort(),['productCode','sku','name','category','description','customImage','nutrition','storageConditions','allergens','longTermStorage','variants'].sort());
   assert.equal(product.name,'Fıstıklı Baklava');assert.equal(product.variants.length,1);assert.equal(product.variants[0].price,100.25);assert.equal(product.variants[0].packaging,'Metal kutu');assert.equal(product.nutrition,f.product.nutrition);
-  assert.deepEqual(Object.keys(product.variants[0]).sort(),['sku','size','weight','unit','packaging','slices','price'].sort());
+  assert.deepEqual(Object.keys(product.variants[0]).sort(),['sku','size','typeName','weight','unit','packaging','slices','price'].sort());
   assert.equal(JSON.stringify(product).includes('cards@example.test'),false);assert.equal((await f.call('/catalog','GET',undefined,true)).status,401);assert.equal((await f.call('/media','GET',undefined,true)).status,401);
   assert.equal((await f.call('/public/products/P999999','GET',undefined,true)).status,404);
  }finally{await f.app.close()}

@@ -37,6 +37,12 @@ export default function ProductDetails({ product }) {
                 <strong>{money(variant.price)}</strong>
               </div>
               <dl>
+                {variant.typeName && (
+                  <>
+                    <dt>Varyant tipi</dt>
+                    <dd>{variant.typeName}</dd>
+                  </>
+                )}
                 {variant.weight > 0 && (
                   <>
                     <dt>Gramaj</dt>

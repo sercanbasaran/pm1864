@@ -17,6 +17,8 @@ API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma 
 | GET | `/catalog` | `catalog.read`; `{catalog}` |
 | POST | `/categories` | `categories.write`; `{expectedRevision,category}` |
 | PUT | `/categories/:id` | `categories.write`; `{expectedRevision,category}` |
+| POST | `/variant-types` | `products.write`; `{expectedRevision,name}`; benzersiz 1–50 karakter ad |
+| DELETE | `/variant-types/:id` | `products.write`; `{expectedRevision}`; kullanımda ise `409 VARIANT_TYPE_IN_USE` |
 | POST | `/products` | `products.write`; `{expectedRevision,product}` |
 | PUT | `/products/:id` | `products.write`; `{expectedRevision,product}` |
 | PATCH | `/products/:id/card` | `products.write`; `{expectedRevision,enabled:boolean}` |
@@ -41,7 +43,7 @@ Rol kimlikleri: `admin`, `editor`, `viewer`. Kullanıcı oluşturma 201 döner. 
 ```
 
 ```json
-{"expectedRevision":1,"product":{"name":"Fıstıklı Pasta","category":"Pastalar","status":"Aktif","description":"Ürün açıklaması","allergens":"Süt, gluten, fıstık","customImage":"https://example.com/pasta.webp","variants":[{"size":"Porsiyon","weight":180,"price":500,"slices":1}]}}
+{"expectedRevision":1,"product":{"name":"Fıstıklı Pasta","category":"Pastalar","status":"Aktif","description":"Ürün açıklaması","allergens":"Süt, gluten, fıstık","customImage":"https://example.com/pasta.webp","variants":[{"size":"Porsiyon","typeId":"type-portion","weight":180,"price":500,"slices":1}]}}
 ```
 
 `id`, `sku`, `version` ve tarihler sunucuda üretilir. SKU sabittir. Kategori kodu güncellemede korunur. Ürün durumları `Aktif` ve `Taslak`tır; dış platform yayın durumunu ifade etmez.
@@ -114,3 +116,9 @@ Kullanıcı yanıtları `theme` alanını içerir. Varsayılan `light`, diğer g
 
 
 Kullanıcı yanıtındaki `avatarUrl`, fotoğraf yoksa boş metindir. Görsel URL’si hesap kimliği ve fotoğraf sürümünü içerir; yükleme/değiştirme/kaldırma kullanıcı `version` değerini günceller. Başka kullanıcı kimliği gönderilse de yazma işlemi yalnızca oturum sahibini etkiler. GET isteğinde farklı `user` sorgusu 404 döndürür. Geçersiz dosya 422, sürüm çakışması 409, oturumsuz erişim 401 döndürür. Fotoğraf baytları kullanıcı veya katalog JSON yanıtlarına dahil edilmez.
+
+## Varyant tipi ve dilim adedi
+
+`GET /catalog` yanıtı `variantTypes: [{id,name,requiresQuantity}]` listesini döndürür. Ürün kaydetmede her varyantın `typeId` alanı bu listedeki bir kimlikle eşleşmelidir; yeni veya güncellenen varyantta eksik/geçersiz tip 422 döndürür. Dilim tipinde `slices` 1–100000 arasında tam sayı olmalıdır; boş, sıfır, negatif, kesirli veya metin değerler reddedilir. Başlangıç tipleri `type-item`, `type-slice`, `type-portion`, `type-box`, `type-weight` kimliklerini kullanır. Eklenen tip kimliklerini sunucu üretir; listeden okuyun.
+
+`POST /variant-types` normalize edilmiş yinelenen adı reddeder. Dilim adıyla yeniden oluşturulan tipte `requiresQuantity` sunucuda daima true olur. Tip limiti 50'dir. `DELETE` aktif veya pasif ürün/varyant referansı bulunduğunda reddedilir. Tür işlemleri diğer katalog değişiklikleriyle aynı kilidi, `expectedRevision` kontrolünü ve işlem geçmişini kullanır. Tipler SKU öneki ayarlarından bağımsız saklanır. Public ürün kartında yalnızca tipin görünen adı `variant.typeName` olarak yer alır; tip kimlikleri ve yönetim listesi yayınlanmaz.

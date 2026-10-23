@@ -107,6 +107,14 @@ Sabit demo fotoğrafları kullanılmaz. Görseli olmayan veya yüklenemeyen ür�
 
 `npm run test:ui`, DOM ortamında gerçek uygulama API’sine bağlı giriş, kategori / ürün oluşturma, fiyat düzenleme, toplu önizleme, profil, bildirim, filtre, dışa aktarma ve görüntüleyici erişimi akışlarını doğrular. Üretim Supabase verileri testlerde kullanılmaz.
 
+## Varyant tipleri
+
+**Varyant yönetimi → Varyant tipleri** alanından yönetici ve editörler tip ekleyip kaldırabilir. Başlangıç tipleri Adet, Dilim, Porsiyon, Kutu ve Gramaj'dır. Aktif veya pasif bir varyantta kullanılan tip kaldırılamaz; önce o varyantların tiplerini değiştirin. Tipler katalog sürümü ve işlem geçmişiyle kalıcı saklanır.
+
+Ürün ekleme ve düzenlemede **her varyant için Varyant tipi seçimi zorunludur**. Yeni varyantta seçim boş başlar. Dilim tipi seçildiğinde **Dilim adedi** alanına 1–100.000 arasında tam sayı girilmelidir. Aynı kural API'de de uygulanır. Birim ve ambalaj alanları ayrı kalır; örneğin Dilim tipi bir varyantın satış birimi Kutu olabilir.
+
+Mevcut katalog ilk açılışta kayıpsız güncellenir: dilim sayısı pozitif varyantlar Dilim, diğerleri Adet tipiyle eşleşir. Ürün/varyant kimlikleri, SKU, fiyat, dilim sayıları ve kullanıcılar korunur. Ek ortam değişkeni veya elle SQL işlemi gerekmez. Varyant tipi listeleme, filtreleme, CSV ve public ürün kartında gösterilir.
+
 ## Kategori ve varyant hiyerarşisi
 
 Katalog yapısı **Ana kategori → Alt kategori → Ürün → Varyant** şeklindedir. Kategoriler ekranında ana kategori kartının içinden alt kategori eklenir. Ürün formu iki ayrı kategori seçimi kullanır; ürünler `categoryId` ile bir alt kategoriye bağlanır. Aynı alt kategori adı farklı ana kategorilerde kullanılabilir; kod ve bağlantı benzersizdir. Ana kategori veya alt kategori pasifse yeni ürün ataması yapılmaz. Üçüncü kategori seviyesi oluşturulamaz.

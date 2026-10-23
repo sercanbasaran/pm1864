@@ -7,7 +7,7 @@ async function fixture(){
  const app=await createApp({env:{SQLITE_PATH:':memory:',ADMIN_EMAIL:'admin@example.test',ADMIN_PASSWORD_HASH:hash}});
  function client(){let cookie='';return async(path,method='GET',body)=>{const response=await app.handle(new Request('https://test.local/api'+path,{method,headers:{origin:'https://test.local',cookie,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}));if(response.headers.has('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];return {status:response.status,...await response.json()}}}
  const call=client();await call('/login','POST',{email:'admin@example.test',password});
- const input={name:'Price test',category:'Baklavalar',status:'Aktif',description:'Keep description',allergens:'Gluten',variants:[{size:'S',price:100.25,weight:500,slices:10},{size:'M',price:200.75,weight:900,slices:18}]};
+ const input={name:'Price test',category:'Baklavalar',status:'Aktif',description:'Keep description',allergens:'Gluten',variants:[{size:'S',typeId:'type-item',price:100.25,weight:500,slices:10},{size:'M',typeId:'type-item',price:200.75,weight:900,slices:18}]};
  const {catalog}=await call('/products','POST',{expectedRevision:0,product:input});
  return {app,call,client,product:catalog.products[0],catalog};
 }

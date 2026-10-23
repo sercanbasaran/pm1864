@@ -11,7 +11,7 @@ async function fixture(role='admin'){
  await call('/login','POST',{email:'test@example.test',password});if(role!=='admin')await app.db.query('UPDATE app_users SET role=? WHERE email=?',[role,'test@example.test']);
  return {app,call};
 }
-const variant=(size='S')=>({size,weight:500,price:100.25,slices:12});
+const variant=(size='S')=>({size,typeId:'type-item',weight:500,price:100.25,slices:12});
 async function sub(f,root,name='Fıstıklı',code='101'){const c=(await f.call('/catalog')).catalog;const r=await f.call('/categories','POST',{expectedRevision:c.revision,category:{name,code,slug:root.id+'-'+code,parentId:root.id,active:true}});assert.equal(r.status,200);return r.catalog.categories.at(-1)}
 async function save(f,categoryId,variants=[variant()],product){const c=(await f.call('/catalog')).catalog;return f.call('/products'+(product?'/'+product.id:''),product?'PUT':'POST',{expectedRevision:c.revision,product:{name:'Kare Baklava',status:'Aktif',categoryId,variants,...product}})}
 test('products belong to child ids; sibling names may repeat across roots; reparent and rename preserve identities',async()=>{
@@ -28,9 +28,9 @@ test('inactive ancestors prevent new assignments while existing products remain 
 });
 test('variant ids and SKUs survive rename/reorder; deleted suffixes are never reused and forged ids are rejected',async()=>{
  const f=await fixture();try{const root=(await f.call('/catalog')).catalog.categories[0],child=await sub(f,root);let r=await save(f,child.id,[variant('S'),variant('M')]);let p=r.catalog.products[0];const first=p.variants[0],second=p.variants[1];
- r=await save(f,child.id,[],{...p,variants:[{...second,size:'Large'},{...first,active:false},variant('XL')]});assert.equal(r.status,200);p=r.catalog.products[0];assert.equal(p.variants[0].id,second.id);assert.equal(p.variants[0].sku,second.sku);assert.equal(p.variants[1].active,false);const removed=p.variants[2].sku;
+ r=await save(f,child.id,[],{...p,variants:[{...second,size:'Large',typeId:'type-item'},{...first,active:false},variant('XL')]});assert.equal(r.status,200);p=r.catalog.products[0];assert.equal(p.variants[0].id,second.id);assert.equal(p.variants[0].sku,second.sku);assert.equal(p.variants[1].active,false);const removed=p.variants[2].sku;
  r=await save(f,child.id,[],{...p,variants:[p.variants[0]]});p=r.catalog.products[0];r=await save(f,child.id,[],{...p,variants:[...p.variants,variant('XXL')]});p=r.catalog.products[0];assert.notEqual(p.variants[1].sku,removed);assert.notEqual(p.variants[1].sku,first.sku);
- const before=r.catalog;assert.equal((await save(f,child.id,[],{...p,variants:[{...variant(),id:'forged'}]})).status,422);assert.equal((await save(f,child.id,[],{...p,variants:[p.variants[0],{...p.variants[0],size:'Duplicate'}]})).status,422);assert.equal((await save(f,child.id,[],{...p,variants:[]})).status,422);assert.deepEqual((await f.call('/catalog')).catalog,before);
+ const before=r.catalog;assert.equal((await save(f,child.id,[],{...p,variants:[{...variant(),id:'forged'}]})).status,422);assert.equal((await save(f,child.id,[],{...p,variants:[p.variants[0],{...p.variants[0],size:'Duplicate',typeId:'type-item'}]})).status,422);assert.equal((await save(f,child.id,[],{...p,variants:[]})).status,422);assert.deepEqual((await f.call('/catalog')).catalog,before);
  }finally{await f.app.close()}
 });
 test('existing catalog migrates transactionally once, retaining SKU, account data and product ids',async()=>{

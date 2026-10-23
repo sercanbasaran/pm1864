@@ -1,3 +1,4 @@
+import { variantTypeName } from "../../variant-types.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -48,7 +49,7 @@ export default function ProductManagement({
   onBulk,
   onCard,
 }) {
-  const { products, categories, busy } = useCatalog(),
+  const { products, categories, variantTypes, busy } = useCatalog(),
     [query, setQuery] = useState(""),
     [category, setCategory] = useState(""),
     [status, setStatus] = useState(""),
@@ -147,6 +148,8 @@ export default function ProductManagement({
           "Ana kategori / Alt kategori",
           "Varyant",
           "Varyant SKU",
+          "Varyant tipi",
+          "Dilim adedi",
           "Gramaj (g)",
           "Birim",
           "Ambalaj",
@@ -162,6 +165,8 @@ export default function ProductManagement({
             categoryPath(categoryOf(p, categories), categories),
             v.size,
             v.sku,
+            variantTypeName(v, variantTypes),
+            v.slices,
             v.weight,
             v.unit || "Adet",
             v.packaging || "",

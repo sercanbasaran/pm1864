@@ -26,7 +26,7 @@ export default function ProductEditor({
   const [draft, setDraft] = useState(() => structuredClone(product)),
     [active, setActive] = useState(tab),
     [error, setError] = useState(""),
-    { categories, busy, mutate, notify } = useCatalog();
+    { categories, variantTypes, busy, mutate, notify } = useCatalog();
   async function save(e) {
     e.preventDefault();
     setError("");
@@ -35,7 +35,7 @@ export default function ProductEditor({
           tab: "Genel bilgiler",
           message: "Ana kategori ve alt kategori seçin.",
         }
-      : validateProduct(draft, categories);
+      : validateProduct(draft, categories, variantTypes);
     if (invalid) {
       setActive(invalid.tab);
       setError(invalid.message);
@@ -181,6 +181,7 @@ export default function ProductEditor({
               <VariantFields
                 disabled={busy || readOnly}
                 product={draft}
+                variantTypes={variantTypes}
                 onChange={setDraft}
               />
             )}

@@ -1,3 +1,4 @@
+import { defaultVariantTypes, variantTypeName } from "./variant-types.js";
 import { categoryOf, rootOf, categoryPath } from "./hierarchy.js";
 import { productInformationFields } from "./product-information.js";
 
@@ -22,6 +23,7 @@ export function productCardData(
   product,
   categories,
   image = product.customImage || "",
+  variantTypes = defaultVariantTypes(),
 ) {
   return {
     productCode: productCardCode(product),
@@ -41,6 +43,7 @@ export function productCardData(
       .map((v) => ({
         sku: v.sku,
         size: v.size,
+        typeName: variantTypeName(v, variantTypes),
         weight: v.weight,
         unit: v.unit || "Adet",
         packaging: v.packaging || "",
