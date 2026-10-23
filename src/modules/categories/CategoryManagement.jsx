@@ -30,7 +30,12 @@ import {
   ArrowRight,
   MagnifyingGlass,
 } from "@phosphor-icons/react";
-import { slugify, nextCategoryCode, validateCategory } from "../../catalog.js";
+import {
+  slugify,
+  nextCategoryCode,
+  nextSubcategoryCode,
+  validateCategory,
+} from "../../catalog.js";
 import { roots, categoryMatches } from "../../hierarchy.js";
 export default function CategoryManager({
   categories,
@@ -100,7 +105,9 @@ export default function CategoryManager({
         : {
             id: crypto.randomUUID(),
             name: "",
-            code: nextCategoryCode(categories),
+            code: parentId
+              ? nextSubcategoryCode(categories, parentId)
+              : nextCategoryCode(categories),
             slug: "",
             description: "",
             parentId,
@@ -154,8 +161,14 @@ export default function CategoryManager({
       Yeni kategori ekle
     </Button>
   ) : null;
+  const noCodeAvailable = Boolean(draft?.isNew && !draft.code);
   const saveAction = draft ? (
-    <Button variant="primary" className="btn" disabled={saving} type="submit">
+    <Button
+      variant="primary"
+      className="btn"
+      disabled={saving || noCodeAvailable}
+      type="submit"
+    >
       <Check size={17} />
       {draft.isNew ? "Kategoriyi oluştur" : "Değişiklikleri kaydet"}
     </Button>
@@ -369,9 +382,46 @@ export default function CategoryManager({
             <ActionBar>{saveAction}</ActionBar>
             <fieldset className="editor-fields" disabled={saving}>
               <div className="editor-content">
+                <div>
+                  <Select
+                    label="Ana kategori"
+                    aria-label="Ana kategori"
+                    value={draft.parentId}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        parentId: e.target.value,
+                        code: draft.isNew
+                          ? e.target.value
+                            ? nextSubcategoryCode(categories, e.target.value)
+                            : nextCategoryCode(categories)
+                          : draft.code,
+                        slug: draft.isNew
+                          ? suggestedSlug(draft.name, e.target.value)
+                          : draft.slug,
+                      })
+                    }
+                  >
+                    <option value="">Ana kategori olarak oluştur</option>
+                    {main
+                      .filter((c) => c.id !== draft.id)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.code})
+                        </option>
+                      ))}
+                  </Select>
+                </div>
                 {error && (
                   <SlAlert open variant="danger" className="form-error">
                     {error}
+                  </SlAlert>
+                )}
+                {noCodeAvailable && (
+                  <SlAlert open variant="warning">
+                    {draft.parentId
+                      ? "Bu ana kategorinin kodundan büyük boş üç haneli kod kalmadı. Başka bir ana kategori seçin."
+                      : "Kullanılabilir kategori kodu bulunamadı."}
                   </SlAlert>
                 )}
                 <div>
@@ -397,7 +447,7 @@ export default function CategoryManager({
                     }}
                   />
                 </div>
-                <div className="form-grid">
+                <div>
                   <div>
                     <Input
                       label="Kategori kodu"
@@ -415,33 +465,12 @@ export default function CategoryManager({
                       }
                     />
                     <small className="input-help">
-                      Ürün kodlarını korumak için kayıt sonrası sabittir.
+                      {draft.isNew
+                        ? draft.parentId
+                          ? "Kod, ana kategori kodundan sonraki ilk boş kod olarak önerilir."
+                          : "Kod otomatik önerilir; kayıttan sonra değiştirilemez."
+                        : "Ürün kodlarını korumak için kayıt sonrası sabittir."}
                     </small>
-                  </div>
-                  <div>
-                    <Select
-                      label="Ana kategori"
-                      aria-label="Ana kategori"
-                      value={draft.parentId}
-                      onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          parentId: e.target.value,
-                          slug: draft.isNew
-                            ? suggestedSlug(draft.name, e.target.value)
-                            : draft.slug,
-                        })
-                      }
-                    >
-                      <option value="">Ana kategori olarak oluştur</option>
-                      {main
-                        .filter((c) => c.id !== draft.id)
-                        .map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                    </Select>
                   </div>
                 </div>
                 <div>

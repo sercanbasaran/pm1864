@@ -1,5 +1,7 @@
 # SKU kodlama düzeni
 
+Kategori ekleme formunda ilk alan ana kategori seçimidir; seçenekler `Kategori adı (100)` biçiminde kodlarıyla gösterilir. Yeni alt kategori kodu, seçilen ana kategori kodu + 1 değerinden başlayarak tüm mevcut kategori kodlarını (pasif olanlar dahil) atlayıp ilk boş üç haneli kod olarak önerilir. Örneğin 100 ana kategorisinde 101 ve 102 doluysa 103 önerilir. Ana kategori değiştirildiğinde öneri yeniden hesaplanır; ana kategori olarak oluşturma seçildiğinde standart ana kategori önerisine dönülür. Mevcut kategorilerin kodları değiştirilmez. Ana kategoriden büyük boş bir kod 999'a kadar bulunamazsa form uyarı gösterir.
+
 Varyantların uygulamada gösterilen biçimi `000.000000.00` şeklindedir: `Kategori.AltKategoriÜrün.Varyant`. Örnek: `100.101001.01`.
 
 | Alan | Uzunluk | Örnek |

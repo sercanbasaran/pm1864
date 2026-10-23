@@ -38,6 +38,16 @@ export function nextCategoryCode(categories) {
     ""
   );
 }
+export function nextSubcategoryCode(categories, parentId) {
+  const parent = categories.find((c) => c.id === parentId && !c.parentId);
+  if (!parent || !/^\d{3}$/.test(parent.code)) return "";
+  const used = new Set(categories.map((c) => c.code));
+  for (let value = Number(parent.code) + 1; value <= 999; value++) {
+    const code = String(value).padStart(3, "0");
+    if (!used.has(code)) return code;
+  }
+  return "";
+}
 export function validateCategory(draft, categories) {
   const salesError = validateSalesAvailability(draft.salesAvailability);
   if (salesError) return salesError;
