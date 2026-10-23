@@ -122,7 +122,7 @@ export default function AppShell({
             <Menu size={24} />
           </Button>
           {/* <strong>{current?.label}</strong> */}
-            <nav className="workspace-breadcrumb" aria-label="Modül yolu">
+           {/*  <nav className="workspace-breadcrumb" aria-label="Modül yolu">
               {parent ? (
   <nav className="workspace-breadcrumb" aria-label="Modül yolu">
     <Button
@@ -139,7 +139,7 @@ export default function AppShell({
 ) : (
   <strong>{current?.label}</strong>
 )}
-            </nav>
+            </nav> */}
           <SlTag
             variant={connectionError ? "danger" : "success"}
             className="connection-tag"

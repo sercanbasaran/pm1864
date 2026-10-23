@@ -91,13 +91,6 @@
   background-color: var(--sl-panel-background-color);
   padding-block: 16px;
 }
-.profile-area{
- position: sticky;
- top: 230px;
- z-index: 11;
- background-color: var(--sl-panel-background-color);
- 
-}
 .workspace-sidebar{
     background-color: var(--sl-panel-background-color);
 }
@@ -120,4 +113,25 @@
   transform: translateX(-50%);
   width: min(420px, calc(100vw - 32px));
   z-index: 10000;
+}
+
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Form alanlarında metin seçimine izin ver */
+input,
+textarea,
+[contenteditable="true"],
+sl-input::part(input),
+sl-textarea::part(textarea) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Kopyalanması gereken alanlarda kullan */
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
 }
