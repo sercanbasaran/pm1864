@@ -74,7 +74,7 @@ export default function ProductCardManagement({ product, user, onClose }) {
       const href = URL.createObjectURL(blob),
         link = document.createElement("a");
       link.href = href;
-      link.download = product.productCode + "-QR.png";
+      link.download = product.sku + "-QR.png";
       document.body.append(link);
       link.click();
       link.remove();

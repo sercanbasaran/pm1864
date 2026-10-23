@@ -10,7 +10,7 @@ Hafız Mustafa 1864 için React + Node.js katalog yönetimi. İlk etapta kategor
 | Kategori ekleme / düzenleme | ✓ | ✓ | — |
 | Ürün / varyant ekleme / düzenleme | ✓ | ✓ | — |
 | Fiyat ve toplu fiyat düzenleme | ✓ | ✓ | — |
-| SKU öneki ayarı | ✓ | — | — |
+| Kodlama düzeni görüntüleme | ✓ | — | — |
 | Kullanıcı oluşturma, rol / durum düzenleme | ✓ | — | — |
 | Başka kullanıcının parolasını sıfırlama | ✓ | — | — |
 | Kendi parolasını değiştirme | ✓ | ✓ | ✓ |
@@ -121,7 +121,7 @@ Katalog yapısı **Ana kategori → Alt kategori → Ürün → Varyant** şekli
 
 Varyant yönetimi ekranı kategori, alt kategori, ürün, aktiflik ve SKU araması sunar. Ürün seçip varyant ekleyebilir; mevcut varyantları düzenleyebilir, çoğaltabilir, sıralayabilir, pasifleştirebilir ve silebilirsiniz. Değişiklikler ürün düzenleyicisindeki **Değişiklikleri kaydet** ile birlikte kaydedilir. Son varyant silinemez; ürün başına en fazla 50 varyant vardır.
 
-Her varyantın kalıcı `id` ve otomatik `sku` değeri bulunur (`HM-100-0001-V0001`). İsim, sıra veya kategori değişikliği mevcut ürün / varyant SKU’sunu değiştirmez. Silinen varyantın sıra numarası yeni varyantta tekrar kullanılmaz. Varyantlar aynı ürün içinde benzersiz adlandırılır.
+Her varyantın kalıcı `id` ve otomatik `sku` değeri bulunur (`100.101001.01`). İsim, sıra veya kategori değişikliği mevcut ürün / varyant SKU’sunu değiştirmez. Silinen varyantın sıra numarası yeni varyantta tekrar kullanılmaz. Varyantlar aynı ürün içinde benzersiz adlandırılır.
 
 Mevcut katalog ilk çalışmada sürüm 2 yapısına transaction içinde geçirilir: ana kategoriye doğrudan bağlı ürünler aynı ana kategorinin **Genel** alt kategorisine alınır; ürün, kullanıcı, fiyat ve SKU verileri korunur. Daha derin eski kategori yolları, kimlikler korunarak iki seviyeye indirilir; eski ara yol alt kategori adına yansır. Önceki API istemcilerinin kategori adıyla gönderdiği kayıtlar için Genel alt kategorisi uyumluluğu korunmuştur; yeni arayüz `categoryId` gönderir. Ek ortam değişkeni veya elle SQL kurulumu gerekmez.
 
@@ -131,7 +131,7 @@ Ana menü sırası: Kategori yönetimi → Ürün yönetimi → Varyant yönetim
 
 `src/main.jsx` yalnızca uygulamayı başlatır. `src/app/` uygulama çatısı, modül kaydı ve merkezi katalog durumunu; `src/components/` ortak bileşenleri; `src/modules/` iş alanlarına göre ekranları içerir. Modüller ayrı JavaScript parçaları olarak gerektiğinde yüklenir. Teknik rehber: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Ürün kodu (`P000001`), ürün SKU’su ve varyant SKU’su ayrı alanlardır. Kod modülü arama, listeleme, CSV ve yeni ürünler için SKU öneki yönetimi sunar; mevcut kodlar değişmez.
+Ürün kodu (`001`), ürün SKU’su (`100.101001`) ve varyant SKU’su (`100.101001.01`) ayrı alanlardır. Kod modülü arama, listeleme ve CSV sunar. Kalıcı QR kimliği ayrı tutulur.
 
 Medya modülü gerçek dosya yükleme, önizleme, yeniden adlandırma, arama, ürüne bağlama ve kullanılmayan dosyayı onayla silme işlemleri içerir. PNG / JPEG / WEBP / GIF, en fazla 2 MB desteklenir. Dosyalar `app_media` tablosunda saklanır; katalog yalnızca medya kimliği ve URL’sini taşır. Görsel içeriği yetkili oturumla okunur. Yönetici ve editör yükleyebilir / düzenleyebilir; görüntüleyici okuyabilir. Kullanımdaki dosya sunucuda da silinemez. Yeni ortam değişkeni gerekmez; tablo uygulama açılışında oluşturulur.
 
@@ -181,3 +181,8 @@ Kategori, ürün, varyant, kod/SKU ve fiyat ekranları mevcut API'leri kullanır
 
 
 Sistem Ayarları (`#system-settings`), Kullanıcı Yönetimi (`#user-management`) ve Kütüphane (`#library`) ana modülleri eklendi. Eski `#codes`, `#users`, `#users/:id/edit` ve `#media` bağlantıları korunur; `#media` artık Görseller ekranını açar. Profil menüsündeki Ayarlar/işlem geçmişi (`#settings`), Sistem Ayarları'ndan ayrıdır. Kullanıcılar ve Kullanıcı rolleri (`#user-roles`) yalnızca `users.manage` yetkisine sahiplere görünür. Rol tablosu, mevcut merkezi rol tanımlarını gösterir; rol ekleme veya yetki değiştirme işlemi sunmaz. Para birimleri (`#currencies`) ve Diller (`#languages`) `settings.write` izniyle görüntülenen hazırlık sayfalarıdır; henüz para dönüşümü veya çeviri ayarı uygulamaz. Dokümanlar (`#documents`) hazırlık sayfasıdır; belge yükleme henüz devrede değildir. Görsel yükleme, düzenleme ve silme mevcut medya API'si ve izinleriyle çalışır.
+
+
+## Güncel SKU düzeni
+
+Varyant gösterimi **000.000000.00**: kategori (3), alt kategori (3), ürün (3), varyant (2) rakam. Örnek **100.101001.01**. Veritabanında sabit `HM` önekiyle saklanır; ekranlar ve CSV öneksizdir. Önek değiştirme alanı kaldırılmıştır. Ürün numarası alt kategori içinde, varyant numarası ürün içinde artar. Mevcut katalog otomatik geçirilir; eski kodlar belge içinde yedeklenir, kayıt kimlikleri ve QR adresleri korunur. [Geçiş, sınırlar ve ayrıntılar](docs/SKU_PATTERN.md).

@@ -1,9 +1,12 @@
+import { displaySku } from "./sku.js";
 import { defaultVariantTypes, variantTypeName } from "./variant-types.js";
 import { categoryOf, rootOf, categoryPath } from "./hierarchy.js";
 import { productInformationFields } from "./product-information.js";
 
 export const productCardCode = (product) =>
-  product.productCode || `P${String(product.id).padStart(6, "0")}`;
+  product.publicCardCode ||
+  product.productCode ||
+  `P${String(product.id).padStart(6, "0")}`;
 export const productCardPath = (product) =>
   "/p/" + encodeURIComponent(productCardCode(product));
 
@@ -26,8 +29,8 @@ export function productCardData(
   variantTypes = defaultVariantTypes(),
 ) {
   return {
-    productCode: productCardCode(product),
-    sku: product.sku,
+    productCode: product.productCode || productCardCode(product),
+    sku: displaySku(product.sku),
     name: product.name,
     category: categoryPath(categoryOf(product, categories), categories),
     description: product.description || "",
@@ -41,7 +44,7 @@ export function productCardData(
     variants: product.variants
       .filter((v) => v.active !== false)
       .map((v) => ({
-        sku: v.sku,
+        sku: displaySku(v.sku),
         size: v.size,
         typeName: variantTypeName(v, variantTypes),
         weight: v.weight,

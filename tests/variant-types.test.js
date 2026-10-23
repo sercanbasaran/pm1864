@@ -25,7 +25,7 @@ test('type management rejects duplicate names and stale writes, protects used ty
   const saved=await f.call('/products','POST',{expectedRevision:r.catalog.revision,product:product({typeId:type.id,active:false})});assert.equal(saved.status,200);r=saved;
   assert.equal((await f.call('/variant-types/'+type.id,'DELETE',{expectedRevision:r.catalog.revision})).error.code,'VARIANT_TYPE_IN_USE');
   const p=r.catalog.products[0];r=await f.call('/products/'+p.id,'PUT',{expectedRevision:r.catalog.revision,product:{...p,variants:[{...p.variants[0],typeId:'type-item'}]}});r=await f.call('/variant-types/'+type.id,'DELETE',{expectedRevision:r.catalog.revision});assert.equal(r.status,200);assert.ok(!r.catalog.variantTypes.some(t=>t.id===type.id));assert.equal((await f.call('/products','POST',{expectedRevision:r.catalog.revision,product:product({typeId:type.id})})).status,422);
-  const renamed=await f.call('/settings','PATCH',{expectedRevision:r.catalog.revision,settings:{skuPrefix:'HMNEW'}});assert.deepEqual(renamed.catalog.variantTypes,r.catalog.variantTypes);
+  const renamed=await f.call('/settings','PATCH',{expectedRevision:r.catalog.revision,settings:{skuPrefix:'HM'}});assert.deepEqual(renamed.catalog.variantTypes,r.catalog.variantTypes);
   assert.equal((await f.call('/variant-types/missing','DELETE',{expectedRevision:renamed.catalog.revision})).status,404);
  }finally{await f.app.close()}
 });
@@ -45,5 +45,5 @@ test('legacy type migration is idempotent and preserves product identities, pric
  }finally{await db.close()}
 });
 test('custom variant type is visible in public product cards without exposing internal type records',async()=>{
- const f=await fixture();try{let r=await f.call('/variant-types','POST',{expectedRevision:0,name:'Özel kutu'});const type=r.catalog.variantTypes.find(t=>t.name==='Özel kutu');r=await f.call('/products','POST',{expectedRevision:r.catalog.revision,product:product({typeId:type.id})});const p=r.catalog.products[0];r=await f.call('/products/'+p.id+'/card','PATCH',{expectedRevision:r.catalog.revision,enabled:true});const card=await f.call('/public/products/'+p.productCode);assert.equal(card.product.variants[0].typeName,'Özel kutu');assert.equal('typeId' in card.product.variants[0],false);assert.equal('variantTypes' in card.product,false)}finally{await f.app.close()}
+ const f=await fixture();try{let r=await f.call('/variant-types','POST',{expectedRevision:0,name:'Özel kutu'});const type=r.catalog.variantTypes.find(t=>t.name==='Özel kutu');r=await f.call('/products','POST',{expectedRevision:r.catalog.revision,product:product({typeId:type.id})});const p=r.catalog.products[0];r=await f.call('/products/'+p.id+'/card','PATCH',{expectedRevision:r.catalog.revision,enabled:true});const card=await f.call('/public/products/'+p.publicCardCode);assert.equal(card.product.variants[0].typeName,'Özel kutu');assert.equal('typeId' in card.product.variants[0],false);assert.equal('variantTypes' in card.product,false)}finally{await f.app.close()}
 });

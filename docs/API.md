@@ -26,7 +26,7 @@ API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma 
 | GET | `/public/products/:productCode/image` | Açık; yalnızca yayınlanmış ürüne bağlı görsel baytları |
 | PATCH | `/prices/products/:id` | `prices.write`; `{expectedRevision,prices:[123.45,234.56]}`; varyant sırasına göre tüm fiyatlar |
 | POST | `/prices/bulk` | `prices.write`; `{expectedRevision,ids,percent,direction}` |
-| PATCH | `/settings` | `settings.write`; `{expectedRevision,settings:{skuPrefix}}` |
+| PATCH | `/settings` | `settings.write`; sabit önek doğrulaması: `{expectedRevision,settings:{skuPrefix:"HM"}}`; başka önekler reddedilir |
 | GET | `/users` | `users.manage`; `{users,roles}` |
 | POST | `/users` | `users.manage`; `{user:{name,email,role,active,password}}` |
 | PUT | `/users/:id` | `users.manage`; `{expectedVersion,user:{name,email,role,active}}` |
@@ -100,11 +100,11 @@ Dosya sınırı 2 MB. Desteklenen türler PNG, JPEG, WEBP, GIF; MIME ve dosya im
 
 ## Ürün kodu
 
-Katalog ürünlerinde `productCode` (`P000001`), ürün `sku` ve varyant `sku` ayrı alanlardır. Ürün kodu ve SKU istemciden gelen değerlerle değiştirilemez. Önceki kayıtların ürün kodları ID’den tutarlı biçimde türetilir. SKU öneki mevcut `/settings` API’siyle yalnızca `settings.write` izni tarafından değiştirilebilir.
+Katalog ürünlerinde `productCode` üç rakamdır (`001`). Ürün SKU biçimi `100.101001`, varyant SKU biçimi `100.101001.01` olur. Saklanan SKU başına sunucuda sabit `HM` eklenir; API ve ekranlar bu öneki göstermez. Kodlar istemciden değiştirilemez. Kalıcı QR kimliği ayrı `publicCardCode` alanında saklanır. Ayrıntılar: [SKU düzeni](SKU_PATTERN.md).
 
 ## Public ürün kartları ve QR
 
-Kart adresi `/p/P000001` biçimindedir ve ürünün kalıcı koduna dayanır. `publicCardEnabled` varsayılan olarak kapalıdır; yalnızca `/products/:id/card` üzerinden değiştirilebilir. Ürün oluşturma/güncelleme payload’ı bu izni değiştiremez. Yayınlama için ürün, ana ve alt kategori aktif; en az bir varyant aktif olmalıdır. Taslak ürün, pasif kategori, aktif varyantı olmayan ürün ve yayınlanmamış kart, public JSON/görsel endpoint’lerinde 404 döndürür.
+Kart adresi `/p/P000001` biçimindedir ve ürünün kalıcı `publicCardCode` değerine dayanır. `publicCardEnabled` varsayılan olarak kapalıdır; yalnızca `/products/:id/card` üzerinden değiştirilebilir. Ürün oluşturma/güncelleme payload’ı bu izni değiştiremez. Yayınlama için ürün, ana ve alt kategori aktif; en az bir varyant aktif olmalıdır. Taslak ürün, pasif kategori, aktif varyantı olmayan ürün ve yayınlanmamış kart, public JSON/görsel endpoint’lerinde 404 döndürür.
 
 Açık JSON alanları: `productCode`, `sku`, `name`, kategori yolu `category`, `description`, `customImage`, `nutrition`, `storageConditions`, `allergens`, `longTermStorage`, `variants`. Yalnızca aktif varyantların `sku`, `size`, `weight`, `unit`, `packaging`, `slices`, `price` alanları gösterilir. Katalog revizyonu, işlem geçmişi, kullanıcılar, medya metadata’sı ve satış kanalı ayarları paylaşılmaz. Yüklenen görseller ayrı public ürün endpoint’inden, her istekte yayın durumu kontrol edilerek sunulur; özel medya API’si oturum istemeye devam eder. Yanıtlar önbelleğe alınmaz.
 
@@ -122,3 +122,6 @@ Kullanıcı yanıtındaki `avatarUrl`, fotoğraf yoksa boş metindir. Görsel UR
 `GET /catalog` yanıtı `variantTypes: [{id,name,requiresQuantity}]` listesini döndürür. Ürün kaydetmede her varyantın `typeId` alanı bu listedeki bir kimlikle eşleşmelidir; yeni veya güncellenen varyantta eksik/geçersiz tip 422 döndürür. Dilim tipinde `slices` 1–100000 arasında tam sayı olmalıdır; boş, sıfır, negatif, kesirli veya metin değerler reddedilir. Başlangıç tipleri `type-item`, `type-slice`, `type-portion`, `type-box`, `type-weight` kimliklerini kullanır. Eklenen tip kimliklerini sunucu üretir; listeden okuyun.
 
 `POST /variant-types` normalize edilmiş yinelenen adı reddeder. Dilim adıyla yeniden oluşturulan tipte `requiresQuantity` sunucuda daima true olur. Tip limiti 50'dir. `DELETE` aktif veya pasif ürün/varyant referansı bulunduğunda reddedilir. Tür işlemleri diğer katalog değişiklikleriyle aynı kilidi, `expectedRevision` kontrolünü ve işlem geçmişini kullanır. Tipler SKU öneki ayarlarından bağımsız saklanır. Public ürün kartında yalnızca tipin görünen adı `variant.typeName` olarak yer alır; tip kimlikleri ve yönetim listesi yayınlanmaz.
+
+
+SKU şeması: [SKU_PATTERN.md](SKU_PATTERN.md). Ürün numarası alt kategori içinde 001–999, varyant numarası ürün içinde 01–99 aralığındadır; kapasite aşımı HTTP 422 `SKU_RANGE_EXHAUSTED` döndürür. Eski katalog otomatik, atomik ve tekrarlanabilir bir geçişle güncellenir. `skuMigrationBackup` ve sayaçlar public API’ye dahil edilmez.

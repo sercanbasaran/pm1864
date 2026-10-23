@@ -1,3 +1,4 @@
+import { upgradeSku } from "../src/sku.js";
 import { upgradeVariantTypes } from "../src/variant-types.js";
 import { upgradeHierarchy } from "../src/hierarchy.js";
 import { mkdir } from "node:fs/promises";
@@ -148,7 +149,8 @@ export async function migrate(db, seed) {
     const hierarchyChanged = doc.schemaVersion !== 2;
     if (hierarchyChanged) upgradeHierarchy(doc);
     const typesChanged = upgradeVariantTypes(doc);
-    if (hierarchyChanged || typesChanged) {
+    const skuChanged = upgradeSku(doc);
+    if (hierarchyChanged || typesChanged || skuChanged) {
       await tx.query(
         "UPDATE app_catalog SET revision=?,document=? WHERE id=1",
         [Number(row.revision) + 1, JSON.stringify(doc)],

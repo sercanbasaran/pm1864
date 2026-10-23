@@ -1,6 +1,4 @@
-import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Card from "../../components/ui/Card.jsx";
-import ActionBar from "../../components/ui/ActionBar.jsx";
 import {
   Button,
   Input,
@@ -11,54 +9,30 @@ import {
   TableHeading,
   TableCell,
 } from "../../components/ui/Controls.jsx";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   MagnifyingGlass,
   Barcode,
   DownloadSimple,
 } from "@phosphor-icons/react";
 import { useCatalog } from "../../app/CatalogContext.jsx";
-import { can } from "../../permissions.js";
 import { downloadCSV } from "../../catalog-tools.js";
 import { categoryOf, categoryPath } from "../../hierarchy.js";
 export default function CodeManagement({ user }) {
-  const { products, categories, settings, busy, mutate, notify } = useCatalog(),
-    [query, setQuery] = useState(""),
-    [prefix, setPrefix] = useState(settings.skuPrefix),
-    [error, setError] = useState("");
-  useEffect(() => setPrefix(settings.skuPrefix), [settings.skuPrefix]);
+  const { products, categories } = useCatalog(),
+    [query, setQuery] = useState("");
   const rows = products.filter((p) =>
     `${p.productCode} ${p.sku} ${p.name} ${p.variants.map((v) => v.sku).join(" ")}`
       .toLocaleLowerCase("tr")
       .includes(query.toLocaleLowerCase("tr")),
   );
-  async function save(e) {
-    e.preventDefault();
-    setError("");
-    try {
-      await mutate("/settings", { settings: { skuPrefix: prefix } }, "PATCH");
-      notify("Kodlama ayarları kaydedildi.");
-    } catch (e) {
-      setError(e.message);
-    }
-  }
-  const saveAction = can(user, "settings.write") ? (
-    <Button
-      type="submit"
-      variant="primary"
-      className="btn"
-      disabled={busy || !prefix || prefix === settings.skuPrefix}
-    >
-      Ayarları kaydet
-    </Button>
-  ) : null;
   return (
     <Card className="panel code-management">
       <div className="panel-title">
         <div>
           <h2>Ürün kodları ve SKU kayıtları</h2>
           <p className="muted">
-            Ürün kodu iç kayıt kimliğidir. Ürün SKU’su ve her varyantın SKU’su
+            Ürün kodu alt kategori içindeki sıra numarasıdır. Ürün SKU'su ve her varyantın SKU'su
             ayrı, kalıcı kodlardır.
           </p>
         </div>
@@ -150,41 +124,19 @@ export default function CodeManagement({ user }) {
           Kodlama kuralları
         </h3>
         <p>
-          Ürün kodları P000001; ürün SKU’ları marka–ana kategori–sıra; varyant
-          SKU’ları ürün SKU–V0001 biçiminde üretilir. İsim ve kategori
-          değişiklikleri kodları değiştirmez. Silinen varyant numarası tekrar
-          kullanılmaz.
+          Kategori (3 rakam) · Alt kategori (3 rakam) · Ürün (3 rakam) · Varyant
+          (2 rakam).
         </p>
-        {can(user, "settings.write") ? (
-          <form onSubmit={save}>
-            <ActionBar>{saveAction}</ActionBar>
-            {error && (
-              <SlAlert open variant="danger" className="form-error">
-                {error}
-              </SlAlert>
-            )}
-            <div>
-              <Input
-                label="Yeni ürünler için SKU öneki"
-                maxLength={8}
-                required
-                pattern="[A-Z0-9]{1,8}"
-                value={prefix}
-                onChange={(e) =>
-                  setPrefix(
-                    e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
-                  )
-                }
-              />
-            </div>
-            <ActionBar position="bottom">{saveAction}</ActionBar>
-          </form>
-        ) : (
-          <p>
-            SKU öneki: <strong>{settings.skuPrefix}</strong>. Kodlama ayarlarını
-            yöneticiler değiştirebilir.
-          </p>
-        )}
+        <p>
+          Varyant SKU örneği: <code>100.101001.01</code>. Ürün SKU örneği:{" "}
+          <code>100.101001</code>.
+        </p>
+        <p>
+          Ürün numaraları alt kategori içinde 001–999; varyant numaraları ürün
+          içinde 01–99 aralığında üretilir. Kodlar sunucuda atanır. Silinen
+          varyant numaraları tekrar kullanılmaz. İsim veya kategori değişikliği
+          mevcut SKU'yu değiştirmez.
+        </p>
       </div>
     </Card>
   );

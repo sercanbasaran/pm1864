@@ -1,4 +1,7 @@
-import { CategoryChannelSwitches, CategoryChannelSummary } from "../../components/ui/SalesChannels.jsx";
+import {
+  CategoryChannelSwitches,
+  CategoryChannelSummary,
+} from "../../components/ui/SalesChannels.jsx";
 import { salesAvailability } from "../../sales-availability.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -85,7 +88,15 @@ export default function CategoryManager({
     setError("");
     setDraft(
       category
-        ? { ...category, salesAvailability: salesAvailability(category.salesAvailability, undefined, true), isNew: false }
+        ? {
+            ...category,
+            salesAvailability: salesAvailability(
+              category.salesAvailability,
+              undefined,
+              true,
+            ),
+            isNew: false,
+          }
         : {
             id: crypto.randomUUID(),
             name: "",
@@ -266,7 +277,12 @@ export default function CategoryManager({
                             </small>
                           )}
                         </TableCell>
-                        <TableCell><CategoryChannelSummary category={category} categories={categories} /></TableCell>
+                        <TableCell>
+                          <CategoryChannelSummary
+                            category={category}
+                            categories={categories}
+                          />
+                        </TableCell>
                         <TableCell>{count}</TableCell>
                         <TableCell>
                           <div className="category-table-actions">
@@ -387,7 +403,7 @@ export default function CategoryManager({
                       label="Kategori kodu"
                       aria-label="Kategori kodu"
                       required
-                      pattern="[1-9][0-9]{2}"
+                      pattern="[0-9]{3}"
                       readOnly={!draft.isNew}
                       maxLength={3}
                       value={draft.code}
@@ -465,7 +481,14 @@ export default function CategoryManager({
                     </p>
                   </div>
                 </div>
-                <CategoryChannelSwitches category={draft} categories={categories} disabled={saving} onChange={salesAvailability => setDraft({ ...draft, salesAvailability })} />
+                <CategoryChannelSwitches
+                  category={draft}
+                  categories={categories}
+                  disabled={saving}
+                  onChange={(salesAvailability) =>
+                    setDraft({ ...draft, salesAvailability })
+                  }
+                />
                 <div className="sku-preview">
                   <div>
                     <small>HİYERARŞİ</small>
@@ -476,9 +499,7 @@ export default function CategoryManager({
                         : ""}
                       {draft.name || "Kategori adı"}
                     </strong>
-                    <p>
-                      {skuPrefix} ürün ve varyant kodları sunucuda oluşturulur.
-                    </p>
+                    <p>Ürün ve varyant kodları sunucuda oluşturulur.</p>
                   </div>
                 </div>
               </div>

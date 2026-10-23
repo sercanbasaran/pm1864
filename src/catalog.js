@@ -42,7 +42,7 @@ export function validateCategory(draft, categories) {
   const salesError = validateSalesAvailability(draft.salesAvailability);
   if (salesError) return salesError;
   if (!draft.name.trim()) return "Kategori adı gerekli.";
-  if (!/^\d{3}$/.test(draft.code) || Number(draft.code) < 100)
+  if (!/^\d{3}$/.test(draft.code))
     return "Kategori kodu 100–999 arasında üç rakam olmalı.";
   if (!slugify(draft.slug)) return "Geçerli bir kategori bağlantısı gerekli.";
   const others = categories.filter((c) => c.id !== draft.id);

@@ -97,7 +97,9 @@ export function upgradeHierarchy(doc) {
     }
     let next = Math.max(
       Number(p.nextVariantNumber) || 1,
-      ...p.variants.map((v) => Number(v.sku?.match(/-V(\d+)$/)?.[1] || 0) + 1),
+      ...p.variants.map(
+        (v) => Number(v.sku?.match(/(?:-V|\.)(\d+)$/)?.[1] || 0) + 1,
+      ),
     );
     const used = new Set(p.variants.map((v) => v.sku).filter(Boolean));
     for (const [i, v] of p.variants.entries()) {

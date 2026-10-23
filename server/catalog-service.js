@@ -1,3 +1,9 @@
+import {
+  SKU_PREFIX,
+  SKU_SCHEMA_VERSION,
+  displaySku,
+  allocateProductCode,
+} from "../src/sku.js";
 import { defaultVariantTypes } from "../src/variant-types.js";
 import {
   salesAvailability,
@@ -57,21 +63,33 @@ export const seedCatalog = () => ({
   logs: [],
   settings: { skuPrefix: "HM" },
   nextProductId: 1,
+  skuSchemaVersion: SKU_SCHEMA_VERSION,
+  nextProductNumbers: {},
 });
 const text = (v, max = 200) =>
   typeof v === "string" ? v.trim().slice(0, max) : "";
 export function publicCatalog(doc, revision) {
   return {
     revision,
-    categories: doc.categories.map(c => ({ ...c, salesAvailability: salesAvailability(c.salesAvailability, undefined, true), effectiveSales: categorySalesAvailability(c, doc.categories) })),
+    categories: doc.categories.map((c) => ({
+      ...c,
+      salesAvailability: salesAvailability(
+        c.salesAvailability,
+        undefined,
+        true,
+      ),
+      effectiveSales: categorySalesAvailability(c, doc.categories),
+    })),
     variantTypes: doc.variantTypes,
     products: doc.products.map(
       ({ channels, channelVersions, dirty, ...p }) => ({
         ...p,
+        sku: displaySku(p.sku),
         salesAvailability: salesAvailability(p.salesAvailability),
         effectiveSales: effectiveSales(p, undefined, doc.categories),
         variants: p.variants.map((v) => ({
           ...v,
+          sku: displaySku(v.sku),
           salesAvailability: salesAvailability(
             v.salesAvailability,
             undefined,
@@ -79,7 +97,7 @@ export function publicCatalog(doc, revision) {
           ),
           effectiveSales: effectiveSales(p, v, doc.categories),
         })),
-        productCode: p.productCode || `P${String(p.id).padStart(6, "0")}`,
+        productCode: p.productCode,
       }),
     ),
     logs: doc.logs,
@@ -147,7 +165,11 @@ export function createCatalogService(db) {
           description: text(input.description, 400),
           parentId: text(input.parentId, 100),
           active: input.active !== false,
-          salesAvailability: salesAvailability(input.salesAvailability, old?.salesAvailability, true),
+          salesAvailability: salesAvailability(
+            input.salesAvailability,
+            old?.salesAvailability,
+            true,
+          ),
         };
       if (
         old?.parentId &&
@@ -158,7 +180,9 @@ export function createCatalogService(db) {
           422,
           "Ürün bağlı alt kategori ana kategoriye dönüştürülemez.",
         );
-      const error = validateSalesAvailability(input.salesAvailability) || validateCategory(c, doc.categories);
+      const error =
+        validateSalesAvailability(input.salesAvailability) ||
+        validateCategory(c, doc.categories);
       if (error) throw new ApiError(422, error);
       if (old) {
         doc.categories = doc.categories.map((o) => (o.id === id ? c : o));
@@ -340,12 +364,21 @@ export function createCatalogService(db) {
           "Varyant değerleri izin verilen sınırı aşıyor.",
         );
       delete p.isNew;
-      p.productCode =
-        old?.productCode || `P${String(productId).padStart(6, "0")}`;
-      p.sku =
-        old?.sku ||
-        `${doc.settings.skuPrefix}-${rootOf(c, doc.categories).code}-${String(productId).padStart(4, "0")}`;
-      let next = old?.nextVariantNumber || 1;
+      try {
+        Object.assign(
+          p,
+          old
+            ? { productCode: old.productCode, sku: old.sku }
+            : allocateProductCode(doc, c),
+        );
+      } catch (error) {
+        throw new ApiError(422, error.message, "SKU_RANGE_EXHAUSTED");
+      }
+      p.publicCardCode =
+        old?.publicCardCode ||
+        old?.productCode ||
+        `P${String(productId).padStart(6, "0")}`;
+      let next = Math.max(1, Number(old?.nextVariantNumber) || 1);
       const seen = new Set();
       p.variants = p.variants.map((v) => {
         let previous = v.id
@@ -360,10 +393,16 @@ export function createCatalogService(db) {
         if (previous && seen.has(previous.id))
           throw new ApiError(422, "Aynı varyant birden fazla gönderilemez.");
         if (previous) seen.add(previous.id);
+        if (!previous && next > 99)
+          throw new ApiError(
+            422,
+            "Bu üründe 99 varyant kodu sınırına ulaşıldı.",
+            "SKU_RANGE_EXHAUSTED",
+          );
         return {
           ...v,
           id: previous?.id || randomUUID(),
-          sku: previous?.sku || `${p.sku}-V${String(next++).padStart(4, "0")}`,
+          sku: previous?.sku || `${p.sku}.${String(next++).padStart(2, "0")}`,
         };
       });
       p.publicCardEnabled = old?.publicCardEnabled === true;
@@ -379,7 +418,7 @@ export function createCatalogService(db) {
       audit(
         doc,
         old ? "Ürün güncellendi" : "Ürün oluşturuldu",
-        `${p.name} · ${p.sku}`,
+        `${p.name} · ${displaySku(p.sku)}`,
         actor,
       );
     });
@@ -429,17 +468,13 @@ export function createCatalogService(db) {
   async function settings(body, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
       const s = body.settings;
-      if (
-        !s ||
-        typeof s.skuPrefix !== "string" ||
-        !/^[A-Z0-9]{1,8}$/.test(s.skuPrefix)
-      )
-        throw new ApiError(422, "1–8 karakter SKU öneki gerekli.");
-      doc.settings = { skuPrefix: s.skuPrefix };
+      if (!s || s.skuPrefix !== SKU_PREFIX)
+        throw new ApiError(422, "SKU kodlama öneki sabittir.");
+      doc.settings = { ...doc.settings, skuPrefix: SKU_PREFIX };
       audit(
         doc,
         "Katalog ayarları güncellendi",
-        `SKU öneki: ${s.skuPrefix}`,
+        "Kodlama ayarları doğrulandı.",
         actor,
       );
     });
