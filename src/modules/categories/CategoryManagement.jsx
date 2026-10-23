@@ -1,3 +1,4 @@
+import BackToListButton from "../../components/ui/BackToListButton.jsx";
 import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
 import CategoryGallery from "./CategoryGallery.jsx";
 import { categoryPageUrl } from "./category-page.js";
@@ -111,7 +112,7 @@ function EditableField({
                 disabled={busy}
                 onClick={onEdit}
               >
-                <PencilSimple size={15} />
+                {empty ? <Plus size={15} /> : <PencilSimple size={15} />}
                 {empty ? "Ekle" : "Düzenle"}
               </Button>
             )}
@@ -303,7 +304,7 @@ export default function CategoryManager({
           {draft.active ? "Aktif" : "Pasif"}
         </SlBadge>
       ),
-      visibility: draft.visibility === "public" ? "Public" : "Private",
+      visibility: draft.visibility === "public" ? "Herkese açık" : "Özel",
       salesAvailability: (
         <div className="sales-summary">
           {salesChannels
@@ -815,10 +816,10 @@ export default function CategoryManager({
                     }
                   >
                     <option value="private">
-                      Private — yalnızca giriş yapan kullanıcılar
+                      Özel — yalnızca giriş yapan kullanıcılar
                     </option>
                     <option value="public">
-                      Public — bağlantıya sahip herkes
+                      Herkese açık — bağlantıya sahip herkes
                     </option>
                   </Select>
                 </EditableField>
@@ -840,14 +841,7 @@ export default function CategoryManager({
               </div>
             </fieldset>
             <div className="editor-footer">
-              <Button
-                type="button"
-                className="btn"
-                disabled={saving}
-                onClick={close}
-              >
-                Listeye dön
-              </Button>
+              <BackToListButton busy={saving} onClick={close} />
               <ActionBar position="bottom">{saveAction}</ActionBar>
             </div>
           </form>

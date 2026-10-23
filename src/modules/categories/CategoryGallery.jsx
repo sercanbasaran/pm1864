@@ -1,3 +1,4 @@
+import { Plus } from "@phosphor-icons/react";
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui/Controls.jsx";
 import { uploadFile } from "../media/media-api.js";
@@ -120,6 +121,7 @@ export default function CategoryGallery({
                 disabled={busy}
                 onClick={() => input.current.click()}
               >
+                {!uploading && <Plus size={15} />}
                 {uploading ? "Yükleniyor…" : "Ekle"}
               </Button>
             </div>
@@ -156,6 +158,7 @@ export default function CategoryGallery({
               disabled={busy}
               onClick={() => input.current.click()}
             >
+              {!uploading && <Plus size={15} />}
               {uploading ? "Yükleniyor…" : "Görsel ekle"}
             </Button>
           ) : (
