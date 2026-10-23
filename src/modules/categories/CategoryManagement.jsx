@@ -596,15 +596,15 @@ export default function CategoryManager({
             <fieldset className="editor-fields" disabled={saving}>
               <div className="editor-content">
                 <EditableField
-                  {...fieldProps("parentId", "Ana kategori", !draft.parentId)}
+                  {...fieldProps("parentId", "Kategori türü", !draft.parentId)}
                 >
                   <Select
                     disabled={
                       !draft.isNew &&
                       (editingField !== "parentId" || !draft.parentId)
                     }
-                    label="Ana kategori"
-                    aria-label="Ana kategori"
+                    label="Kategori türü"
+                    aria-label="Kategori türü"
                     value={draft.parentId}
                     onChange={(e) =>
                       setDraft({
@@ -724,10 +724,10 @@ export default function CategoryManager({
                     }
                   />
                 </EditableField>
-                <EditableField {...fieldProps("active", "Kategori aktif")}>
+                <EditableField {...fieldProps("active", "Kategori durumu")}>
                   <Input
                     disabled={!draft.isNew && editingField !== "active"}
-                    label="Kategori aktif"
+                    label="Kategori durumu"
                     type="checkbox"
                     checked={draft.active}
                     onChange={(e) =>
