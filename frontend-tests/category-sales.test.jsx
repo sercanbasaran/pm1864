@@ -1,40 +1,135 @@
-import React from 'react';
-import {test,expect,vi,afterEach} from 'vitest';
-import {render,cleanup,fireEvent,waitFor} from '@testing-library/react';
-import {settle} from './shadow-queries.js';
-import CategoryManagement from '../src/modules/categories/CategoryManagement.jsx';
-const all={store:true,online:true,foodDelivery:true};
-const root={id:'r',name:'Baklava',slug:'baklava',code:'100',active:true,parentId:'',salesAvailability:{...all,online:false}};
-const child={id:'c',name:'Fistikli',slug:'fistikli',code:'101',active:true,parentId:'r',salesAvailability:all};
+import React from "react";
+import { test, expect, vi, afterEach } from "vitest";
+import { render, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { settle } from "./shadow-queries.js";
+import CategoryManagement from "../src/modules/categories/CategoryManagement.jsx";
+const all = { store: true, online: true, foodDelivery: true };
+const root = {
+  id: "r",
+  name: "Baklava",
+  slug: "baklava",
+  code: "100",
+  active: true,
+  parentId: "",
+  salesAvailability: { ...all, online: false },
+};
+const child = {
+  id: "c",
+  name: "Fistikli",
+  slug: "fistikli",
+  code: "101",
+  active: true,
+  parentId: "r",
+  salesAvailability: all,
+};
 afterEach(cleanup);
-test('existing category locks only its code and saves editable fields and channel preferences',async()=>{
-  const onSave=vi.fn(async()=>true),onClose=vi.fn();
-  render(<CategoryManagement categories={[root,child]} products={[]} route="categories/c/edit" onSave={onSave} onClose={onClose} onNavigate={vi.fn()}/>);
+test("category editor opens and saves only the selected field and cancels drafts", async () => {
+  const onSave = vi.fn(async () => true),
+    onClose = vi.fn();
+  render(
+    <CategoryManagement
+      categories={[root, child]}
+      products={[]}
+      route="categories/c/edit"
+      onSave={onSave}
+      onClose={onClose}
+      onNavigate={vi.fn()}
+    />,
+  );
   await settle();
-  const controls=[...document.querySelectorAll('sl-switch')];
-  expect(controls).toHaveLength(3);
-  const online=controls.find(c=>c.getAttribute('aria-label')==='E-Mağaza');
-  expect(online.disabled).toBe(true);expect(online.checked).toBe(false);
-  const code=[...document.querySelectorAll('sl-input')].find(c=>c.label==='Kategori kodu');
-  expect(code.disabled).toBe(true);
-  expect([...document.querySelectorAll('sl-input,sl-select,sl-textarea,sl-checkbox')].filter(c=>c!==code).every(c=>!c.disabled)).toBe(true);
-  expect([...document.querySelectorAll('sl-button')].filter(b=>b.type==='submit').every(b=>!b.disabled)).toBe(true);
-  const name=[...document.querySelectorAll('sl-input')].find(c=>c.label==='Kategori adı');
-  name.value='Yeni Fistikli';fireEvent(name,new CustomEvent('sl-input',{bubbles:true}));await settle();
-  const store=controls.find(c=>c.getAttribute('aria-label')==='Mağaza');
+  const findControl = (label) =>
+    [
+      ...document.querySelectorAll(
+        "sl-input,sl-select,sl-textarea,sl-checkbox",
+      ),
+    ].find((c) => c.label === label);
+  const clickEdit = async (label) => {
+    fireEvent.click(
+      [...document.querySelectorAll("sl-button")].find(
+        (b) => b.getAttribute("aria-label") === label + " düzenle",
+      ),
+    );
+    await settle();
+  };
+  const clickAction = async (label) => {
+    fireEvent.click(
+      [...document.querySelectorAll("sl-button")].find(
+        (b) => b.textContent.trim() === label,
+      ),
+    );
+    await settle();
+  };
+  expect(
+    [
+      ...document.querySelectorAll(
+        "sl-input,sl-select,sl-textarea,sl-checkbox,sl-switch",
+      ),
+    ].every((c) => c.disabled),
+  ).toBe(true);
+  await clickEdit("Kategori adı");
+  const name = findControl("Kategori adı");
+  expect(name.disabled).toBe(false);
+  expect(findControl("Kategori bağlantısı").disabled).toBe(true);
+  expect(findControl("Kategori kodu").disabled).toBe(true);
+  name.value = "Yeni Fistikli";
+  fireEvent(name, new CustomEvent("sl-input", { bubbles: true }));
+  await settle();
+  await clickAction("Kaydet");
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+  expect(onSave.mock.calls[0][0]).toEqual({ ...child, name: "Yeni Fistikli" });
+  expect(onClose).not.toHaveBeenCalled();
+  expect(name.disabled).toBe(true);
+  await clickEdit("Açıklama");
+  const description = findControl("Açıklama");
+  description.value = "Kaydedilmeyen açıklama";
+  fireEvent(description, new CustomEvent("sl-input", { bubbles: true }));
+  await settle();
+  await clickEdit("Satış kanalları");
+  expect(description.value || "").toBe("");
+  const controls = [...document.querySelectorAll("sl-switch")];
+  const online = controls.find(
+    (c) => c.getAttribute("aria-label") === "E-Mağaza",
+  );
+  expect(online.disabled).toBe(true);
+  expect(online.checked).toBe(false);
+  const store = controls.find((c) => c.getAttribute("aria-label") === "Mağaza");
   expect(store.disabled).toBe(false);
-  store.checked=false;fireEvent(store,new CustomEvent('sl-change',{bubbles:true}));await settle();
-  fireEvent.submit(document.querySelector('form'));
-  await waitFor(()=>expect(onSave).toHaveBeenCalled());
-  expect(onSave.mock.calls[0][0].name).toBe('Yeni Fistikli');
-  expect(onSave.mock.calls[0][0].code).toBe('101');
-  expect(onSave.mock.calls[0][0].salesAvailability).toEqual({...all,store:false});
-  expect(onClose).toHaveBeenCalled();
-});
-test('category list shows channel status and read-only mode has no editing switches',async()=>{
-  render(<CategoryManagement categories={[root,child]} products={[]} readOnly route="categories" onNavigate={vi.fn()}/>);
+  store.checked = false;
+  fireEvent(store, new CustomEvent("sl-change", { bubbles: true }));
   await settle();
-  expect(document.querySelectorAll('sl-switch')).toHaveLength(0);
-  expect(document.querySelector('table').textContent).toContain('Satış kanalları');
-  expect(document.querySelector('table').textContent).toContain('E-Mağaza');
+  await clickAction("Kaydet");
+  expect(onSave.mock.calls[1][0]).toEqual({
+    ...child,
+    salesAvailability: { ...all, store: false },
+  });
+  expect(onClose).not.toHaveBeenCalled();
+  await clickEdit("Kategori adı");
+  name.value = "Vazgeçilecek";
+  fireEvent(name, new CustomEvent("sl-input", { bubbles: true }));
+  await settle();
+  const cancel = [...document.querySelectorAll("sl-button")].find(
+    (b) => b.textContent.trim() === "Vazgeç",
+  );
+  fireEvent.click(cancel);
+  await settle();
+  expect(name.value).toBe(child.name);
+  expect(name.disabled).toBe(true);
+  expect(onSave).toHaveBeenCalledTimes(2);
+});
+test("category list shows channel status and read-only mode has no editing switches", async () => {
+  render(
+    <CategoryManagement
+      categories={[root, child]}
+      products={[]}
+      readOnly
+      route="categories"
+      onNavigate={vi.fn()}
+    />,
+  );
+  await settle();
+  expect(document.querySelectorAll("sl-switch")).toHaveLength(0);
+  expect(document.querySelector("table").textContent).toContain(
+    "Satış kanalları",
+  );
+  expect(document.querySelector("table").textContent).toContain("E-Mağaza");
 });
