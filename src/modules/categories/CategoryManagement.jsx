@@ -3,7 +3,13 @@ import {
   CategoryChannelSummary,
 } from "../../components/ui/SalesChannels.jsx";
 import { salesAvailability } from "../../sales-availability.js";
-import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
+import CategorySummary from "./CategorySummary.jsx";
+import CategoryFilters from "./CategoryFilters.jsx";
+import {
+  categoryRows,
+  categoryProductCount,
+  emptyCategoryFilters,
+} from "./category-list.js";
 import Card from "../../components/ui/Card.jsx";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
@@ -20,7 +26,6 @@ import {
   TableRow,
   TableHeading,
   TableCell,
-
 } from "../../components/ui/Controls.jsx";
 import React, { useEffect, useState } from "react";
 import {
@@ -37,7 +42,7 @@ import {
   nextSubcategoryCode,
   validateCategory,
 } from "../../catalog.js";
-import { roots, categoryMatches } from "../../hierarchy.js";
+import { roots } from "../../hierarchy.js";
 export default function CategoryManager({
   categories,
   products,
@@ -52,7 +57,8 @@ export default function CategoryManager({
   onClose,
 }) {
   const [draft, setDraft] = useState(null),
-    [query, setQuery] = useState(""),
+    [filters, setFilters] = useState({ ...emptyCategoryFilters }),
+    [sort, setSort] = useState({ key: "hierarchy", direction: "asc" }),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
   const main = roots(categories);
@@ -142,15 +148,6 @@ export default function CategoryManager({
       setSaving(false);
     }
   }
-  const matches = (c) =>
-    `${c.name} ${c.code}`
-      .toLocaleLowerCase("tr")
-      .includes(query.toLocaleLowerCase("tr"));
-  const visible = main.filter(
-    (c) =>
-      matches(c) ||
-      categories.some((child) => child.parentId === c.id && matches(child)),
-  );
   const addAction = !readOnly ? (
     <Button
       type="button"
@@ -174,40 +171,53 @@ export default function CategoryManager({
       {draft.isNew ? "Kategoriyi oluştur" : "Değişiklikleri kaydet"}
     </Button>
   ) : null;
-  const activeMain = main.filter((c) => c.active).length;
-  const activeChildren = categories.filter(
-    (c) =>
-      c.parentId &&
-      c.active &&
-      main.some((parent) => parent.id === c.parentId && parent.active),
-  ).length;
-  const rows = visible.flatMap((root) => [
-    root,
-    ...categories.filter(
-      (c) => c.parentId === root.id && (matches(root) || matches(c)),
-    ),
-  ]);
+  const rows = categoryRows(categories, products, filters, sort);
+  function sortColumn(key, label) {
+    const selected = sort.key === key;
+    return (
+      <TableHeading
+        scope="col"
+        aria-sort={
+          selected
+            ? sort.direction === "asc"
+              ? "ascending"
+              : "descending"
+            : "none"
+        }
+      >
+        <Button
+          type="button"
+          size="small"
+          className="category-sort-button"
+          onClick={() =>
+            setSort({
+              key,
+              direction: selected && sort.direction === "asc" ? "desc" : "asc",
+            })
+          }
+        >
+          {label}
+          <span aria-hidden="true">
+            {selected ? (sort.direction === "asc" ? " ↑" : " ↓") : " ↕"}
+          </span>
+        </Button>
+      </TableHeading>
+    );
+  }
   return (
     <>
       {!route.split("?")[0].includes("/") && (
         <section className="category-module">
-          <ManagementSummary
-            label="Kategori özeti"
-            items={[
-              {
-                label: "Aktif kategori sayısı",
-                value: activeMain,
-                detail: main.length + " ana kategori içinde",
-              },
-              {
-                label: "Aktif alt kategori sayısı",
-                value: activeChildren,
-                detail: "Ana kategorisi de aktif olan alt kategoriler",
-              },
-            ]}
-            title="Kategorilerinizi yönetin"
-            description="Ürünlerinizi ana kategorilere veya isteğe bağlı alt kategorilere bağlayın."
-            action={addAction}
+          <div className="category-module-heading">
+            <h2>Kategori yönetimi</h2>
+            {addAction}
+          </div>
+          <CategorySummary
+            categories={categories}
+            products={products}
+            onQuality={(quality) =>
+              setFilters({ ...emptyCategoryFilters, quality })
+            }
           />
           <Card className="category-list-card">
             <div className="category-toolbar">
@@ -223,10 +233,29 @@ export default function CategoryManager({
                   prefix={<MagnifyingGlass size={17} />}
                   aria-label="Kategori ara"
                   placeholder="Ana kategori, alt kategori veya kod ara"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={filters.query}
+                  onChange={(e) =>
+                    setFilters({ ...filters, query: e.target.value })
+                  }
                 />
               </div>
+            </div>
+            <CategoryFilters
+              categories={categories}
+              filters={filters}
+              onChange={setFilters}
+            />
+            <div className="category-results">
+              <span>
+                {rows.length} / {categories.length} kategori gösteriliyor
+              </span>
+              <Button
+                type="button"
+                size="small"
+                onClick={() => setSort({ key: "hierarchy", direction: "asc" })}
+              >
+                Hiyerarşik sıraya dön
+              </Button>
             </div>
             <div
               className="table-scroll"
@@ -237,12 +266,12 @@ export default function CategoryManager({
               <Table className="category-table" aria-label="Kategoriler">
                 <TableHead>
                   <TableRow>
-                    <TableHeading scope="col">Kategori adı</TableHeading>
-                    <TableHeading scope="col">Kod</TableHeading>
-                    <TableHeading scope="col">Tür</TableHeading>
-                    <TableHeading scope="col">Durum</TableHeading>
-                    <TableHeading scope="col">Satış kanalları</TableHeading>
-                    <TableHeading scope="col">Ürün sayısı</TableHeading>
+                    {sortColumn("name", "Kategori adı")}
+                    {sortColumn("code", "Kod")}
+                    {sortColumn("type", "Tür")}
+                    {sortColumn("status", "Durum")}
+                    {sortColumn("channels", "Satış kanalları")}
+                    {sortColumn("count", "Ürün sayısı")}
                     <TableHeading scope="col">İşlemler</TableHeading>
                   </TableRow>
                 </TableHead>
@@ -251,11 +280,11 @@ export default function CategoryManager({
                     const parent = main.find((c) => c.id === category.parentId),
                       isChild = Boolean(category.parentId),
                       active = category.active && (!isChild || parent?.active),
-                      count = products.filter((p) =>
-                        isChild
-                          ? p.categoryId === category.id
-                          : categoryMatches(p, category.id, categories),
-                      ).length;
+                      count = categoryProductCount(
+                        category,
+                        categories,
+                        products,
+                      );
                     return (
                       <TableRow
                         key={category.id}
@@ -300,7 +329,9 @@ export default function CategoryManager({
                             categories={categories}
                           />
                         </TableCell>
-                        <TableCell><SlBadge>{count}</SlBadge></TableCell>
+                        <TableCell>
+                          <SlBadge>{count}</SlBadge>
+                        </TableCell>
                         <TableCell>
                           <div className="category-table-actions">
                             {!readOnly && (
@@ -361,8 +392,10 @@ export default function CategoryManager({
                           <FolderSimple size={32} />
                           <h3>Kategori bulunamadı</h3>
                           <p>
-                            {query
-                              ? "Aramanızı değiştirerek yeniden deneyin."
+                            {Object.entries(filters).some(
+                              ([key, value]) => key !== "channelState" && value,
+                            )
+                              ? "Aramanızı veya filtrelerinizi değiştirerek yeniden deneyin."
                               : "Yeni kategori ekleyerek başlayın."}
                           </p>
                         </div>
