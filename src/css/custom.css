@@ -1,7 +1,7 @@
 /* src/custom.css */
 
 :root {
-  --sidebar-accent: #da291c;
+  --sidebar-accent: #DA291C;
   --sidebar-transition-duration: 400ms;
   --sidebar-transition-easing: ease-in-out;
 }
@@ -34,7 +34,8 @@
 .workspace-module-group::part(base),
 .workspace-module-group::part(header) {
   transition:
-    color var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+    color var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing),
     background-color var(--sidebar-transition-duration)
       var(--sidebar-transition-easing),
     border-color var(--sidebar-transition-duration)
@@ -83,14 +84,15 @@
   font-weight: 600;
 }
 
-.workspace-brand {
+.workspace-brand{
   position: sticky;
   top: 0;
   z-index: 10;
+  background-color: var(--sl-panel-background-color);
   padding-block: 16px;
 }
-.workspace-sidebar {
-  background-color: #fff;
+.workspace-sidebar{
+    background-color: var(--sl-panel-background-color);
 }
 
 .sl-toast-stack {
@@ -133,25 +135,59 @@ sl-textarea::part(textarea) {
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* Topbar: right-aligned controls with matching avatar/button dimensions. */
 .workspace-topbar {
+  --topbar-control-size: 40px;
+  --topbar-icon-size: 21px;
   justify-content: flex-end;
   align-items: center;
-  background-color: #fff;
+}
 
-    margin-bottom: 0;
+.workspace-topbar > nav {
+  flex: 0 1 auto;
+  margin-block: 0;
+}
+
+.workspace-topbar .icon-btn {
+  flex: 0 0 var(--topbar-control-size);
+  width: var(--topbar-control-size);
+  height: var(--topbar-control-size);
+}
+
+.workspace-topbar .icon-btn::part(base) {
+  box-sizing: border-box;
+  width: var(--topbar-control-size);
+  height: var(--topbar-control-size);
+  min-height: var(--topbar-control-size);
+  padding: 0;
+}
+
+.workspace-topbar .icon-btn svg {
+  width: var(--topbar-icon-size);
+  height: var(--topbar-icon-size);
+  flex-shrink: 0;
+}
+
+.workspace-topbar .profile-area {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(100%, 22rem);
+  align-items: center;
 }
 
 .workspace-topbar .profile-area > sl-avatar {
-  --size: 40px;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  --size: var(--topbar-control-size);
+  flex: 0 0 var(--topbar-control-size);
 }
-.workspace-main {
-  padding: 0px;
-  background-color: #f1f1f1;
+
+.workspace-topbar .profile-menu-trigger::part(base) {
+  height: var(--topbar-control-size);
+  min-height: var(--topbar-control-size);
 }
-.workspace-content {
-  padding: var(--sl-spacing-large);
-  margin-top: 0;
+
+.workspace-topbar .profile-menu-trigger::part(label) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
