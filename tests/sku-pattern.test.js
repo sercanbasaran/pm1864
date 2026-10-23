@@ -61,7 +61,7 @@ test("SKU schema has fixed widths and database-only prefix with separate product
     let r = await f.create();
     assert.equal(r.status, 200);
     const first = r.catalog.products[0];
-    assert.equal(first.productCode, "001");
+    assert.equal(first.productCode, "0100000001");
     assert.equal(first.sku, "0100.000001");
     assert.equal(first.variants[0].sku, "0100.000001.01");
     assert.equal(first.variants[1].sku, "0100.000001.02");
@@ -69,7 +69,7 @@ test("SKU schema has fixed widths and database-only prefix with separate product
     assert.equal(r.catalog.products[0].sku, "0100.000002");
     r = await f.create("Lokumlar");
     assert.equal(r.catalog.products[0].sku, "0200.000001");
-    assert.equal(r.catalog.products[0].productCode, "001");
+    assert.equal(r.catalog.products[0].productCode, "0200000001");
     const doc = JSON.parse(
       (await f.app.db.query("SELECT document FROM app_catalog WHERE id=1"))
         .rows[0].document,
@@ -83,7 +83,7 @@ test("SKU schema has fixed widths and database-only prefix with separate product
       "HM0100.000001.01",
     );
     assert.equal(JSON.stringify(r.catalog.products).includes("HM0100."), false);
-    assert.equal(productCardPath(first), "/p/P000001");
+    assert.equal(productCardPath(first), "/p/test-baklavalar-0100000001");
     const enabled = await f.call("/products/" + first.id + "/card", "PATCH", {
       expectedRevision: r.catalog.revision,
       enabled: true,
@@ -233,7 +233,7 @@ test("display formatter removes only the storage prefix; three digit category co
     products: [],
   };
   assert.deepEqual(allocateProductCode(doc, doc.categories[1]), {
-    productCode: "001",
+    productCode: "0001002001",
     sku: "HM0001.002001",
   });
 });

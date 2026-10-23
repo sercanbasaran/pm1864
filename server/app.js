@@ -98,7 +98,7 @@ export async function createApp({ env = process.env, database } = {}) {
         return json({ category: page });
       }
       const productPageRoute = route.match(
-        /^\/api\/product-pages\/(P[0-9]{6,})(?:\/images\/([a-zA-Z0-9-]+))?$/,
+        /^\/api\/product-pages\/([a-zA-Z0-9-]+)(?:\/images\/([a-zA-Z0-9-]+))?$/,
       );
       if (productPageRoute && method === "GET") {
         const user = await session(request);

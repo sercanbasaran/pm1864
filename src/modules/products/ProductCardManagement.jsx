@@ -74,7 +74,7 @@ export default function ProductCardManagement({ product, user, onClose }) {
       const href = URL.createObjectURL(blob),
         link = document.createElement("a");
       link.href = href;
-      link.download = product.sku + "-QR.png";
+      link.download = product.productCode + "-QR.png";
       document.body.append(link);
       link.click();
       link.remove();
@@ -118,7 +118,7 @@ export default function ProductCardManagement({ product, user, onClose }) {
           {!eligible && (
             <SlAlert open variant="neutral">
               Yayınlamak için ürün ve bağlı olduğu kategoriler aktif olmalı;
-              en az bir aktif varyant bulunmalıdır.
+              varyant eklenmişse en az biri aktif olmalıdır.
             </SlAlert>
           )}
           {error && (

@@ -1,3 +1,4 @@
+import ProductVariantsTable from "./ProductVariantsTable.jsx";
 import React from "react";
 import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
@@ -27,7 +28,6 @@ export default function ProductDetails({ product }) {
             <h2>{product.name}</h2>
             <div className="product-detail-identifiers">
               <SlTag>{product.productCode}</SlTag>
-              <SlTag>SKU: {product.sku}</SlTag>
             </div>
             {product.description && (
               <p className="product-detail-description">
@@ -39,57 +39,15 @@ export default function ProductDetails({ product }) {
       </Card>
       <Card className="product-detail-card">
         <h3>Varyantlar ve fiyatlar</h3>
-        <div className="product-detail-variants">
-          {product.variants.map((variant) => (
-            <Card key={variant.sku} className="product-detail-variant">
-              <div className="product-detail-variant-heading">
-                <strong>{variant.size}</strong>
-                <strong>{money(variant.price)}</strong>
-              </div>
-              <dl>
-                {variant.typeName && (
-                  <>
-                    <dt>Varyant tipi</dt>
-                    <dd>{variant.typeName}</dd>
-                  </>
-                )}
-                {variant.weight > 0 && (
-                  <>
-                    <dt>Gramaj</dt>
-                    <dd>
-                      {new Intl.NumberFormat("tr-TR").format(variant.weight)} g
-                    </dd>
-                  </>
-                )}
-                <dt>Birim</dt>
-                <dd>{variant.unit}</dd>
-                {variant.packaging && (
-                  <>
-                    <dt>Ambalaj</dt>
-                    <dd>{variant.packaging}</dd>
-                  </>
-                )}
-                {variant.slices > 0 && (
-                  <>
-                    <dt>Dilim sayısı</dt>
-                    <dd>{variant.slices}</dd>
-                  </>
-                )}
-                <dt>SKU</dt>
-                <dd>{variant.sku}</dd>
-              </dl>
-            </Card>
-          ))}
-        </div>
-        {!product.variants.length && (
-          <p className="muted">Görüntülenecek aktif varyant bulunmuyor.</p>
-        )}
+        <ProductVariantsTable product={product} />
       </Card>
-      {productDetailSteps.some((field) => product[field.key]) && (
+      {productDetailSteps.some(
+        (field) => field.key !== "variants" && product[field.key],
+      ) && (
         <Card className="product-detail-card product-detail-information">
           <h3>Ürün bilgileri</h3>
           {productDetailSteps
-            .filter((field) => product[field.key])
+            .filter((field) => field.key !== "variants" && product[field.key])
             .map((field) => (
               <SlDetails
                 key={field.key}

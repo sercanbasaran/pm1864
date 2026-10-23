@@ -8,7 +8,7 @@ export const productCardCode = (product) =>
   product.productCode ||
   `P${String(product.id).padStart(6, "0")}`;
 export const productCardPath = (product) =>
-  "/p/" + encodeURIComponent(productCardCode(product));
+  "/p/" + encodeURIComponent(product.publicSlug || productCardCode(product));
 
 export function productCardEligible(product, categories) {
   const category = categoryOf(product, categories),
@@ -17,7 +17,8 @@ export function productCardEligible(product, categories) {
     product.status === "Aktif" &&
     !!category?.active &&
     !!root?.active &&
-    product.variants.some((v) => v.active !== false)
+    (!product.variants.length ||
+      product.variants.some((v) => v.active !== false))
   );
 }
 

@@ -112,7 +112,6 @@ export default function VariantFields({
                 type="button"
                 className="icon-btn"
                 aria-label={(v.size || "Yeni") + " varyantını sil"}
-                disabled={product.variants.length === 1}
                 onClick={() =>
                   onChange({
                     ...product,

@@ -172,7 +172,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
               description: "",
               allergens: "",
               customImage: "",
-              variants: [{ ...newVariant(), size: "Standart" }],
+              variants: [],
             }
           : null
         : products.find((p) => String(p.id) === record && action === "edit");

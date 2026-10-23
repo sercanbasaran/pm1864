@@ -319,3 +319,13 @@ sl-textarea::part(textarea) {
 .nutrition-table table { width: 100%; }
 .nutrition-table td sl-input { min-width: 100px; max-width: 180px; }
 .nutrition-table > sl-textarea { margin-top: 12px; }
+
+.editor-page, .editor-card, .editor-fields, .editor-content, .product-details, .nutrition-table, .product-variants-table { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.editor-card { display: block; }
+.table-scroll { width: 100%; max-width: 100%; overflow-x: auto; box-sizing: border-box; }
+.product-variants-table > sl-button { margin-bottom: 12px; }
+.product-variants-table td sl-input, .product-variants-table td sl-select { min-width: 110px; max-width: 180px; }
+.product-variants-table .sales-controls { min-width: 200px; }
+.variant-table-actions { display: flex; flex-wrap: wrap; gap: 4px; min-width: 90px; }
+.product-detail-identifiers { flex-wrap: wrap; overflow-wrap: anywhere; }
+.category-field-content > *, .nutrition-table > *, .product-variants-table > * { max-width: 100%; box-sizing: border-box; }

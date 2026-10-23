@@ -25,7 +25,10 @@ export function allocateProductCode(doc, category) {
     );
   doc.nextProductNumbers[group] = next + 1;
   const productCode = String(next).padStart(3, "0");
-  return { productCode, sku: SKU_PREFIX + group + productCode };
+  return {
+    productCode: root.code + subcategoryCode + productCode,
+    sku: SKU_PREFIX + group + productCode,
+  };
 }
 
 // Applied inside the database migration transaction. Work on a copy so a

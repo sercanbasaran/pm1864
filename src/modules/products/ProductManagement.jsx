@@ -98,7 +98,7 @@ export default function ProductManagement({
         (!status || p.status === status) &&
         (!quality ||
           (quality === "image" ? !p.customImage : !p.description?.trim())) &&
-        `${p.name} ${p.productCode} ${p.sku} ${p.variants.map((v) => v.size + " " + v.sku).join(" ")}`
+        `${p.name} ${p.productCode} ${p.variants.map((v) => v.size).join(" ")}`
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
     )
@@ -106,11 +106,19 @@ export default function ProductManagement({
       sort === "name"
         ? a.name.localeCompare(b.name, "tr")
         : sort === "price-asc"
-          ? Math.min(...a.variants.map((v) => v.price)) -
-            Math.min(...b.variants.map((v) => v.price))
+          ? (a.variants.length
+              ? Math.min(...a.variants.map((v) => v.price))
+              : 0) -
+            (b.variants.length
+              ? Math.min(...b.variants.map((v) => v.price))
+              : 0)
           : sort === "price-desc"
-            ? Math.min(...b.variants.map((v) => v.price)) -
-              Math.min(...a.variants.map((v) => v.price))
+            ? (b.variants.length
+                ? Math.min(...b.variants.map((v) => v.price))
+                : 0) -
+              (a.variants.length
+                ? Math.min(...a.variants.map((v) => v.price))
+                : 0)
             : new Date(b.updated) - new Date(a.updated),
     );
   const current = Math.min(page, Math.max(1, Math.ceil(visible.length / 8))),
@@ -144,10 +152,8 @@ export default function ProductManagement({
         [
           "Ürün",
           "Ürün kodu",
-          "SKU",
           "Ana kategori / Alt kategori",
           "Varyant",
-          "Varyant SKU",
           "Varyant tipi",
           "Dilim adedi",
           "Gramaj (g)",
@@ -158,22 +164,22 @@ export default function ProductManagement({
           ...salesChannels.map((c) => c.label),
         ],
         ...visible.flatMap((p) =>
-          p.variants.map((v) => [
+          (p.variants.length ? p.variants : [null]).map((v) => [
             p.name,
             p.productCode,
-            p.sku,
             categoryPath(categoryOf(p, categories), categories),
-            v.size,
-            v.sku,
-            variantTypeName(v, variantTypes),
-            v.slices,
-            v.weight,
-            v.unit || "Adet",
-            v.packaging || "",
-            v.price,
+            v?.size || "",
+            v ? variantTypeName(v, variantTypes) : "",
+            v?.slices ?? "",
+            v?.weight ?? "",
+            v ? v.unit || "Adet" : "",
+            v?.packaging || "",
+            v?.price ?? "",
             p.status,
             ...salesChannels.map((c) =>
-              effectiveSales(p, v, categories)[c.key] ? "Açık" : "Kapalı",
+              effectiveSales(p, v || undefined, categories)[c.key]
+                ? "Açık"
+                : "Kapalı",
             ),
           ]),
         ),
@@ -250,7 +256,7 @@ export default function ProductManagement({
               prefix={<MagnifyingGlass size={17} />}
               ref={search}
               aria-label="Ürün ara"
-              placeholder="Ürün adı, kod veya SKU ara"
+              placeholder="Ürün adı veya ürün kodu ara"
               value={query}
               onChange={(e) => filter(setQuery, e.target.value)}
             />
@@ -426,8 +432,7 @@ export default function ProductManagement({
                         <div>
                           <strong title={p.name}>{p.name}</strong>
                           <small>
-                            {p.productCode} · {p.sku} · {p.variants.length}{" "}
-                            varyant
+                            {p.productCode} · {p.variants.length} varyant
                           </small>
                         </div>
                       </Button>
@@ -438,13 +443,18 @@ export default function ProductManagement({
                       </SlTag>
                     </TableCell>
                     <TableCell>
-                      {money(Math.min(...p.variants.map((v) => v.price)))}
+                      {p.variants.length
+                        ? money(Math.min(...p.variants.map((v) => v.price)))
+                        : "—"}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={p.status} />
                     </TableCell>
                     <TableCell>
-                      <SalesChannelSummary categories={categories} product={p} />
+                      <SalesChannelSummary
+                        categories={categories}
+                        product={p}
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="product-list-actions">
@@ -479,14 +489,14 @@ export default function ProductManagement({
                 <ProductImage product={p} />
                 <StatusBadge status={p.status} />
                 <h3 title={p.name}>{p.name}</h3>
-                <small>
-                  {p.productCode} · {p.sku}
-                </small>
+                <small>{p.productCode}</small>
                 <p className="product-summary-category">
                   {categoryPath(categoryOf(p, categories), categories)}
                 </p>
                 <strong>
-                  {money(Math.min(...p.variants.map((v) => v.price)))}
+                  {p.variants.length
+                    ? money(Math.min(...p.variants.map((v) => v.price)))
+                    : "—"}
                 </strong>
                 <div className="product-summary-actions">
                   <Button type="button" onClick={() => onEdit(p)}>

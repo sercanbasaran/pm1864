@@ -26,7 +26,7 @@ import {
 } from "../../product-information.js";
 import { categoryOf, rootOf } from "../../hierarchy.js";
 import CategoryFields from "../categories/CategoryFields.jsx";
-import VariantFields from "../variants/VariantFields.jsx";
+import ProductVariantsTable from "./ProductVariantsTable.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import EditorPage from "../../components/layout/EditorPage.jsx";
 
@@ -57,9 +57,11 @@ export default function ProductEditor({
   const current = products.find((p) => p.id === product.id) || product;
   const [draft, setDraft] = useState(() => normalize(product));
   const [active, setActive] = useState(
-      productDetailSteps.some((step) => step.label === tab)
-        ? tab
-        : "Genel bilgiler",
+      tab === "Varyant & fiyat"
+        ? "Varyantlar ve fiyatlar"
+        : productDetailSteps.some((step) => step.label === tab)
+          ? tab
+          : "Genel bilgiler",
     ),
     [error, setError] = useState("");
   const [editingField, setEditingField] = useState(
@@ -204,7 +206,11 @@ export default function ProductEditor({
       busy={busy}
       onClose={onClose}
     >
-      <div className="editor-tabs product-detail-steps" role="group" aria-label="Ürün bölümleri">
+      <div
+        className="editor-tabs product-detail-steps"
+        role="group"
+        aria-label="Ürün bölümleri"
+      >
         {productDetailSteps.map(({ label }) => (
           <Button
             type="button"
@@ -258,16 +264,6 @@ export default function ProductEditor({
                   value={
                     draft.productCode ? (
                       <SlBadge variant="neutral">{draft.productCode}</SlBadge>
-                    ) : (
-                      "Kayıttan sonra oluşturulur."
-                    )
-                  }
-                />
-                <EditableField
-                  label="SKU"
-                  value={
-                    draft.sku ? (
-                      <SlBadge variant="neutral">{draft.sku}</SlBadge>
                     ) : (
                       "Kayıttan sonra oluşturulur."
                     )
@@ -418,41 +414,25 @@ export default function ProductEditor({
                     }
                   />
                 </section>
-                {field(
-                  "variants",
-                  "Varyantlar ve fiyatlar",
-                  <div className="product-variant-summary">
-                    {draft.variants.map((variant, i) => (
-                      <div key={variant.id || i}>
-                        <strong>{variant.size || "Yeni varyant"}</strong>{" "}
-                        <SlBadge
-                          variant={
-                            variant.active !== false ? "success" : "neutral"
-                          }
-                        >
-                          {variant.active !== false ? "Aktif" : "Pasif"}
-                        </SlBadge>
-                        <p>
-                          {money(variant.price)} · {variant.weight} g ·{" "}
-                          {variant.unit || "Adet"}
-                        </p>
-                        {variant.packaging && <p>{variant.packaging}</p>}
-                        {variant.sku && (
-                          <SlBadge variant="neutral">{variant.sku}</SlBadge>
-                        )}
-                      </div>
-                    ))}
-                  </div>,
-                  <VariantFields
-                    categories={categories}
-                    disabled={busy || readOnly}
-                    product={draft}
-                    variantTypes={variantTypes}
-                    onChange={setDraft}
-                  />,
-                  !draft.variants.length,
-                )}
               </>
+            ) : active === "Varyantlar ve fiyatlar" ? (
+              field(
+                "variants",
+                "Varyantlar ve fiyatlar",
+                <ProductVariantsTable
+                  product={draft}
+                  variantTypes={variantTypes}
+                />,
+                <ProductVariantsTable
+                  product={draft}
+                  variantTypes={variantTypes}
+                  categories={categories}
+                  editing
+                  disabled={busy || readOnly}
+                  onChange={setDraft}
+                />,
+                !draft.variants.length,
+              )
             ) : (
               productInformationFields
                 .filter(

@@ -1,4 +1,8 @@
 import {
+  productSlug,
+  PRODUCT_IDENTITY_VERSION,
+} from "../src/product-identity.js";
+import {
   SKU_PREFIX,
   SKU_SCHEMA_VERSION,
   displaySku,
@@ -64,6 +68,7 @@ export const seedCatalog = () => ({
   nextProductId: 1,
   skuSchemaVersion: SKU_SCHEMA_VERSION,
   nextProductNumbers: {},
+  productIdentityVersion: PRODUCT_IDENTITY_VERSION,
 });
 const text = (v, max = 200) =>
   typeof v === "string" ? v.trim().slice(0, max) : "";
@@ -452,6 +457,15 @@ export function createCatalogService(db) {
       } catch (error) {
         throw new ApiError(422, error.message, "SKU_RANGE_EXHAUSTED");
       }
+      p.publicSlug = productSlug(p);
+      p.slugHistory = [
+        ...new Set([
+          ...(old?.slugHistory || []),
+          ...(old?.publicSlug && old.publicSlug !== p.publicSlug
+            ? [old.publicSlug]
+            : []),
+        ]),
+      ];
       p.publicCardCode =
         old?.publicCardCode ||
         old?.productCode ||
@@ -656,7 +670,12 @@ export function createCatalogService(db) {
   }
   async function productPage(code, authenticated = false, assetId = "") {
     const catalog = await read();
-    const product = catalog.products.find((p) => productCardCode(p) === code);
+    const product = catalog.products.find(
+      (p) =>
+        productCardCode(p) === code ||
+        p.publicSlug === code ||
+        p.slugHistory?.includes(code),
+    );
     if (!product || !productCardEligible(product, catalog.categories))
       throw new ApiError(404, "Ürün bulunamadı.", "NOT_FOUND");
     if (!product.publicCardEnabled && !authenticated)

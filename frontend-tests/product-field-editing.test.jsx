@@ -100,8 +100,8 @@ test("existing products use text cards, immutable codes, matching back buttons a
     document.querySelectorAll("sl-input,sl-select,sl-textarea"),
   ).toHaveLength(0);
   expect(
-    [...document.querySelectorAll("dt")].slice(0, 3).map((n) => n.textContent),
-  ).toEqual(["Ürün durumu", "Ürün kodu", "SKU"]);
+    [...document.querySelectorAll("dt")].slice(0, 2).map((n) => n.textContent),
+  ).toEqual(["Ürün durumu", "Ürün kodu"]);
   expect(document.querySelector("form").textContent).not.toContain("*");
   expect(document.querySelectorAll(".editor-back-button")).toHaveLength(2);
   expect(document.querySelector("form").textContent).toContain("Özel");
@@ -157,9 +157,10 @@ test("private/public control uses the publication API and read-only product scre
 test("variant editing starts in a summary card and preserves IDs and other product fields", async () => {
   const { fetch } = await show();
   expect(document.querySelectorAll("sl-input")).toHaveLength(0);
+  await action("Varyantlar ve fiyatlar");
   await clickLabel("Varyantlar ve fiyatlar düzenle");
-  const price = [...document.querySelectorAll("sl-input")].find(
-    (c) => c.label === "Fiyat (₺)",
+  const price = [...document.querySelectorAll("sl-input")].find((c) =>
+    c.getAttribute("aria-label")?.endsWith("Fiyat (₺)"),
   );
   price.value = "175";
   fireEvent(price, new CustomEvent("sl-input", { bubbles: true }));
@@ -202,7 +203,7 @@ test("new products retain the complete creation form with required fields and pr
     ),
   ).toBe(true);
 });
-test("seven detail steps isolate ingredients and edit nutrition in a table", async () => {
+test("eight detail steps isolate ingredients and edit nutrition in a table", async () => {
   const { fetch } = await show();
   expect(
     [
@@ -218,6 +219,7 @@ test("seven detail steps isolate ingredients and edit nutrition in a table", asy
     "Servis Önerisi",
     "Saklama Koşulları",
     "Uzun Süreli Muhafaza",
+    "Varyantlar ve fiyatlar",
   ]);
   await action("İçindekiler");
   await clickLabel("İçindekiler ekle");
@@ -249,4 +251,33 @@ test("seven detail steps isolate ingredients and edit nutrition in a table", asy
   expect(JSON.parse(saved[1].body).product.nutrition).toBe(
     "100 g için: Enerji 297,5 kcal.",
   );
+});
+test("variant step is optional and SKU is absent from the product UI", async () => {
+  const draft = {
+    ...product,
+    isNew: true,
+    id: undefined,
+    productCode: undefined,
+    sku: undefined,
+    variants: [],
+  };
+  const close = vi.fn();
+  const save = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ catalog: snapshot }), { status: 200 }),
+  );
+  vi.stubGlobal("fetch", save);
+  render(
+    <CatalogProvider snapshot={snapshot} notify={vi.fn()}>
+      <ProductEditor product={draft} onClose={close} />
+    </CatalogProvider>,
+  );
+  await settle();
+  expect(document.querySelector(".editor-page").textContent).not.toContain(
+    "SKU",
+  );
+  fireEvent.submit(document.querySelector("form"));
+  await settle();
+  await waitFor(() => expect(close).toHaveBeenCalled());
+  expect(JSON.parse(save.mock.calls[0][1].body).product.variants).toEqual([]);
 });

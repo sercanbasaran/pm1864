@@ -67,7 +67,7 @@ export default function CategoryFields({ product, categories, onChange }) {
         </Select>
         {parent && !children.length && (
           <small className="input-help">
-            Ürün doğrudan ana kategoriye eklenir. SKU alt kategori kodu 000 olur.
+            Ürün doğrudan ana kategoriye eklenir. Ürün kodunda alt kategori bölümü 000 olur.
           </small>
         )}
       </div>

@@ -13,7 +13,7 @@ export default function PublicProductPage() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController(),
-      code = window.location.pathname.match(/^\/p\/(P\d{6,})\/?$/)?.[1];
+      code = window.location.pathname.match(/^\/p\/([a-zA-Z0-9-]+)\/?$/)?.[1];
     setLoading(true);
     setError(null);
     setProduct(null);

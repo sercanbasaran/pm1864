@@ -123,8 +123,6 @@ export function validateProduct(
       tab: "Varyant & fiyat",
       message: "Bir üründe en fazla 50 varyant olabilir.",
     };
-  if (!product.variants.length)
-    return { tab: "Varyant & fiyat", message: "En az bir varyant gerekli." };
   const names = product.variants.map((v) => normalizeName(v.size));
   if (names.some((n) => !n) || new Set(names).size !== names.length)
     return {

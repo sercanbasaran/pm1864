@@ -62,9 +62,10 @@ export const productDetailSteps = [
   { label: "Servis Önerisi", key: "servingSuggestion" },
   { label: "Saklama Koşulları", key: "storageConditions" },
   { label: "Uzun Süreli Muhafaza", key: "longTermStorage" },
+  { label: "Varyantlar ve fiyatlar", key: "variants" },
 ];
 export function stepForProductError(invalid) {
-  if (invalid.tab === "Varyant & fiyat") return "Genel bilgiler";
+  if (invalid.tab === "Varyant & fiyat") return "Varyantlar ve fiyatlar";
   if (invalid.tab !== "Besin ve saklama") return invalid.tab;
   const field = productInformationFields.find((info) =>
     invalid.message.startsWith(info.label),
