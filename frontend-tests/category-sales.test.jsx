@@ -60,17 +60,24 @@ test("category editor opens and saves only the selected field and cancels drafts
     await settle();
   };
   expect(
-    [
-      ...document.querySelectorAll(
-        "sl-input,sl-select,sl-textarea,sl-checkbox,sl-switch",
-      ),
-    ].every((c) => c.disabled),
-  ).toBe(true);
+    document.querySelectorAll(
+      "sl-input,sl-select,sl-textarea,sl-checkbox,sl-switch",
+    ),
+  ).toHaveLength(0);
+  expect(
+    [...document.querySelectorAll("dt")].map((c) => c.textContent),
+  ).toContain("Kategori adı");
+  expect(
+    [...document.querySelectorAll("dd")].map((c) => c.textContent),
+  ).toContain(child.name);
+  expect(document.querySelector("form").textContent).not.toContain("*");
   await clickEdit("Kategori adı");
   const name = findControl("Kategori adı");
   expect(name.disabled).toBe(false);
-  expect(findControl("Kategori bağlantısı").disabled).toBe(true);
-  expect(findControl("Kategori kodu").disabled).toBe(true);
+  expect(findControl("Kategori bağlantısı")).toBeUndefined();
+  expect(findControl("Kategori kodu")).toBeUndefined();
+  expect(name.required).toBe(true);
+  expect(document.querySelectorAll("sl-input")).toHaveLength(1);
   name.value = "Yeni Fistikli";
   fireEvent(name, new CustomEvent("sl-input", { bubbles: true }));
   await settle();
@@ -78,14 +85,14 @@ test("category editor opens and saves only the selected field and cancels drafts
   await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
   expect(onSave.mock.calls[0][0]).toEqual({ ...child, name: "Yeni Fistikli" });
   expect(onClose).not.toHaveBeenCalled();
-  expect(name.disabled).toBe(true);
+  expect(findControl("Kategori adı")).toBeUndefined();
   await clickEdit("Açıklama");
   const description = findControl("Açıklama");
   description.value = "Kaydedilmeyen açıklama";
   fireEvent(description, new CustomEvent("sl-input", { bubbles: true }));
   await settle();
   await clickEdit("Satış kanalları");
-  expect(description.value || "").toBe("");
+  expect(findControl("Açıklama")).toBeUndefined();
   const controls = [...document.querySelectorAll("sl-switch")];
   const online = controls.find(
     (c) => c.getAttribute("aria-label") === "E-Mağaza",
@@ -104,16 +111,19 @@ test("category editor opens and saves only the selected field and cancels drafts
   });
   expect(onClose).not.toHaveBeenCalled();
   await clickEdit("Kategori adı");
-  name.value = "Vazgeçilecek";
-  fireEvent(name, new CustomEvent("sl-input", { bubbles: true }));
+  const nextName = findControl("Kategori adı");
+  nextName.value = "Vazgeçilecek";
+  fireEvent(nextName, new CustomEvent("sl-input", { bubbles: true }));
   await settle();
   const cancel = [...document.querySelectorAll("sl-button")].find(
     (b) => b.textContent.trim() === "Vazgeç",
   );
   fireEvent.click(cancel);
   await settle();
-  expect(name.value).toBe(child.name);
-  expect(name.disabled).toBe(true);
+  expect(
+    [...document.querySelectorAll("dd")].map((c) => c.textContent),
+  ).toContain(child.name);
+  expect(findControl("Kategori adı")).toBeUndefined();
   expect(onSave).toHaveBeenCalledTimes(2);
 });
 test("category list shows channel status and read-only mode has no editing switches", async () => {
