@@ -26,6 +26,7 @@ import {
   Tag,
   PencilSimple,
   QrCode,
+  Copy,
 } from "@phosphor-icons/react";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { can } from "../../permissions.js";
@@ -46,6 +47,7 @@ export default function ProductManagement({
   focus,
   onEdit,
   onNew,
+  onDuplicate,
   onBulk,
   onCard,
 }) {
@@ -458,6 +460,18 @@ export default function ProductManagement({
                     </TableCell>
                     <TableCell>
                       <div className="product-list-actions">
+                        {write && (
+                          <Button
+                            type="button"
+                            className="icon-btn"
+                            aria-label={p.name + " ürününü çoğalt"}
+                            title="Ürün çoğalt"
+                            disabled={busy}
+                            onClick={() => onDuplicate(p)}
+                          >
+                            <Copy size={18} />
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           className="icon-btn"
@@ -499,6 +513,16 @@ export default function ProductManagement({
                     : "—"}
                 </strong>
                 <div className="product-summary-actions">
+                  {write && (
+                    <Button
+                      type="button"
+                      aria-label={p.name + " ürününü çoğalt"}
+                      disabled={busy}
+                      onClick={() => onDuplicate(p)}
+                    >
+                      <Copy size={16} /> Ürün çoğalt
+                    </Button>
+                  )}
                   <Button type="button" onClick={() => onEdit(p)}>
                     <PencilSimple size={16} />
                     {write ? "Düzenle" : "Görüntüle"}

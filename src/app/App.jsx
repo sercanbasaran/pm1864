@@ -9,11 +9,12 @@ import { Info, X } from "@phosphor-icons/react";
 import { CatalogProvider, useCatalog } from "./CatalogContext.jsx";
 import { moduleGroups, modules, legacyPages } from "./modules.js";
 import { can, roleFor } from "../permissions.js";
-import { selectable } from "../hierarchy.js";
+import { selectable, categoryOf } from "../hierarchy.js";
 import { newVariant } from "../modules/variants/VariantFields.jsx";
 import AppShell from "../components/layout/AppShell.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import ModuleBoundary from "../components/ui/ModuleBoundary.jsx";
+import { duplicateProduct } from "../duplicate-product.js";
 import ProductEditor from "../modules/products/ProductEditor.jsx";
 import VariantEditor from "../modules/variants/VariantEditor.jsx";
 import ModuleHome from "../modules/workspace/ModuleHome.jsx";
@@ -155,28 +156,49 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     }
     navigate("products/new?category=" + encodeURIComponent(category.id));
   }
+  function duplicate(product) {
+    if (!can(user, "products.write")) return;
+    const category = categoryOf(product, categories);
+    if (!category || !selectable(category, categories)) {
+      notify("Ürünü çoğaltmadan önce aktif bir kategori seçin.");
+      return;
+    }
+    navigate(
+      "products/new?category=" +
+        encodeURIComponent(category.id) +
+        "&duplicate=" +
+        encodeURIComponent(product.id),
+    );
+  }
   let editing = null;
   if (["products", "variants"].includes(page) && record) {
     const category =
       categories.find(
         (c) => c.id === params.get("category") && selectable(c, categories),
       ) || categories.find((c) => selectable(c, categories));
+    const source = params.has("duplicate")
+      ? products.find((p) => String(p.id) === params.get("duplicate"))
+      : null;
     const product =
-      record === "new"
-        ? category
-          ? {
-              isNew: true,
-              name: "",
-              categoryId: category.id,
-              category: category.name,
-              status: "Taslak",
-              description: "",
-              allergens: "",
-              customImage: "",
-              variants: [],
-            }
+      record === "new" && params.has("duplicate")
+        ? source
+          ? duplicateProduct(source)
           : null
-        : products.find((p) => String(p.id) === record && action === "edit");
+        : record === "new"
+          ? category
+            ? {
+                isNew: true,
+                name: "",
+                categoryId: category.id,
+                category: category.name,
+                status: "Taslak",
+                description: "",
+                allergens: "",
+                customImage: "",
+                variants: [],
+              }
+            : null
+          : products.find((p) => String(p.id) === record && action === "edit");
     if (product)
       editing = {
         product:
@@ -238,6 +260,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         focus={focus}
         onEdit={(p) => open(p)}
         onNew={create}
+        onDuplicate={duplicate}
         onBulk={onBulk}
         onCard={(p) => navigate("products/" + p.id + "/card")}
       />

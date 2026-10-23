@@ -3,6 +3,8 @@ import { test, expect, vi, afterEach } from "vitest";
 import { render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { CatalogProvider } from "../src/app/CatalogContext.jsx";
 import ProductEditor from "../src/modules/products/ProductEditor.jsx";
+import ProductManagement from "../src/modules/products/ProductManagement.jsx";
+import { duplicateProduct } from "../src/duplicate-product.js";
 import VariantEditor from "../src/modules/variants/VariantEditor.jsx";
 import PlannedModule from "../src/modules/workspace/PlannedModule.jsx";
 import {
@@ -310,13 +312,68 @@ test("product editor has no variant section, even through a legacy variant tab",
     </CatalogProvider>,
   );
   await settle();
-  expect(document.querySelector(".product-detail-steps .selected").textContent).toBe(
-    "Genel bilgiler",
-  );
+  expect(
+    document.querySelector(".product-detail-steps .selected").textContent,
+  ).toBe("Genel bilgiler");
   expect(document.querySelector("form").textContent).not.toContain(
     "Varyantlar ve fiyatlar",
   );
   expect(
     document.querySelector('[aria-label="Varyantlar ve fiyatlar düzenle"]'),
   ).toBeNull();
+});
+
+test("duplication actions are available in list and grid only for product editors", async () => {
+  const duplicate = vi.fn();
+  const showList = (role) =>
+    render(
+      <CatalogProvider snapshot={snapshot} notify={vi.fn()}>
+        <ProductManagement
+          user={{ role }}
+          onEdit={vi.fn()}
+          onNew={vi.fn()}
+          onBulk={vi.fn()}
+          onCard={vi.fn()}
+          onDuplicate={duplicate}
+        />
+      </CatalogProvider>,
+    );
+  showList("editor");
+  await settle();
+  await clickLabel("Baklava ürününü çoğalt");
+  expect(duplicate).toHaveBeenCalledWith(product);
+  await clickLabel("Kart görünümü");
+  await clickLabel("Baklava ürününü çoğalt");
+  expect(duplicate).toHaveBeenCalledTimes(2);
+  cleanup();
+  showList("viewer");
+  await settle();
+  expect(
+    document.querySelector('[aria-label="Baklava ürününü çoğalt"]'),
+  ).toBeNull();
+});
+test("a duplicated product opens as editable new content and posts to creation endpoint", async () => {
+  const save = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ catalog: snapshot }), { status: 200 }),
+  );
+  vi.stubGlobal("fetch", save);
+  render(
+    <CatalogProvider snapshot={snapshot} notify={vi.fn()}>
+      <ProductEditor product={duplicateProduct(product)} onClose={vi.fn()} />
+    </CatalogProvider>,
+  );
+  await settle();
+  expect(document.querySelector('sl-input[aria-label="Ürün adı"]').value).toBe(
+    "Baklava (Kopya)",
+  );
+  fireEvent.submit(document.querySelector("form"));
+  await waitFor(() => expect(save).toHaveBeenCalled());
+  const call = save.mock.calls.find(([url]) => url === "/api/products");
+  expect(call).toBeDefined();
+  const sent = JSON.parse(call[1].body).product;
+  expect(sent.id).toBeUndefined();
+  expect(sent.sku).toBeUndefined();
+  expect(sent.variants[0].id).toBeUndefined();
+  expect(sent.publicCardEnabled).toBe(false);
 });

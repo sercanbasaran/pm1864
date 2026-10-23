@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { duplicateProduct } from "../src/duplicate-product.js";
 import { upgradeProductIdentity } from "../src/product-identity.js";
 import { createApp } from "../server/app.js";
 import { hashPassword } from "../server/security.js";
@@ -105,6 +106,23 @@ test("products can be created and published without variants; named and legacy l
       200,
     );
     assert.equal(p.productCode, "0100000001");
+    const duplicated = await call("/products", "POST", {
+      expectedRevision: catalog.revision,
+      product: duplicateProduct(p),
+    });
+    assert.equal(duplicated.status, 200);
+    const copy = duplicated.catalog.products.find((item) => item.id !== p.id);
+    assert.equal(copy.name, "Yeni isim (Kopya)");
+    assert.equal(copy.productCode, "0100000002");
+    assert.notEqual(copy.sku, p.sku);
+    assert.notEqual(copy.publicCardCode, p.publicCardCode);
+    assert.notEqual(copy.publicSlug, p.publicSlug);
+    assert.equal(copy.publicCardEnabled, false);
+    assert.equal(copy.status, "Taslak");
+    assert.deepEqual(
+      duplicated.catalog.products.find((item) => item.id === p.id),
+      p,
+    );
   } finally {
     await app.close();
   }
