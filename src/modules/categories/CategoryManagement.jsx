@@ -20,6 +20,7 @@ import {
   TableRow,
   TableHeading,
   TableCell,
+
 } from "../../components/ui/Controls.jsx";
 import React, { useEffect, useState } from "react";
 import {
@@ -299,7 +300,7 @@ export default function CategoryManager({
                             categories={categories}
                           />
                         </TableCell>
-                        <TableCell>{count}</TableCell>
+                        <TableCell><SlBadge>{count}</SlBadge></TableCell>
                         <TableCell>
                           <div className="category-table-actions">
                             {!readOnly && (
