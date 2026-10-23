@@ -97,6 +97,21 @@ export async function createApp({ env = process.env, database } = {}) {
         if (categoryRoute[2]) return media.content(page);
         return json({ category: page });
       }
+      const productPageRoute = route.match(
+        /^\/api\/product-pages\/(P[0-9]{6,})(?:\/images\/([a-zA-Z0-9-]+))?$/,
+      );
+      if (productPageRoute && method === "GET") {
+        const user = await session(request);
+        const allowed =
+          !!user && !user.mustChangePassword && can(user, "catalog.read");
+        const page = await service.productPage(
+          productPageRoute[1],
+          allowed,
+          productPageRoute[2],
+        );
+        if (productPageRoute[2]) return media.content(page);
+        return json({ product: page });
+      }
       const publicRoute = route.match(
         /^\/api\/public\/products\/(P[0-9]{6,})(\/image)?$/,
       );

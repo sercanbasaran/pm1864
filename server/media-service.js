@@ -146,7 +146,10 @@ export function createMediaService(db) {
           (c.images || []).some((image) => image.id === id),
         ) ||
         context.doc.products.some(
-          (p) => p.mediaId === id || p.customImage === mediaUrl(id),
+          (p) =>
+            p.mediaId === id ||
+            p.customImage === mediaUrl(id) ||
+            (p.images || []).some((image) => image.id === id),
         )
       )
         throw new ApiError(

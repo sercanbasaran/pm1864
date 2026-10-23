@@ -139,14 +139,14 @@ test('product cards publish with a stable decodable QR, download PNG and restric
  cleanup();const catalog=await api.service.read();render(<App user={{...user,role:'viewer'}} snapshot={catalog} onLogout={vi.fn()} onUserUpdated={vi.fn()}/>);await screen.findByRole('region',{name:'Ürün kartı ve QR'});await settle();expect(screen.queryByRole('switch',{name:'Ürün kartını yayınla'})).toBeNull();
 });
 
-test('public product page reads only the anonymous API and handles withdrawn cards without a login wall',async()=>{
+test('product pages load safe fields and require sign in for private access',async()=>{
  let catalog=await api.service.read();catalog=await api.service.saveProduct({expectedRevision:catalog.revision,product:{...catalog.products[0],status:'Aktif',description:'Public ürün açıklaması',allergens:'Fıstık içerir.'}},catalog.products[0].id,user.email);
  catalog=await api.service.publishCard({expectedRevision:catalog.revision,enabled:true},catalog.products[0].id,user.email);
  window.history.replaceState(null,'','/p/P000001');const calls=[];
  vi.stubGlobal('fetch',vi.fn(async(path,options)=>{calls.push({path,options});return api.handle(new Request('http://localhost'+path))}));
  render(<RootApp/>);await screen.findByRole('heading',{name:'Kontrol Baklava',level:2});expect(screen.getByText('Public ürün açıklaması')).toBeTruthy();expect(screen.getByText('Fıstık içerir.')).toBeTruthy();expect(screen.queryByRole('button',{name:'Giriş yap'})).toBeNull();expect(screen.queryByRole('navigation',{name:'Yönetim modülleri'})).toBeNull();
- const apiCalls=calls.filter(call=>call.path.startsWith('/api/'));expect(apiCalls).toHaveLength(1);expect(apiCalls[0].path).toBe('/api/public/products/P000001');expect(apiCalls[0].options.credentials).toBe('omit');
- cleanup();await api.service.publishCard({expectedRevision:catalog.revision,enabled:false},catalog.products[0].id,user.email);render(<RootApp/>);await screen.findByText('Ürün kartı bulunamadı veya yayından kaldırıldı.');expect(screen.queryByRole('heading',{name:'Kontrol Baklava',level:2})).toBeNull();expect(screen.queryByRole('button',{name:'Giriş yap'})).toBeNull();
+ const apiCalls=calls.filter(call=>call.path.startsWith('/api/'));expect(apiCalls).toHaveLength(1);expect(apiCalls[0].path).toBe('/api/product-pages/P000001');expect(apiCalls[0].options.credentials).toBe('same-origin');
+ cleanup();await api.service.publishCard({expectedRevision:catalog.revision,enabled:false},catalog.products[0].id,user.email);render(<RootApp/>);await screen.findByRole('button',{name:'Giriş yap'});expect(screen.queryByRole('heading',{name:'Kontrol Baklava',level:2})).toBeNull();
 });
 
 test('product table summary remains global while filtering and card view keeps the same records',async()=>{

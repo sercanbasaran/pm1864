@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
+import BackendGate from "../../app/BackendGate.jsx";
 import Card from "../../components/ui/Card.jsx";
 import { Button } from "../../components/ui/Controls.jsx";
 import ProductDetails from "./ProductDetails.jsx";
@@ -23,9 +24,9 @@ export default function PublicProductPage() {
             new Error("Ürün kartı bulunamadı veya yayından kaldırıldı."),
             { status: 404 },
           );
-        const response = await fetch("/api/public/products/" + code, {
+        const response = await fetch("/api/product-pages/" + code, {
           signal: controller.signal,
-          credentials: "omit",
+          credentials: "same-origin",
           cache: "no-store",
         });
         if (!response.ok)
@@ -65,6 +66,8 @@ export default function PublicProductPage() {
       document.title = old;
     };
   }, [product]);
+  if (error?.status === 401)
+    return <BackendGate>{() => <PublicProductPage />}</BackendGate>;
   return (
     <div className="public-product-page">
       <header className="public-product-header">

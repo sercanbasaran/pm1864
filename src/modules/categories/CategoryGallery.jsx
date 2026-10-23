@@ -9,6 +9,7 @@ export default function CategoryGallery({
   onRefresh,
   disabled = false,
   editable = true,
+  label = "Kategori",
 }) {
   const [index, setIndex] = useState(0),
     [paused, setPaused] = useState(false),
@@ -50,12 +51,13 @@ export default function CategoryGallery({
       if (added.length) {
         const refreshed = await onRefresh?.();
         if (
-          (await onChange([...images, ...added], refreshed?.categories)) ===
-          false
+          (await onChange(
+            [...images, ...added],
+            refreshed?.categories,
+            refreshed,
+          )) === false
         )
-          throw new Error(
-            "Görseller kategoriye kaydedilemedi. Yeniden deneyin.",
-          );
+          throw new Error("Görseller kaydedilemedi. Yeniden deneyin.");
         setIndex(images.length);
       }
       if (failure) setError(failure);
@@ -92,7 +94,7 @@ export default function CategoryGallery({
           accept="image/png,image/jpeg,image/webp,image/gif"
           multiple
           hidden
-          aria-label="Kategori görsellerini yükle"
+          aria-label={label + " görsellerini yükle"}
           onChange={upload}
           disabled={busy}
         />
@@ -107,7 +109,7 @@ export default function CategoryGallery({
               <img
                 key={image.id}
                 src={image.url || `/api/media/${image.id}/content`}
-                alt={`Kategori görseli ${n + 1}`}
+                alt={`${label} görseli ${n + 1}`}
               />
             ))}
           </div>

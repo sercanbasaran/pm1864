@@ -305,12 +305,20 @@ export function createCatalogService(db) {
           name: text(input.name, 160),
           category: c.name,
           categoryId: c.id,
-          mediaId: text(input.mediaId, 100),
+          mediaId: text(
+            input.mediaId === undefined ? old?.mediaId : input.mediaId,
+            100,
+          ),
           description: text(input.description, 4000),
           ...information,
           salesAvailability: input.salesAvailability,
           status: input.status === "Aktif" ? "Aktif" : "Taslak",
-          customImage: text(input.customImage, 2000),
+          customImage: text(
+            input.customImage === undefined
+              ? old?.customImage
+              : input.customImage,
+            2000,
+          ),
           image: Number.isInteger(input.image) ? input.image : 0,
           variants: Array.isArray(input.variants)
             ? input.variants.slice(0, 50).map((v) => ({
@@ -334,6 +342,65 @@ export function createCatalogService(db) {
             : [],
           isNew: !old,
         };
+      const imageInput = input.images ?? old?.images ?? [];
+      if (
+        !Array.isArray(imageInput) ||
+        imageInput.length > 30 ||
+        imageInput.some((image) => !image || typeof image.id !== "string")
+      )
+        throw new ApiError(422, "En fazla 30 ürün görseli eklenebilir.");
+      p.images = [...new Set(imageInput.map((image) => image.id))].map(
+        (id) => ({
+          id,
+          url: "/api/media/" + encodeURIComponent(id) + "/content",
+        }),
+      );
+      for (const image of p.images) {
+        if (
+          !(await tx.query("SELECT id FROM app_media WHERE id=?", [image.id]))
+            .rows[0]
+        )
+          throw new ApiError(422, "Ürün görseli bulunamadı.");
+      }
+      const imagesChanged =
+        input.images !== undefined &&
+        JSON.stringify(input.images.map((image) => image.id)) !==
+          JSON.stringify((old?.images || []).map((image) => image.id));
+      const coverChanged =
+        input.mediaId !== undefined && input.mediaId !== (old?.mediaId || "");
+      if (
+        input.images !== undefined &&
+        (!coverChanged || imagesChanged) &&
+        (imagesChanged || p.images.length > 0 || !p.customImage)
+      ) {
+        p.mediaId = p.images[0]?.id || "";
+        p.customImage =
+          p.images[0]?.url ||
+          (typeof input.customImage === "string" &&
+          input.customImage.startsWith("/api/media/")
+            ? ""
+            : text(input.customImage, 2000));
+      } else if (coverChanged) {
+        p.images = p.mediaId
+          ? [
+              {
+                id: p.mediaId,
+                url: "/api/media/" + encodeURIComponent(p.mediaId) + "/content",
+              },
+              ...p.images.filter(
+                (image) => image.id !== p.mediaId && image.id !== old?.mediaId,
+              ),
+            ]
+          : [];
+      } else if (
+        p.mediaId &&
+        !p.images.some((image) => image.id === p.mediaId)
+      ) {
+        p.images.unshift({
+          id: p.mediaId,
+          url: "/api/media/" + encodeURIComponent(p.mediaId) + "/content",
+        });
+      }
       if (p.mediaId) {
         const asset = (
           await tx.query("SELECT id FROM app_media WHERE id=?", [p.mediaId])
@@ -587,6 +654,48 @@ export function createCatalogService(db) {
       ),
     };
   }
+  async function productPage(code, authenticated = false, assetId = "") {
+    const catalog = await read();
+    const product = catalog.products.find((p) => productCardCode(p) === code);
+    if (!product || !productCardEligible(product, catalog.categories))
+      throw new ApiError(404, "Ürün bulunamadı.", "NOT_FOUND");
+    if (!product.publicCardEnabled && !authenticated)
+      throw new ApiError(401, "Bu ürün için giriş yapın.", "UNAUTHORIZED");
+    const images = product.images?.length
+      ? product.images
+      : product.mediaId
+        ? [{ id: product.mediaId }]
+        : [];
+    if (assetId) {
+      if (
+        !images.some((image) => image.id === assetId) &&
+        product.mediaId !== assetId
+      )
+        throw new ApiError(404, "Görsel bulunamadı.", "NOT_FOUND");
+      return assetId;
+    }
+    const imageUrl = (id) =>
+      "/api/product-pages/" +
+      encodeURIComponent(code) +
+      "/images/" +
+      encodeURIComponent(id);
+    return {
+      ...productCardData(
+        product,
+        catalog.categories,
+        product.mediaId
+          ? imageUrl(product.mediaId)
+          : /^https?:\/\//i.test(product.customImage || "")
+            ? product.customImage
+            : "",
+        catalog.variantTypes,
+      ),
+      images: images.map((image) => ({
+        id: image.id,
+        url: imageUrl(image.id),
+      })),
+    };
+  }
   async function publishedProduct(code) {
     const catalog = await read(),
       product = catalog.products.find((p) => productCardCode(p) === code);
@@ -663,6 +772,7 @@ export function createCatalogService(db) {
     settings,
     prices,
     categoryPage,
+    productPage,
     publishedProduct,
     publicCard,
     publishCard,

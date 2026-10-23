@@ -308,3 +308,7 @@ sl-textarea::part(textarea) {
   .category-field-card .category-field-actions { align-self: start; }
   .category-link-display { gap: 8px; }
 }
+
+.product-variant-summary { display: grid; gap: 12px; }
+.product-variant-summary > div { padding: 12px; border: 1px solid var(--sl-color-neutral-200); border-radius: 8px; min-width: 0; }
+.product-variant-summary p { margin: 8px 0; }

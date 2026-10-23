@@ -1,3 +1,4 @@
+import EditableField from "../../components/ui/EditableField.jsx";
 import BackToListButton from "../../components/ui/BackToListButton.jsx";
 import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
 import CategoryGallery from "./CategoryGallery.jsx";
@@ -51,76 +52,6 @@ import {
   validateCategory,
 } from "../../catalog.js";
 import { roots } from "../../hierarchy.js";
-function EditableField({
-  children,
-  label,
-  value,
-  creating,
-  enabled,
-  editing,
-  busy,
-  onEdit,
-  onSave,
-  onCancel,
-  displayAction,
-  empty,
-}) {
-  return (
-    <section
-      className={
-        "category-field-card" + (creating || editing ? " is-editing" : "")
-      }
-    >
-      <div className="category-field-content">
-        {creating || editing ? (
-          children
-        ) : (
-          <dl className="category-field-value">
-            <dt>{label}</dt>
-            <dd>{value || "—"}</dd>
-          </dl>
-        )}
-      </div>
-      {displayAction ||
-        (enabled && (
-          <div className="category-field-actions">
-            {editing ? (
-              <>
-                <Button
-                  type="button"
-                  size="small"
-                  variant="primary"
-                  disabled={busy}
-                  onClick={onSave}
-                >
-                  Kaydet
-                </Button>
-                <Button
-                  type="button"
-                  size="small"
-                  disabled={busy}
-                  onClick={onCancel}
-                >
-                  Vazgeç
-                </Button>
-              </>
-            ) : (
-              <Button
-                type="button"
-                size="small"
-                aria-label={label + (empty ? " ekle" : " düzenle")}
-                disabled={busy}
-                onClick={onEdit}
-              >
-                {empty ? <Plus size={15} /> : <PencilSimple size={15} />}
-                {empty ? "Ekle" : "Düzenle"}
-              </Button>
-            )}
-          </div>
-        ))}
-    </section>
-  );
-}
 export default function CategoryManager({
   categories,
   products,
