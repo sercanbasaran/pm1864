@@ -15,6 +15,7 @@ import AppShell from "../components/layout/AppShell.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import ModuleBoundary from "../components/ui/ModuleBoundary.jsx";
 import ProductEditor from "../modules/products/ProductEditor.jsx";
+import VariantEditor from "../modules/variants/VariantEditor.jsx";
 import ModuleHome from "../modules/workspace/ModuleHome.jsx";
 import PlannedModule from "../modules/workspace/PlannedModule.jsx";
 import BulkPriceDialog from "../modules/pricing/BulkPriceDialog.jsx";
@@ -179,16 +180,12 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     if (product)
       editing = {
         product:
-          params.get("append") === "1"
+          page === "variants" && params.get("append") === "1"
             ? {
                 ...structuredClone(product),
                 variants: [...structuredClone(product.variants), newVariant()],
               }
             : product,
-        tab:
-          params.get("tab") === "variants"
-            ? "Varyant & fiyat"
-            : "Genel bilgiler",
       };
   }
   async function saveCategory(category, isNew) {
@@ -334,13 +331,21 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         onClose={closeEditor}
       />
     ) : editing && !(record === "new" && !can(user, "products.write")) ? (
-      <ProductEditor
-        key={route}
-        product={editing.product}
-        tab={editing.tab}
-        readOnly={!can(user, "products.write")}
-        onClose={closeEditor}
-      />
+      page === "variants" ? (
+        <VariantEditor
+          key={route}
+          product={editing.product}
+          readOnly={!can(user, "products.write")}
+          onClose={closeEditor}
+        />
+      ) : (
+        <ProductEditor
+          key={route}
+          product={editing.product}
+          readOnly={!can(user, "products.write")}
+          onClose={closeEditor}
+        />
+      )
     ) : (
       missing
     );

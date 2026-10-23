@@ -22,6 +22,8 @@ import {
   CurrencyCircleDollar,
   Translate,
   Files,
+  Megaphone,
+  Cube,
 } from "@phosphor-icons/react";
 const existingModules = [
   {
@@ -211,9 +213,32 @@ export const moduleGroups = [
   ...group,
   permission: group.permission || "catalog.read",
 }));
-export const primaryModules = [existingModules[0], ...moduleGroups];
+export const newMainModules = [
+  {
+    id: "campaign-management",
+    label: "KAMPANYA YÖNETİMİ",
+    icon: Megaphone,
+    permission: "catalog.read",
+    status: "planned",
+    description: "Kampanya tanımları ve kampanya süreçlerinin yönetimi.",
+  },
+  {
+    id: "packaging-center",
+    label: "AMBALAJ MERKEZİ",
+    icon: Cube,
+    permission: "catalog.read",
+    status: "planned",
+    description: "Ambalaj tanımları ve ambalaj bilgilerinin yönetimi.",
+  },
+];
+export const primaryModules = [
+  existingModules[0],
+  ...moduleGroups,
+  ...newMainModules,
+];
 export const modules = [
   ...existingModules,
+  ...newMainModules,
   {
     id: "user-roles",
     label: "Kullanıcı rolleri",
@@ -233,6 +258,8 @@ export const visibleChildren = (group, user, can) =>
     .map(moduleFor)
     .filter((module) => module && can(user, module.permission));
 export const legacyPages = {
+  "Kampanya Yönetimi": "campaign-management",
+  "Ambalaj Merkezi": "packaging-center",
   "Ürün yönetimi ana modülü": "product-management",
   Kategoriler: "categories",
   "Kategori yönetimi": "categories",

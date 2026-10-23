@@ -3,6 +3,13 @@ import { test, expect, vi, afterEach } from "vitest";
 import { render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { CatalogProvider } from "../src/app/CatalogContext.jsx";
 import ProductEditor from "../src/modules/products/ProductEditor.jsx";
+import VariantEditor from "../src/modules/variants/VariantEditor.jsx";
+import PlannedModule from "../src/modules/workspace/PlannedModule.jsx";
+import {
+  newMainModules,
+  primaryModules,
+  moduleFor,
+} from "../src/app/modules.js";
 import { settle } from "./shadow-queries.js";
 const category = {
   id: "r",
@@ -49,7 +56,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
-async function show(readOnly = false) {
+async function show(readOnly = false, Editor = ProductEditor) {
   const close = vi.fn(),
     notify = vi.fn();
   const fetch = vi.fn(async (url, options = {}) => {
@@ -76,7 +83,7 @@ async function show(readOnly = false) {
   vi.stubGlobal("fetch", fetch);
   render(
     <CatalogProvider snapshot={snapshot} notify={notify}>
-      <ProductEditor product={product} readOnly={readOnly} onClose={close} />
+      <Editor product={product} readOnly={readOnly} onClose={close} />
     </CatalogProvider>,
   );
   await settle();
@@ -154,10 +161,9 @@ test("private/public control uses the publication API and read-only product scre
     true,
   );
 });
-test("variant editing starts in a summary card and preserves IDs and other product fields", async () => {
-  const { fetch } = await show();
+test("separate variant editing preserves IDs and other product fields", async () => {
+  const { fetch } = await show(false, VariantEditor);
   expect(document.querySelectorAll("sl-input")).toHaveLength(0);
-  await action("Varyantlar ve fiyatlar");
   await clickLabel("Varyantlar ve fiyatlar düzenle");
   const price = [...document.querySelectorAll("sl-input")].find((c) =>
     c.getAttribute("aria-label")?.endsWith("Fiyat (₺)"),
@@ -203,7 +209,7 @@ test("new products retain the complete creation form with required fields and pr
     ),
   ).toBe(true);
 });
-test("eight detail steps isolate ingredients and edit nutrition in a table", async () => {
+test("seven detail steps isolate ingredients and edit nutrition in a table", async () => {
   const { fetch } = await show();
   expect(
     [
@@ -219,7 +225,6 @@ test("eight detail steps isolate ingredients and edit nutrition in a table", asy
     "Servis Önerisi",
     "Saklama Koşulları",
     "Uzun Süreli Muhafaza",
-    "Varyantlar ve fiyatlar",
   ]);
   await action("İçindekiler");
   await clickLabel("İçindekiler ekle");
@@ -280,4 +285,38 @@ test("variant step is optional and SKU is absent from the product UI", async () 
   await settle();
   await waitFor(() => expect(close).toHaveBeenCalled());
   expect(JSON.parse(save.mock.calls[0][1].body).product.variants).toEqual([]);
+});
+
+test("new main modules have navigable landing pages and a working overview return", async () => {
+  for (const module of newMainModules) {
+    expect(primaryModules).toContain(module);
+    expect(moduleFor(module.id)).toBe(module);
+    const navigate = vi.fn();
+    render(<PlannedModule module={module} onNavigate={navigate} />);
+    expect(document.querySelector("h2").textContent).toBe(module.label);
+    await action("Genel bakışa dön");
+    expect(navigate).toHaveBeenCalledWith("overview");
+    cleanup();
+  }
+});
+test("product editor has no variant section, even through a legacy variant tab", async () => {
+  render(
+    <CatalogProvider snapshot={snapshot} notify={vi.fn()}>
+      <ProductEditor
+        product={product}
+        tab="Varyant & fiyat"
+        onClose={vi.fn()}
+      />
+    </CatalogProvider>,
+  );
+  await settle();
+  expect(document.querySelector(".product-detail-steps .selected").textContent).toBe(
+    "Genel bilgiler",
+  );
+  expect(document.querySelector("form").textContent).not.toContain(
+    "Varyantlar ve fiyatlar",
+  );
+  expect(
+    document.querySelector('[aria-label="Varyantlar ve fiyatlar düzenle"]'),
+  ).toBeNull();
 });

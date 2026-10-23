@@ -26,7 +26,6 @@ import {
 } from "../../product-information.js";
 import { categoryOf, rootOf } from "../../hierarchy.js";
 import CategoryFields from "../categories/CategoryFields.jsx";
-import ProductVariantsTable from "./ProductVariantsTable.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import EditorPage from "../../components/layout/EditorPage.jsx";
 
@@ -57,20 +56,12 @@ export default function ProductEditor({
   const current = products.find((p) => p.id === product.id) || product;
   const [draft, setDraft] = useState(() => normalize(product));
   const [active, setActive] = useState(
-      tab === "Varyant & fiyat"
-        ? "Varyantlar ve fiyatlar"
-        : productDetailSteps.some((step) => step.label === tab)
-          ? tab
-          : "Genel bilgiler",
+      productDetailSteps.some((step) => step.label === tab)
+        ? tab
+        : "Genel bilgiler",
     ),
     [error, setError] = useState("");
-  const [editingField, setEditingField] = useState(
-    !product.isNew &&
-      product.variants.some((v) => !v.id) &&
-      tab === "Varyant & fiyat"
-      ? "variants"
-      : null,
-  );
+  const [editingField, setEditingField] = useState(null);
   useEffect(() => {
     if (!product.isNew && !editingField) setDraft(normalize(current));
   }, [current, editingField, product.isNew]);
@@ -415,24 +406,6 @@ export default function ProductEditor({
                   />
                 </section>
               </>
-            ) : active === "Varyantlar ve fiyatlar" ? (
-              field(
-                "variants",
-                "Varyantlar ve fiyatlar",
-                <ProductVariantsTable
-                  product={draft}
-                  variantTypes={variantTypes}
-                />,
-                <ProductVariantsTable
-                  product={draft}
-                  variantTypes={variantTypes}
-                  categories={categories}
-                  editing
-                  disabled={busy || readOnly}
-                  onChange={setDraft}
-                />,
-                !draft.variants.length,
-              )
             ) : (
               productInformationFields
                 .filter(
