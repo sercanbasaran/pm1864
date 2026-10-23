@@ -142,13 +142,16 @@ export function createMediaService(db) {
       if (body.expectedVersion !== Number(old.version))
         throw new ApiError(409, "Medya kaydı değişti. Listeyi yenileyin.");
       if (
+        context.doc.categories.some((c) =>
+          (c.images || []).some((image) => image.id === id),
+        ) ||
         context.doc.products.some(
           (p) => p.mediaId === id || p.customImage === mediaUrl(id),
         )
       )
         throw new ApiError(
           409,
-          "Bu görsel bir üründe kullanılıyor. Önce ürünle bağlantısını kaldırın.",
+          "Bu görsel bir ürün veya kategoride kullanılıyor. Önce bağlantısını kaldırın.",
           "MEDIA_IN_USE",
         );
       await tx.query("DELETE FROM app_media WHERE id=?", [id]);

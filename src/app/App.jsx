@@ -148,9 +148,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         (c) => c.id === categoryId && selectable(c, categories),
       ) || categories.find((c) => selectable(c, categories));
     if (!category) {
-      notify(
-        "Ürün eklemek için önce aktif bir ana kategori oluşturun.",
-      );
+      notify("Ürün eklemek için önce aktif bir ana kategori oluşturun.");
       navigate("categories");
       return;
     }
@@ -229,6 +227,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         categories={categories}
         products={products}
         onSave={saveCategory}
+        onRefresh={catalog.refresh}
         onProducts={(category) => browse({ category })}
         onNewProduct={create}
         skuPrefix={settings.skuPrefix}

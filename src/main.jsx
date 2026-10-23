@@ -1,6 +1,7 @@
 import React from "react";
 import ShoelaceTheme from "./theme/ShoelaceTheme.jsx";
 import { createRoot } from "react-dom/client";
+import CategoryPage from "./modules/categories/CategoryPage.jsx";
 import PublicProductPage from "./modules/products/PublicProductPage.jsx";
 import BackendGate from "./app/BackendGate.jsx";
 import { App } from "./app/App.jsx";
@@ -11,7 +12,9 @@ export { App } from "./app/App.jsx";
 export function RootApp() {
   return (
     <ShoelaceTheme>
-      {window.location.pathname.startsWith("/p/") ? (
+      {window.location.pathname.startsWith("/kategori/") ? (
+        <CategoryPage />
+      ) : window.location.pathname.startsWith("/p/") ? (
         <PublicProductPage />
       ) : (
         <BackendGate>

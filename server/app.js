@@ -82,6 +82,21 @@ export async function createApp({ env = process.env, database } = {}) {
         method = request.method.toUpperCase();
       if (route === "/api/health" && method === "GET")
         return json({ ok: true, service: "pm1864", database: db.dialect });
+      const categoryRoute = route.match(
+        /^\/api\/category-pages\/([^/]+)(?:\/images\/([a-zA-Z0-9-]+))?$/,
+      );
+      if (categoryRoute && method === "GET") {
+        const user = await session(request);
+        const allowed =
+          !!user && !user.mustChangePassword && can(user, "catalog.read");
+        const page = await service.categoryPage(
+          decodeURIComponent(categoryRoute[1]),
+          allowed,
+          categoryRoute[2],
+        );
+        if (categoryRoute[2]) return media.content(page);
+        return json({ category: page });
+      }
       const publicRoute = route.match(
         /^\/api\/public\/products\/(P[0-9]{6,})(\/image)?$/,
       );

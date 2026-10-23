@@ -152,7 +152,7 @@ export function createCatalogService(db) {
     });
   }
   async function saveCategory(body, id, actor) {
-    return mutate(body.expectedRevision, actor, (doc) => {
+    return mutate(body.expectedRevision, actor, async (doc, tx) => {
       const old = id ? doc.categories.find((c) => c.id === id) : null;
       if (id && !old) throw new ApiError(404, "Kategori bulunamadı.");
       const input = body.category || {},
@@ -164,12 +164,36 @@ export function createCatalogService(db) {
           description: text(input.description, 400),
           parentId: text(input.parentId, 100),
           active: input.active !== false,
+          visibility: input.visibility ?? old?.visibility ?? "private",
+          images: input.images ?? old?.images ?? [],
           salesAvailability: salesAvailability(
             input.salesAvailability,
             old?.salesAvailability,
             true,
           ),
         };
+      if (!["private", "public"].includes(c.visibility))
+        throw new ApiError(
+          422,
+          "Bağlantı erişimi private veya public olmalıdır.",
+        );
+      if (
+        !Array.isArray(c.images) ||
+        c.images.length > 30 ||
+        c.images.some((image) => !image || typeof image.id !== "string")
+      )
+        throw new ApiError(422, "En fazla 30 kategori görseli eklenebilir.");
+      c.images = [...new Set(c.images.map((image) => image.id))].map((id) => ({
+        id,
+        url: "/api/media/" + encodeURIComponent(id) + "/content",
+      }));
+      for (const image of c.images) {
+        if (
+          !(await tx.query("SELECT id FROM app_media WHERE id=?", [image.id]))
+            .rows[0]
+        )
+          throw new ApiError(422, "Kategori görseli bulunamadı.");
+      }
       if (old && Boolean(old.parentId) !== Boolean(c.parentId))
         throw new ApiError(
           422,
@@ -503,6 +527,66 @@ export function createCatalogService(db) {
       );
     });
   }
+  async function categoryPage(slug, authenticated = false, assetId = "") {
+    const catalog = await read();
+    const category = catalog.categories.find((c) => c.slug === slug);
+    if (
+      !category ||
+      !category.active ||
+      (category.parentId &&
+        !catalog.categories.find((c) => c.id === category.parentId)?.active)
+    )
+      throw new ApiError(404, "Kategori bulunamadı.", "NOT_FOUND");
+    if (category.visibility !== "public" && !authenticated)
+      throw new ApiError(401, "Bu kategori için giriş yapın.", "UNAUTHORIZED");
+    const ids = new Set([
+      category.id,
+      ...catalog.categories
+        .filter((c) => c.parentId === category.id && c.active)
+        .map((c) => c.id),
+    ]);
+    const products = catalog.products.filter(
+      (p) =>
+        ids.has(
+          p.categoryId ||
+            catalog.categories.find((c) => c.name === p.category)?.id,
+        ) && productCardEligible(p, catalog.categories),
+    );
+    const imageIds = new Set([
+      ...(category.images || []).map((image) => image.id),
+      ...products.map((p) => p.mediaId).filter(Boolean),
+    ]);
+    if (assetId) {
+      if (!imageIds.has(assetId))
+        throw new ApiError(404, "Görsel bulunamadı.", "NOT_FOUND");
+      return assetId;
+    }
+    const imageUrl = (id) =>
+      "/api/category-pages/" +
+      encodeURIComponent(slug) +
+      "/images/" +
+      encodeURIComponent(id);
+    return {
+      name: category.name,
+      description: category.description || "",
+      images: (category.images || []).map((image) => ({
+        id: image.id,
+        url: imageUrl(image.id),
+      })),
+      products: products.map((p) =>
+        productCardData(
+          p,
+          catalog.categories,
+          p.mediaId
+            ? imageUrl(p.mediaId)
+            : /^https?:\/\//i.test(p.customImage || "")
+              ? p.customImage
+              : "",
+          catalog.variantTypes,
+        ),
+      ),
+    };
+  }
   async function publishedProduct(code) {
     const catalog = await read(),
       product = catalog.products.find((p) => productCardCode(p) === code);
@@ -578,6 +662,7 @@ export function createCatalogService(db) {
     bulk,
     settings,
     prices,
+    categoryPage,
     publishedProduct,
     publicCard,
     publishCard,

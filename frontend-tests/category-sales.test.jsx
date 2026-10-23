@@ -45,8 +45,10 @@ test("category editor opens and saves only the selected field and cancels drafts
     ].find((c) => c.label === label);
   const clickEdit = async (label) => {
     fireEvent.click(
-      [...document.querySelectorAll("sl-button")].find(
-        (b) => b.getAttribute("aria-label") === label + " düzenle",
+      [...document.querySelectorAll("sl-button")].find((b) =>
+        [label + " düzenle", label + " ekle"].includes(
+          b.getAttribute("aria-label"),
+        ),
       ),
     );
     await settle();
@@ -60,9 +62,7 @@ test("category editor opens and saves only the selected field and cancels drafts
     await settle();
   };
   expect(
-    document.querySelectorAll(
-      "sl-input,sl-select,sl-textarea,sl-checkbox,sl-switch",
-    ),
+    document.querySelectorAll("sl-input,sl-select,sl-textarea,sl-checkbox"),
   ).toHaveLength(0);
   expect(
     [...document.querySelectorAll("dt")].map((c) => c.textContent),
@@ -71,6 +71,27 @@ test("category editor opens and saves only the selected field and cancels drafts
     [...document.querySelectorAll("dd")].map((c) => c.textContent),
   ).toContain(child.name);
   expect(document.querySelector("form").textContent).not.toContain("*");
+  expect(
+    [...document.querySelectorAll(".category-field-card dt")]
+      .slice(0, 2)
+      .map((c) => c.textContent),
+  ).toEqual(["Kategori durumu", "Kategori kodu"]);
+  expect(
+    document.querySelector('[aria-label="Kategori durumu düzenle"]'),
+  ).toBeNull();
+  expect(
+    document.querySelector('[aria-label="Kategori durumu"]'),
+  ).not.toBeNull();
+  expect(
+    document.querySelector('[aria-label="Açıklama ekle"]').textContent,
+  ).toContain("Ekle");
+  expect(
+    document.querySelector('[aria-label="Kategori bağlantısını kopyala"]'),
+  ).not.toBeNull();
+  expect(document.querySelector(".category-link-display a").href).toContain(
+    "/kategori/fistikli",
+  );
+  expect(document.querySelector(".sku-preview")).toBeNull();
   await clickEdit("Kategori adı");
   const name = findControl("Kategori adı");
   expect(name.disabled).toBe(false);

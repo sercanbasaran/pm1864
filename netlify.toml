@@ -27,3 +27,8 @@
   from = "/p/*"
   to = "/index.html"
   status = 200
+
+[[redirects]]
+  from = "/kategori/*"
+  to = "/index.html"
+  status = 200

@@ -1,3 +1,6 @@
+import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
+import CategoryGallery from "./CategoryGallery.jsx";
+import { categoryPageUrl } from "./category-page.js";
 import {
   CategoryChannelSwitches,
   CategoryChannelSummary,
@@ -58,9 +61,12 @@ function EditableField({
   onEdit,
   onSave,
   onCancel,
+  displayAction,
+  empty,
 }) {
   return (
-    <div
+    <section
+      className="category-field-card"
       style={{
         display: "flex",
         gap: 12,
@@ -76,7 +82,7 @@ function EditableField({
             style={{
               margin: 0,
               padding: "0 0 16px",
-              borderBottom: "1px solid var(--sl-color-neutral-200)",
+
               overflowWrap: "anywhere",
             }}
           >
@@ -95,43 +101,44 @@ function EditableField({
           </dl>
         )}
       </div>
-      {enabled && (
-        <div style={{ display: "flex", gap: 8 }}>
-          {editing ? (
-            <>
+      {displayAction ||
+        (enabled && (
+          <div style={{ display: "flex", gap: 8 }}>
+            {editing ? (
+              <>
+                <Button
+                  type="button"
+                  size="small"
+                  variant="primary"
+                  disabled={busy}
+                  onClick={onSave}
+                >
+                  Kaydet
+                </Button>
+                <Button
+                  type="button"
+                  size="small"
+                  disabled={busy}
+                  onClick={onCancel}
+                >
+                  Vazgeç
+                </Button>
+              </>
+            ) : (
               <Button
                 type="button"
                 size="small"
-                variant="primary"
+                aria-label={label + (empty ? " ekle" : " düzenle")}
                 disabled={busy}
-                onClick={onSave}
+                onClick={onEdit}
               >
-                Kaydet
+                <PencilSimple size={15} />
+                {empty ? "Ekle" : "Düzenle"}
               </Button>
-              <Button
-                type="button"
-                size="small"
-                disabled={busy}
-                onClick={onCancel}
-              >
-                Vazgeç
-              </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              size="small"
-              aria-label={label + " düzenle"}
-              disabled={busy}
-              onClick={onEdit}
-            >
-              <PencilSimple size={15} />
-              Düzenle
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
+            )}
+          </div>
+        ))}
+    </section>
   );
 }
 export default function CategoryManager({
@@ -142,6 +149,7 @@ export default function CategoryManager({
   onNewProduct,
   readOnly = false,
   canCreateProduct = true,
+  onRefresh,
   skuPrefix = "HM",
   route = "categories",
   onNavigate,
@@ -153,6 +161,7 @@ export default function CategoryManager({
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
   const [editingField, setEditingField] = useState(null);
+  const [copyStatus, setCopyStatus] = useState("");
   const main = roots(categories);
   const suggestedSlug = (name, parentId) =>
     slugify(
@@ -200,6 +209,8 @@ export default function CategoryManager({
               undefined,
               true,
             ),
+            visibility: category.visibility || "private",
+            images: category.images || [],
             isNew: false,
           }
         : {
@@ -213,6 +224,8 @@ export default function CategoryManager({
             parentId,
             active: true,
             salesAvailability: salesAvailability(undefined, undefined, true),
+            visibility: "private",
+            images: [],
             isNew: true,
           },
     );
@@ -234,19 +247,27 @@ export default function CategoryManager({
   }
   async function saveField(field) {
     if (saving || editingField !== field) return;
-    const original = categories.find((c) => c.id === draft.id);
-    if (!original) return;
+    return persistField(field, draft[field]);
+  }
+  async function persistField(field, nextValue, sourceCategories = categories) {
+    if (saving) return false;
+    if (draft.isNew) {
+      setDraft({ ...draft, [field]: nextValue });
+      return true;
+    }
+    const original = sourceCategories.find((c) => c.id === draft.id);
+    if (!original) return false;
     const value =
       field === "name"
-        ? draft.name.trim().replace(/\s+/g, " ")
+        ? String(nextValue).trim().replace(/\s+/g, " ")
         : field === "slug"
-          ? slugify(draft.slug)
-          : draft[field];
+          ? slugify(nextValue)
+          : nextValue;
     const clean = { ...original, [field]: value };
-    const message = validateCategory(clean, categories);
+    const message = validateCategory(clean, sourceCategories);
     if (message) {
       setError(message);
-      return;
+      return false;
     }
     setSaving(true);
     setError("");
@@ -254,8 +275,13 @@ export default function CategoryManager({
       if (await onSave(clean, false)) {
         setDraft({ ...clean, isNew: false });
         setEditingField(null);
+        return true;
       } else
         setError("Kategori kaydedilemedi. Bildirimdeki hatayı kontrol edin.");
+      return false;
+    } catch (e) {
+      setError(e.message);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -266,22 +292,66 @@ export default function CategoryManager({
         ? main.find((c) => c.id === draft.parentId)?.name
         : "Ana kategori",
       name: draft.name,
-      code: draft.code,
-      slug: draft.slug,
+      code: <SlBadge variant="neutral">{draft.code}</SlBadge>,
+      slug: (
+        <div className="category-link-display">
+          <a href={categoryPageUrl(draft)} target="_blank" rel="noreferrer">
+            {categoryPageUrl(draft)}
+          </a>
+          <Button
+            type="button"
+            size="small"
+            aria-label="Kategori bağlantısını kopyala"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(categoryPageUrl(draft));
+                setCopyStatus("Bağlantı kopyalandı.");
+              } catch {
+                setCopyStatus(
+                  "Bağlantı kopyalanamadı. URL’yi seçerek kopyalayabilirsiniz.",
+                );
+              }
+            }}
+          >
+            Kopyala
+          </Button>
+          <span role="status">{copyStatus}</span>
+        </div>
+      ),
       description: draft.description,
-      active: draft.active ? "Aktif" : "Pasif",
-      salesAvailability: salesChannels
-        .map(
-          ({ key, label }) =>
-            `${label}: ${categorySalesAvailability(draft, categories)[key] ? "Açık" : "Kapalı"}`,
-        )
-        .join("\n"),
+      active: (
+        <SlBadge variant={draft.active ? "success" : "neutral"}>
+          {draft.active ? "Aktif" : "Pasif"}
+        </SlBadge>
+      ),
+      visibility: draft.visibility === "public" ? "Public" : "Private",
+      salesAvailability: (
+        <div className="sales-summary">
+          {salesChannels
+            .filter(
+              ({ key }) => categorySalesAvailability(draft, categories)[key],
+            )
+            .map(({ key, label }) => (
+              <SlBadge key={key} variant="success">
+                {label}
+              </SlBadge>
+            ))}
+        </div>
+      ),
     };
     return {
       label,
       value: values[field],
       creating: draft.isNew,
       enabled: !draft.isNew && !locked,
+      empty:
+        field === "visibility"
+          ? false
+          : field === "salesAvailability"
+            ? !salesChannels.some(
+                ({ key }) => categorySalesAvailability(draft, categories)[key],
+              )
+            : !draft[field],
       editing: editingField === field,
       busy: saving,
       onEdit: () => {
@@ -596,6 +666,50 @@ export default function CategoryManager({
             <fieldset className="editor-fields" disabled={saving}>
               <div className="editor-content">
                 <EditableField
+                  {...fieldProps("active", "Kategori durumu", true)}
+                  creating={false}
+                  displayAction={
+                    <SlSwitch
+                      aria-label="Kategori durumu"
+                      checked={draft.active}
+                      disabled={saving}
+                      onSlChange={(e) =>
+                        persistField("active", e.target.checked)
+                      }
+                    />
+                  }
+                />
+                <EditableField {...fieldProps("code", "Kategori kodu", true)}>
+                  <div>
+                    <Input
+                      label="Kategori kodu"
+                      aria-label="Kategori kodu"
+                      required
+                      pattern={draft.parentId ? "[0-9]{3}" : "[0-9]{4}"}
+                      readOnly={!draft.isNew}
+                      disabled={!draft.isNew}
+                      maxLength={draft.parentId ? 3 : 4}
+                      value={draft.code}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          code: e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, draft.parentId ? 3 : 4),
+                        })
+                      }
+                    />
+                    <small className="input-help">
+                      {draft.isNew
+                        ? draft.parentId
+                          ? "Üç haneli kod, ana kategori kodunun son üç hanesinden sonraki ilk boş değer olarak önerilir."
+                          : "Dört haneli kod otomatik önerilir: 0100, 0200, …, 1000, 1100. Kayıttan sonra değiştirilemez."
+                        : "Ürün kodlarını korumak için kayıt sonrası sabittir."}
+                    </small>
+                  </div>
+                </EditableField>
+
+                <EditableField
                   {...fieldProps("parentId", "Kategori türü", !draft.parentId)}
                 >
                   <Select
@@ -672,35 +786,6 @@ export default function CategoryManager({
                     }}
                   />
                 </EditableField>
-                <EditableField {...fieldProps("code", "Kategori kodu", true)}>
-                  <div>
-                    <Input
-                      label="Kategori kodu"
-                      aria-label="Kategori kodu"
-                      required
-                      pattern={draft.parentId ? "[0-9]{3}" : "[0-9]{4}"}
-                      readOnly={!draft.isNew}
-                      disabled={!draft.isNew}
-                      maxLength={draft.parentId ? 3 : 4}
-                      value={draft.code}
-                      onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          code: e.target.value
-                            .replace(/\D/g, "")
-                            .slice(0, draft.parentId ? 3 : 4),
-                        })
-                      }
-                    />
-                    <small className="input-help">
-                      {draft.isNew
-                        ? draft.parentId
-                          ? "Üç haneli kod, ana kategori kodunun son üç hanesinden sonraki ilk boş değer olarak önerilir."
-                          : "Dört haneli kod otomatik önerilir: 0100, 0200, …, 1000, 1100. Kayıttan sonra değiştirilemez."
-                        : "Ürün kodlarını korumak için kayıt sonrası sabittir."}
-                    </small>
-                  </div>
-                </EditableField>
                 <EditableField {...fieldProps("slug", "Kategori bağlantısı")}>
                   <Input
                     disabled={!draft.isNew && editingField !== "slug"}
@@ -724,23 +809,6 @@ export default function CategoryManager({
                     }
                   />
                 </EditableField>
-                <EditableField {...fieldProps("active", "Kategori durumu")}>
-                  <Input
-                    disabled={!draft.isNew && editingField !== "active"}
-                    label="Kategori durumu"
-                    type="checkbox"
-                    checked={draft.active}
-                    onChange={(e) =>
-                      setDraft({ ...draft, active: e.target.checked })
-                    }
-                  />
-                  <div>
-                    <p>
-                      Pasif ana kategoriye ve alt kategorilerine yeni ürün
-                      eklenemez.
-                    </p>
-                  </div>
-                </EditableField>
                 <EditableField
                   {...fieldProps("salesAvailability", "Satış kanalları")}
                 >
@@ -756,19 +824,39 @@ export default function CategoryManager({
                     }
                   />
                 </EditableField>
-                <div className="sku-preview">
-                  <div>
-                    <small>HİYERARŞİ</small>
-                    <strong>
-                      {draft.parentId
-                        ? main.find((c) => c.id === draft.parentId)?.name +
-                          " / "
-                        : ""}
-                      {draft.name || "Kategori adı"}
-                    </strong>
-                    <p>Ürün ve varyant kodları sunucuda oluşturulur.</p>
-                  </div>
-                </div>
+                <EditableField
+                  {...fieldProps("visibility", "Bağlantı erişimi")}
+                >
+                  <Select
+                    label="Bağlantı erişimini seçin"
+                    value={draft.visibility || "private"}
+                    onChange={(e) =>
+                      setDraft({ ...draft, visibility: e.target.value })
+                    }
+                  >
+                    <option value="private">
+                      Private — yalnızca giriş yapan kullanıcılar
+                    </option>
+                    <option value="public">
+                      Public — bağlantıya sahip herkes
+                    </option>
+                  </Select>
+                </EditableField>
+                <section className="category-field-card category-images-card">
+                  <h3>Kategori görselleri</h3>
+                  <CategoryGallery
+                    images={draft.images || []}
+                    disabled={saving}
+                    onRefresh={onRefresh}
+                    onChange={(images, latestCategories) =>
+                      persistField(
+                        "images",
+                        images,
+                        latestCategories || categories,
+                      )
+                    }
+                  />
+                </section>
               </div>
             </fieldset>
             <div className="editor-footer">
@@ -778,7 +866,7 @@ export default function CategoryManager({
                 disabled={saving}
                 onClick={close}
               >
-                Vazgeç
+                Listeye dön
               </Button>
               <ActionBar position="bottom">{saveAction}</ActionBar>
             </div>
