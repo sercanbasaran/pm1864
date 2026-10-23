@@ -10,6 +10,7 @@ import {
   Question,
   SignOut,
   Gear,
+  CaretDown,
 } from "@phosphor-icons/react";
 import { Button } from "../ui/Controls.jsx";
 import { roleFor } from "../../permissions.js";
@@ -53,6 +54,11 @@ export default function ProfileMenu({ user, onNavigate, onLogout, onError }) {
         >
           <UserAvatar user={user} />
           <span className="profile-menu-name">{user.name}</span>
+          <CaretDown
+            className="profile-mobile-chevron"
+            size={16}
+            aria-hidden="true"
+          />
         </Button>
         <SlMenu aria-label="Profil menüsü" onSlSelect={select}>
           <div className="profile-menu-heading">

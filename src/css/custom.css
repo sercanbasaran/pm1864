@@ -129,7 +129,7 @@ sl-textarea::part(textarea) {
   user-select: text;
 }
 
-/* Shared header controls; mobile keeps actions left and profile right. */
+/* Shared header controls; mobile groups actions and profile beside the logo. */
 .workspace-topbar {
   --topbar-control-size: 40px;
   --topbar-icon-size: 21px;
@@ -173,10 +173,35 @@ sl-textarea::part(textarea) {
 .profile-menu-trigger .control-content { gap: var(--sl-spacing-small); }
 .profile-menu-trigger sl-avatar { --size: 30px; flex: 0 0 auto; }
 .profile-menu-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-mobile-logo, .profile-mobile-chevron { display: none; }
 @media (max-width: 1000px) {
-  .workspace-topbar { justify-content: space-between; }
-  .workspace-header-profile { margin-inline-start: auto; }
+  .workspace-topbar {
+    --topbar-control-size: 36px;
+    justify-content: flex-start;
+    gap: 4px;
+    padding-inline: var(--sl-spacing-x-small);
+  }
+  .workspace-header-actions { gap: 4px; }
+  .workspace-header-profile { flex: 0 0 auto; }
   .profile-menu-name { display: none; }
+  .workspace-topbar .profile-menu-trigger::part(base) {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    padding-inline: 2px;
+  }
+  .workspace-topbar .profile-menu-trigger::part(caret) { display: none; }
+  .profile-menu-trigger .control-content { gap: 4px; }
+  .profile-mobile-chevron { display: block; flex: 0 0 auto; }
+  .workspace-mobile-logo {
+    display: block;
+    width: clamp(56px, 18vw, 96px);
+    height: 40px;
+    object-fit: contain;
+    object-position: right center;
+    margin-inline-start: auto;
+    flex: 0 0 auto;
+  }
 }
 
 /* Main categories stand out without changing table geometry. */

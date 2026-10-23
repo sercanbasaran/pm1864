@@ -158,6 +158,7 @@ export default function AppShell({
               onError={notify}
             />
           </div>
+          <BrandLogo className="workspace-mobile-logo" />
         </header>
         {busy && (
           <SlProgressBar indeterminate aria-label="Sunucuya kaydediliyor" />
