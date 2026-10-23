@@ -147,7 +147,7 @@ form,
   flex-wrap: wrap;
   margin-bottom: var(--sl-spacing-2x-large);
 }
-.workspace-topbar > strong {
+.workspace-topbar > nav {
   flex: 1;
   min-width: 0;
 }

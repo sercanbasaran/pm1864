@@ -53,7 +53,7 @@ export default function AppShell({
     <div className="workspace-sidebar-content">
       <div className="workspace-brand">
         <BrandLogo className="workspace-logo" />
-        <small>USTA · Ürün yönetimi</small>
+        <small>1864 USTA</small>
       </div>
       <ProfileMenu
         user={user}
@@ -61,9 +61,7 @@ export default function AppShell({
         onLogout={onLogout}
         onError={notify}
       />
-      <SlDivider />
       <nav aria-label="Yönetim modülleri">
-        <p>Yönetim modülleri</p>
         {links(primaryModules.filter((module) => !module.children))}
         {primaryModules
           .filter((module) => module.children && can(user, module.permission))
@@ -85,7 +83,7 @@ export default function AppShell({
                 role="group"
                 aria-label={group.label + " alt modülleri"}
               >
-                <Button
+               {/*  <Button
                   type="button"
                   className={
                     "workspace-nav-item " +
@@ -95,7 +93,7 @@ export default function AppShell({
                   onClick={() => navigate(group.id)}
                 >
                   Modüle genel bakış
-                </Button>
+                </Button> */}
                 {links(visibleChildren(group, user, can))}
               </div>
             </SlDetails>
@@ -129,7 +127,25 @@ export default function AppShell({
           >
             <Menu size={24} />
           </Button>
-          <strong>{current?.label}</strong>
+          {/* <strong>{current?.label}</strong> */}
+            <nav className="workspace-breadcrumb" aria-label="Modül yolu">
+              {parent ? (
+  <nav className="workspace-breadcrumb" aria-label="Modül yolu">
+    <Button
+      type="button"
+      size="small"
+      onClick={() => navigate(parent.id)}
+    >
+      {parent.label}
+    </Button>
+
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{current?.label}</span>
+  </nav>
+) : (
+  <strong>{current?.label}</strong>
+)}
+            </nav>
           <SlTag
             variant={connectionError ? "danger" : "success"}
             className="connection-tag"
@@ -137,14 +153,14 @@ export default function AppShell({
             {refreshing
               ? "Yenileniyor…"
               : connectionError
-                ? "Bağlantı kontrol edilmeli"
-                : "Sunucuya bağlı"}
+                ? "Bağlantı Kurulamıyor"
+                : "Sunucuya Bağlı"}
           </SlTag>
-          <SlTooltip content="Kataloğu yenile">
+          <SlTooltip content="Yenile">
             <Button
               type="button"
               className="icon-btn"
-              aria-label="Kataloğu yenile"
+              aria-label="Yenile"
               disabled={busy || refreshing}
               onClick={async () => {
                 try {
@@ -178,8 +194,8 @@ export default function AppShell({
               Güncel veriler alınamadı. Yenile düğmesiyle tekrar deneyin.
             </SlAlert>
           )}
-          {parent && (
-            <nav className="workspace-breadcrumb" aria-label="Modül yolu">
+          {/* {parent && (
+           <nav className="workspace-breadcrumb" aria-label="Modül yolu">
               <Button
                 type="button"
                 size="small"
@@ -190,7 +206,8 @@ export default function AppShell({
               <span aria-hidden="true">/</span>
               <span aria-current="page">{current?.label}</span>
             </nav>
-          )}
+            
+          )} */}
           <div className="workspace-page-heading">
             <h1>{current?.label}</h1>
             {current?.description && <p>{current.description}</p>}

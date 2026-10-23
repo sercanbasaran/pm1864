@@ -26,34 +26,34 @@ import {
 const existingModules = [
   {
     id: "overview",
-    label: "Genel bakış",
+    label: "Genel Bakış",
     icon: SquaresFour,
     permission: "catalog.read",
   },
   {
     id: "categories",
-    label: "Kategori yönetimi",
+    label: "Kategoriler",
     icon: FolderSimple,
     permission: "catalog.read",
     description: "Ana kategoriler ve alt gruplar.",
   },
   {
     id: "products",
-    label: "Ürün yönetimi",
+    label: "Ürünler",
     icon: Package,
     permission: "catalog.read",
     description: "Ürün bilgileri, kategoriler ve görseller.",
   },
   {
     id: "variants",
-    label: "Varyant yönetimi",
+    label: "Varyantlar",
     icon: Stack,
     permission: "catalog.read",
     description: "Boyut, gramaj, fiyat ve varyant durumları.",
   },
   {
     id: "codes",
-    label: "Ürün kodu ve SKU yönetimi",
+    label: "Ürün Kodları",
     icon: Barcode,
     permission: "catalog.read",
     description: "Kalıcı ürün kodları, SKU’lar ve kodlama kuralları.",
@@ -76,7 +76,7 @@ const existingModules = [
 export const secondaryModules = [
   {
     id: "prices",
-    label: "Fiyat yönetimi",
+    label: "Fiyatlama",
     icon: Tag,
     permission: "catalog.read",
   },
@@ -110,7 +110,7 @@ export const secondaryModules = [
 const plannedModules = [
   {
     id: "currencies",
-    label: "Para birimleri",
+    label: "Para Birimleri",
     icon: CurrencyCircleDollar,
     permission: "settings.write",
     description: "Sistemde kullanılacak para birimlerinin tanımları.",
@@ -148,13 +148,13 @@ const plannedModules = [
   },
   {
     id: "digital-stores",
-    label: "Dijital mağazalar",
+    label: "E-Mağazalar",
     icon: Globe,
     description: "E-ticaret mağazalarının yönetimi.",
   },
   {
     id: "food-platforms",
-    label: "Yemek sipariş platformları",
+    label: "Sipariş platformları",
     icon: Motorcycle,
     description: "Yemek sipariş platformlarındaki satış kanallarının yönetimi.",
   },
@@ -166,21 +166,21 @@ const plannedModules = [
 export const moduleGroups = [
   {
     id: "product-management",
-    label: "Ürün yönetimi",
+    label: "Ürün Yönetimi",
     icon: Package,
     description: "Kategori, ürün ve varyant yapısını yönetin.",
     children: ["categories", "products", "variants"],
   },
   {
     id: "sales-management",
-    label: "Satış yönetimi",
+    label: "Satış Yönetimi",
     icon: ChartLine,
     description: "Fiyat, satış grubu ve menü yapısını yönetin.",
     children: ["prices", "sales-groups", "menus"],
   },
   {
     id: "channel-management",
-    label: "Kanal yönetimi",
+    label: "Kanal Yönetimi",
     icon: TreeStructure,
     description: "Fiziksel ve dijital satış kanallarını yönetin.",
     children: ["stores", "digital-stores", "food-platforms"],

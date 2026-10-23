@@ -1,0 +1,85 @@
+/* src/custom.css */
+
+:root {
+  --sidebar-accent: #DA291C;
+  --sidebar-transition-duration: 400ms;
+  --sidebar-transition-easing: ease-in-out;
+}
+
+/* İkon ve metinleri sola hizala */
+.workspace-nav-item::part(base) {
+  justify-content: flex-start;
+}
+
+.workspace-nav-item::part(label) {
+  flex: 1;
+  text-align: left;
+}
+
+.workspace-nav-item .control-content,
+.workspace-group-title {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* Normal ve aktif butonların ortak zemini */
+.workspace-nav-item::part(base) {
+  background-color: var(--sl-color-neutral-0);
+  border-color: var(--sl-color-neutral-300);
+  color: var(--sl-color-neutral-700);
+}
+
+/* Hover'a giriş ve çıkış geçişleri */
+.workspace-nav-item::part(base),
+.workspace-module-group::part(base),
+.workspace-module-group::part(header) {
+  transition:
+    color var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing),
+    background-color var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing),
+    border-color var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing),
+    box-shadow var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing);
+}
+
+/* Ana modül: hover ve açık durum */
+.workspace-module-group:hover::part(base),
+.workspace-module-group[open]::part(base) {
+  border-color: var(--sidebar-accent);
+}
+
+.workspace-module-group:hover::part(header),
+.workspace-module-group[open]::part(header) {
+  color: var(--sidebar-accent);
+}
+
+/* Alt menü: hover ve aktif durum birebir aynı */
+.workspace-nav-item:hover::part(base),
+.workspace-nav-item.is-active::part(base),
+.workspace-nav-item.is-active:hover::part(base) {
+  background-color: var(--sl-color-neutral-0);
+  border-color: var(--sidebar-accent);
+  color: var(--sidebar-accent);
+  box-shadow: none;
+}
+
+/* Hareket azaltma tercihi */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sidebar-transition-duration: 400ms;
+  }
+}
+
+.workspace-nav-item.is-active::part(base),
+.workspace-nav-item.is-active:hover::part(base) {
+  background-color: var(--sidebar-accent);
+  border-color: var(--sidebar-accent);
+  color: #fff;
+  box-shadow: none;
+}
+.workspace-module-group .workspace-group-title > span {
+  font-size: 15px;
+  font-weight: 600;
+}
