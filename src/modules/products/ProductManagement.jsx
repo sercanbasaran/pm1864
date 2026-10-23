@@ -173,7 +173,7 @@ export default function ProductManagement({
             v.price,
             p.status,
             ...salesChannels.map((c) =>
-              effectiveSales(p, v)[c.key] ? "Açık" : "Kapalı",
+              effectiveSales(p, v, categories)[c.key] ? "Açık" : "Kapalı",
             ),
           ]),
         ),
@@ -444,7 +444,7 @@ export default function ProductManagement({
                       <StatusBadge status={p.status} />
                     </TableCell>
                     <TableCell>
-                      <SalesChannelSummary product={p} />
+                      <SalesChannelSummary categories={categories} product={p} />
                     </TableCell>
                     <TableCell>
                       <div className="product-list-actions">

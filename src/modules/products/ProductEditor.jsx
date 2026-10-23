@@ -131,6 +131,7 @@ export default function ProductEditor({
                   </Select>
                 </div>
                 <SalesChannelSwitches
+                  categories={categories}
                   disabled={busy || readOnly}
                   product={draft}
                   onChange={(salesAvailability) =>
@@ -179,6 +180,7 @@ export default function ProductEditor({
               <ProductInformationFields product={draft} onChange={setDraft} />
             ) : (
               <VariantFields
+                categories={categories}
                 disabled={busy || readOnly}
                 product={draft}
                 variantTypes={variantTypes}

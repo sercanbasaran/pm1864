@@ -2,6 +2,8 @@ import { defaultVariantTypes } from "../src/variant-types.js";
 import {
   salesAvailability,
   effectiveSales,
+  categorySalesAvailability,
+  validateSalesAvailability,
 } from "../src/sales-availability.js";
 import {
   productCardCode,
@@ -61,13 +63,13 @@ const text = (v, max = 200) =>
 export function publicCatalog(doc, revision) {
   return {
     revision,
-    categories: doc.categories,
+    categories: doc.categories.map(c => ({ ...c, salesAvailability: salesAvailability(c.salesAvailability, undefined, true), effectiveSales: categorySalesAvailability(c, doc.categories) })),
     variantTypes: doc.variantTypes,
     products: doc.products.map(
       ({ channels, channelVersions, dirty, ...p }) => ({
         ...p,
         salesAvailability: salesAvailability(p.salesAvailability),
-        effectiveSales: effectiveSales(p),
+        effectiveSales: effectiveSales(p, undefined, doc.categories),
         variants: p.variants.map((v) => ({
           ...v,
           salesAvailability: salesAvailability(
@@ -75,7 +77,7 @@ export function publicCatalog(doc, revision) {
             undefined,
             true,
           ),
-          effectiveSales: effectiveSales(p, v),
+          effectiveSales: effectiveSales(p, v, doc.categories),
         })),
         productCode: p.productCode || `P${String(p.id).padStart(6, "0")}`,
       }),
@@ -145,6 +147,7 @@ export function createCatalogService(db) {
           description: text(input.description, 400),
           parentId: text(input.parentId, 100),
           active: input.active !== false,
+          salesAvailability: salesAvailability(input.salesAvailability, old?.salesAvailability, true),
         };
       if (
         old?.parentId &&
@@ -155,7 +158,7 @@ export function createCatalogService(db) {
           422,
           "Ürün bağlı alt kategori ana kategoriye dönüştürülemez.",
         );
-      const error = validateCategory(c, doc.categories);
+      const error = validateSalesAvailability(input.salesAvailability) || validateCategory(c, doc.categories);
       if (error) throw new ApiError(422, error);
       if (old) {
         doc.categories = doc.categories.map((o) => (o.id === id ? c : o));

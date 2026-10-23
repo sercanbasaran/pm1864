@@ -119,7 +119,7 @@ export default function VariantManager({
                     v.price,
                     v.active !== false ? "Aktif" : "Pasif",
                     ...salesChannels.map((c) =>
-                      effectiveSales(p, v)[c.key] ? "Açık" : "Kapalı",
+                      effectiveSales(p, v, categories)[c.key] ? "Açık" : "Kapalı",
                     ),
                   ]),
                 ],
@@ -274,7 +274,7 @@ export default function VariantManager({
                     </SlBadge>
                   </TableCell>
                   <TableCell>
-                    <SalesChannelSummary product={p} variant={v} />
+                    <SalesChannelSummary categories={categories} product={p} variant={v} />
                   </TableCell>
                   <TableCell>
                     <Button className="btn" onClick={() => onEdit(p, false)}>

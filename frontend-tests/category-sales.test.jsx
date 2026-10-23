@@ -1,0 +1,31 @@
+import React from 'react';
+import {test,expect,vi,afterEach} from 'vitest';
+import {render,cleanup,fireEvent,waitFor} from '@testing-library/react';
+import {settle} from './shadow-queries.js';
+import CategoryManagement from '../src/modules/categories/CategoryManagement.jsx';
+const all={store:true,online:true,foodDelivery:true};
+const root={id:'r',name:'Baklava',slug:'baklava',code:'100',active:true,parentId:'',salesAvailability:{...all,online:false}};
+const child={id:'c',name:'Fistikli',slug:'fistikli',code:'101',active:true,parentId:'r',salesAvailability:all};
+afterEach(cleanup);
+test('category editor shows inherited switches and persists independent channel preferences',async()=>{
+  const onSave=vi.fn(async()=>true),onClose=vi.fn();
+  render(<CategoryManagement categories={[root,child]} products={[]} route="categories/c/edit" onSave={onSave} onClose={onClose} onNavigate={vi.fn()}/>);
+  await settle();
+  const controls=[...document.querySelectorAll('sl-switch')];
+  expect(controls).toHaveLength(3);
+  const online=controls.find(c=>c.getAttribute('aria-label')==='Online satış');
+  expect(online.disabled).toBe(true);expect(online.checked).toBe(false);
+  const store=controls.find(c=>c.getAttribute('aria-label')==='Mağaza satışı');
+  store.checked=false;fireEvent(store,new CustomEvent('sl-change',{bubbles:true}));await settle();
+  fireEvent.submit(document.querySelector('form'));
+  await waitFor(()=>expect(onSave).toHaveBeenCalled());
+  expect(onSave.mock.calls[0][0].salesAvailability).toEqual({...all,store:false});
+  expect(onClose).toHaveBeenCalled();
+});
+test('category list shows channel status and read-only mode has no editing switches',async()=>{
+  render(<CategoryManagement categories={[root,child]} products={[]} readOnly route="categories" onNavigate={vi.fn()}/>);
+  await settle();
+  expect(document.querySelectorAll('sl-switch')).toHaveLength(0);
+  expect(document.querySelector('table').textContent).toContain('Satış kanalları');
+  expect(document.querySelector('table').textContent).toContain('Online: Kapalı');
+});

@@ -20,6 +20,7 @@ export function newVariant() {
 export default function VariantFields({
   product,
   variantTypes = [],
+  categories,
   onChange,
   disabled = false,
 }) {
@@ -236,6 +237,7 @@ export default function VariantFields({
             />
           </div>
           <SalesChannelSwitches
+            categories={categories}
             disabled={disabled}
             product={product}
             variant={v}

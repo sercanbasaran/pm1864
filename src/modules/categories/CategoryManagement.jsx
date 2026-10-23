@@ -1,3 +1,5 @@
+import { CategoryChannelSwitches, CategoryChannelSummary } from "../../components/ui/SalesChannels.jsx";
+import { salesAvailability } from "../../sales-availability.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import Card from "../../components/ui/Card.jsx";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
@@ -83,7 +85,7 @@ export default function CategoryManager({
     setError("");
     setDraft(
       category
-        ? { ...category, isNew: false }
+        ? { ...category, salesAvailability: salesAvailability(category.salesAvailability, undefined, true), isNew: false }
         : {
             id: crypto.randomUUID(),
             name: "",
@@ -92,6 +94,7 @@ export default function CategoryManager({
             description: "",
             parentId,
             active: true,
+            salesAvailability: salesAvailability(undefined, undefined, true),
             isNew: true,
           },
     );
@@ -213,6 +216,7 @@ export default function CategoryManager({
                     <TableHeading scope="col">Kod</TableHeading>
                     <TableHeading scope="col">Tür</TableHeading>
                     <TableHeading scope="col">Durum</TableHeading>
+                    <TableHeading scope="col">Satış kanalları</TableHeading>
                     <TableHeading scope="col">Ürün sayısı</TableHeading>
                     <TableHeading scope="col">İşlemler</TableHeading>
                   </TableRow>
@@ -262,6 +266,7 @@ export default function CategoryManager({
                             </small>
                           )}
                         </TableCell>
+                        <TableCell><CategoryChannelSummary category={category} categories={categories} /></TableCell>
                         <TableCell>{count}</TableCell>
                         <TableCell>
                           <div className="category-table-actions">
@@ -318,7 +323,7 @@ export default function CategoryManager({
                   })}
                   {!rows.length && (
                     <TableRow>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={7}>
                         <div className="empty">
                           <FolderSimple size={32} />
                           <h3>Kategori bulunamadı</h3>
@@ -460,6 +465,7 @@ export default function CategoryManager({
                     </p>
                   </div>
                 </div>
+                <CategoryChannelSwitches category={draft} categories={categories} disabled={saving} onChange={salesAvailability => setDraft({ ...draft, salesAvailability })} />
                 <div className="sku-preview">
                   <div>
                     <small>HİYERARŞİ</small>

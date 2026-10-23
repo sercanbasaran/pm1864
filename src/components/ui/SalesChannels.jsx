@@ -5,10 +5,12 @@ import {
   salesChannels,
   salesAvailability,
   effectiveSales,
+  categorySalesAvailability,
 } from "../../sales-availability.js";
 export function SalesChannelSwitches({
   product,
   variant,
+  categories,
   onChange,
   disabled = false,
 }) {
@@ -17,7 +19,8 @@ export function SalesChannelSwitches({
       undefined,
       !!variant,
     ),
-    parent = salesAvailability(product.salesAvailability);
+    parent = salesAvailability(product.salesAvailability),
+    category = categories ? categorySalesAvailability(categories.find(c => product.categoryId ? c.id === product.categoryId : c.name === product.category), categories) : salesAvailability(undefined, undefined, true);
   return (
     <div className="sales-controls">
       <h3>Satış kanalları</h3>
@@ -28,10 +31,10 @@ export function SalesChannelSwitches({
       </p>
       {salesChannels.map(({ key, label }) => {
         const blocked =
-          !!variant &&
+          !category[key] || (!!variant &&
           (!parent[key] ||
             product.status !== "Aktif" ||
-            variant.active === false);
+            variant.active === false));
         return (
           <div key={key} className="sales-switch-row">
             <SlSwitch
@@ -46,7 +49,9 @@ export function SalesChannelSwitches({
             </SlSwitch>
             {blocked && (
               <small>
-                {!parent[key]
+                {!category[key]
+                  ? "Kategori düzeyinde kapalı"
+                  : !parent[key]
                   ? "Ürün düzeyinde kapalı"
                   : product.status !== "Aktif"
                     ? "Ürün taslak durumunda"
@@ -64,8 +69,8 @@ const channelLabels = {
   online: "Online",
   foodDelivery: "Yemek platformu",
 };
-export function SalesChannelSummary({ product, variant }) {
-  const values = effectiveSales(product, variant);
+export function SalesChannelSummary({ product, variant, categories }) {
+  const values = effectiveSales(product, variant, categories);
   return (
     <div className="sales-summary">
       {salesChannels.map((c) => (
@@ -80,4 +85,21 @@ export function SalesChannelSummary({ product, variant }) {
       ))}
     </div>
   );
+}
+
+export function CategoryChannelSwitches({ category, categories, onChange, disabled = false }) {
+  const preferences = salesAvailability(category.salesAvailability, undefined, true);
+  const parent = category.parentId ? categorySalesAvailability(categories.find(c => c.id === category.parentId), categories) : salesAvailability(undefined, undefined, true);
+  return <div className="sales-controls">
+    <h3>Satış kanalları</h3>
+    <p>Kategorinin geçerli olduğu satış kanallarını seçin. Üst kategoride kapalı olan kanal alt kategoride açılamaz. Ürün ve varyant tercihleri korunur.</p>
+    {salesChannels.map(({key, label}) => <div className="sales-switch-row" key={key}>
+      <SlSwitch aria-label={label} checked={parent[key] && preferences[key]} disabled={disabled || !parent[key]} onSlChange={event => onChange({...preferences, [key]: event.target.checked})}>{label}</SlSwitch>
+      {!parent[key] && <small>Ana kategori düzeyinde kapalı veya ana kategori pasif</small>}
+    </div>)}
+  </div>;
+}
+export function CategoryChannelSummary({ category, categories }) {
+  const values = categorySalesAvailability(category, categories);
+  return <div className="sales-summary">{salesChannels.map(({key,label}) => <SlTag key={key} title={label} variant={values[key] ? "success" : "neutral"}>{channelLabels[key]}: {values[key] ? "Açık" : "Kapalı"}</SlTag>)}</div>;
 }
