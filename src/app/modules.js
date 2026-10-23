@@ -17,6 +17,11 @@ import {
   ListBullets,
   ChartLine,
   TreeStructure,
+  Books,
+  ShieldCheck,
+  CurrencyCircleDollar,
+  Translate,
+  Files,
 } from "@phosphor-icons/react";
 const existingModules = [
   {
@@ -55,14 +60,14 @@ const existingModules = [
   },
   {
     id: "users",
-    label: "Kullanıcı yönetimi",
+    label: "Kullanıcılar",
     icon: UsersThree,
     permission: "users.manage",
     description: "Ekip hesapları, roller ve erişim yetkileri.",
   },
   {
     id: "media",
-    label: "Medya",
+    label: "Görseller",
     icon: Images,
     permission: "catalog.read",
     description: "Görsel yükleme, düzenleme ve ürünlerle ilişkilendirme.",
@@ -104,6 +109,26 @@ export const secondaryModules = [
 // Stable leaf IDs keep existing bookmarks, editors and public card links valid.
 const plannedModules = [
   {
+    id: "currencies",
+    label: "Para birimleri",
+    icon: CurrencyCircleDollar,
+    permission: "settings.write",
+    description: "Sistemde kullanılacak para birimlerinin tanımları.",
+  },
+  {
+    id: "languages",
+    label: "Diller",
+    icon: Translate,
+    permission: "settings.write",
+    description: "İçerik ve arayüz dillerinin tanımları.",
+  },
+  {
+    id: "documents",
+    label: "Dokümanlar",
+    icon: Files,
+    description: "Ürün ve operasyon dokümanlarının kütüphanesi.",
+  },
+  {
     id: "sales-groups",
     label: "Satış grupları",
     icon: UsersThree,
@@ -135,7 +160,7 @@ const plannedModules = [
   },
 ].map((module) => ({
   ...module,
-  permission: "catalog.read",
+  permission: module.permission || "catalog.read",
   status: "planned",
 }));
 export const moduleGroups = [
@@ -143,8 +168,8 @@ export const moduleGroups = [
     id: "product-management",
     label: "Ürün yönetimi",
     icon: Package,
-    description: "Kategori, ürün, varyant ve kod yapısını yönetin.",
-    children: ["categories", "products", "variants", "codes"],
+    description: "Kategori, ürün ve varyant yapısını yönetin.",
+    children: ["categories", "products", "variants"],
   },
   {
     id: "sales-management",
@@ -160,13 +185,42 @@ export const moduleGroups = [
     description: "Fiziksel ve dijital satış kanallarını yönetin.",
     children: ["stores", "digital-stores", "food-platforms"],
   },
-].map((group) => ({ ...group, permission: "catalog.read" }));
+  {
+    id: "system-settings",
+    label: "Sistem Ayarları",
+    icon: Gear,
+    description: "Kod/SKU, para birimi ve dil tanımlarını yönetin.",
+    children: ["codes", "currencies", "languages"],
+  },
+  {
+    id: "user-management",
+    label: "Kullanıcı Yönetimi",
+    icon: UsersThree,
+    permission: "users.manage",
+    description: "Ekip hesaplarını ve kullanıcı rollerini yönetin.",
+    children: ["users", "user-roles"],
+  },
+  {
+    id: "library",
+    label: "Kütüphane",
+    icon: Books,
+    description: "Görselleri ve dokümanları tek bir kütüphanede toplayın.",
+    children: ["media", "documents"],
+  },
+].map((group) => ({
+  ...group,
+  permission: group.permission || "catalog.read",
+}));
 export const primaryModules = [existingModules[0], ...moduleGroups];
-export const sharedModules = existingModules.filter((module) =>
-  ["users", "media"].includes(module.id),
-);
 export const modules = [
   ...existingModules,
+  {
+    id: "user-roles",
+    label: "Kullanıcı rolleri",
+    icon: ShieldCheck,
+    permission: "users.manage",
+    description: "Merkezi roller ve sunucuda uygulanan erişim izinleri.",
+  },
   ...secondaryModules,
   ...plannedModules,
   ...moduleGroups,
@@ -187,7 +241,15 @@ export const legacyPages = {
   "Varyant yönetimi": "variants",
   "Fiyat yönetimi": "prices",
   "Kullanıcılar ve yetkiler": "users",
-  "Kullanıcı yönetimi": "users",
+  "Kullanıcı yönetimi": "user-management",
+  "Kullanıcı Yönetimi": "user-management",
+  Kullanıcılar: "users",
+  "Kullanıcı rolleri": "user-roles",
+  "Sistem Ayarları": "system-settings",
+  "Sistem ayarları": "system-settings",
+  Kütüphane: "library",
+  Görseller: "media",
+  Medya: "media",
   Ayarlar: "settings",
   "İşlem geçmişi": "settings",
   Hesabım: "account",

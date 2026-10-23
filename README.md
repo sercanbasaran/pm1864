@@ -168,10 +168,16 @@ Navigasyon tanımları `src/app/modules.js` içindedir. `moduleGroups` ana modü
 
 | Ana modül | Alt modüller |
 | --- | --- |
-| Ürün yönetimi | Kategori yönetimi, Ürün yönetimi, Varyant yönetimi, Ürün kodu ve SKU yönetimi |
+| Ürün yönetimi | Kategori yönetimi, Ürün yönetimi, Varyant yönetimi |
 | Satış yönetimi | Fiyat yönetimi, Satış grupları, Menü |
 | Kanal yönetimi | Mağazalar, Dijital mağazalar, Yemek sipariş platformları |
+| Sistem Ayarları | Ürün kodu ve SKU yönetimi, Para birimleri, Diller |
+| Kullanıcı Yönetimi | Kullanıcılar, Kullanıcı rolleri |
+| Kütüphane | Görseller, Dokümanlar |
 
-Genel bakış en üstte; kullanıcı ve medya ortak çalışma alanındadır. Profil, yardım, ayarlar ve işlem geçmişi profil menüsünde kalır. Masaüstü ve mobil menüler aynı kayıtları ve izin denetimini kullanır. Aktif ekranın ana modülü otomatik açılır; modül yolu ana modüle dönüş sağlar.
+Genel bakış en üsttedir. Kullanıcı ve görsel ekranları kendi ana modüllerinin altındadır. Profil, yardım, ayarlar ve işlem geçmişi profil menüsünde kalır. Masaüstü ve mobil menüler aynı kayıtları ve izin denetimini kullanır. Aktif ekranın ana modülü otomatik açılır; modül yolu ana modüle dönüş sağlar.
 
 Kategori, ürün, varyant, kod/SKU ve fiyat ekranları mevcut API'leri kullanır. Satış grupları, menü ve kanal alt modülleri bu aşamada yalnızca mimari sayfalardır; arayüzde “Hazırlık aşamasında” olarak belirtilir. Bu alanlara ait kalıcı veri modeli, kayıt işlemleri veya platform bağlantısı henüz eklenmemiştir. Sahte kayıt veya otomatik platform yayını yapılmaz. Yeni işlev eklerken ekranın yanı sıra sunucu yetkisi ve kalıcı veri modeli de uygulanmalıdır.
+
+
+Sistem Ayarları (`#system-settings`), Kullanıcı Yönetimi (`#user-management`) ve Kütüphane (`#library`) ana modülleri eklendi. Eski `#codes`, `#users`, `#users/:id/edit` ve `#media` bağlantıları korunur; `#media` artık Görseller ekranını açar. Profil menüsündeki Ayarlar/işlem geçmişi (`#settings`), Sistem Ayarları'ndan ayrıdır. Kullanıcılar ve Kullanıcı rolleri (`#user-roles`) yalnızca `users.manage` yetkisine sahiplere görünür. Rol tablosu, mevcut merkezi rol tanımlarını gösterir; rol ekleme veya yetki değiştirme işlemi sunmaz. Para birimleri (`#currencies`) ve Diller (`#languages`) `settings.write` izniyle görüntülenen hazırlık sayfalarıdır; henüz para dönüşümü veya çeviri ayarı uygulamaz. Dokümanlar (`#documents`) hazırlık sayfasıdır; belge yükleme henüz devrede değildir. Görsel yükleme, düzenleme ve silme mevcut medya API'si ve izinleriyle çalışır.

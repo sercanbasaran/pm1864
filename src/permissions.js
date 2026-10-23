@@ -17,7 +17,7 @@ export const roles = [
     id: "editor",
     name: "Editör",
     description:
-      "Kategori, ürün, varyant, fiyat ve medyayı düzenler; kullanıcıları yönetemez.",
+      "Kategori, ürün, varyant, fiyat ve kütüphane görsellerini düzenler; kullanıcıları yönetemez.",
     permissions: [
       "catalog.read",
       "categories.write",
@@ -29,7 +29,8 @@ export const roles = [
   {
     id: "viewer",
     name: "Görüntüleyici",
-    description: "Kataloğu, medyayı ve işlem geçmişini yalnızca görüntüler.",
+    description:
+      "Kataloğu, kütüphane görsellerini ve işlem geçmişini yalnızca görüntüler.",
     permissions: ["catalog.read"],
   },
 ];
@@ -38,7 +39,7 @@ export const permissionLabels = {
   "categories.write": "Kategori yönetimi",
   "products.write": "Ürün yönetimi",
   "prices.write": "Fiyat düzenleme",
-  "media.write": "Medya yönetimi",
+  "media.write": "Görsel yönetimi",
   "settings.write": "Sistem ayarları",
   "users.manage": "Kullanıcı ve yetki yönetimi",
 };

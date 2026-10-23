@@ -12,7 +12,6 @@ import BrandLogo from "../ui/BrandLogo.jsx";
 import ProfileMenu from "./ProfileMenu.jsx";
 import {
   primaryModules,
-  sharedModules,
   parentFor,
   visibleChildren,
   modules,
@@ -101,8 +100,6 @@ export default function AppShell({
               </div>
             </SlDetails>
           ))}
-        <p>Çalışma alanı</p>
-        {links(sharedModules)}
       </nav>
     </div>
   );

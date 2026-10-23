@@ -36,6 +36,7 @@ const CodeManagement = lazy(
 const UserManagement = lazy(
   () => import("../modules/users/UserManagement.jsx"),
 );
+const UserRoles = lazy(() => import("../modules/users/UserRoles.jsx"));
 const MediaManagement = lazy(
   () => import("../modules/media/MediaManagement.jsx"),
 );
@@ -263,6 +264,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         onChanged={async () => onUserUpdated((await request("/session")).user)}
       />
     ),
+    "user-roles": <UserRoles />,
     media: <MediaManagement user={user} />,
     prices: (
       <PriceManagement

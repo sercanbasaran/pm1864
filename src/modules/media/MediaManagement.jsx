@@ -76,7 +76,7 @@ export default function MediaManagement({ user }) {
       setDialog(null);
       await load();
       await refresh();
-      notify("Medya kaydı güncellendi.");
+      notify("Görsel kaydı güncellendi.");
     } catch (e) {
       setError(e.message);
     } finally {
@@ -113,7 +113,7 @@ export default function MediaManagement({ user }) {
     <Card className="panel media-management">
       <div className="panel-title">
         <div>
-          <h2>Medya kütüphanesi</h2>
+          <h2>Görsel kütüphanesi</h2>
           <p className="muted">
             PNG, JPEG, WEBP ve GIF · Dosya başına en fazla 2 MB
           </p>
@@ -128,7 +128,7 @@ export default function MediaManagement({ user }) {
               <Input
                 ref={input}
                 className="visually-hidden"
-                aria-label="Medya dosyası"
+                aria-label="Görsel dosyası"
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/gif"
                 disabled={busy}
@@ -148,7 +148,7 @@ export default function MediaManagement({ user }) {
         <div className="search">
           <Input
             prefix={<MagnifyingGlass size={17} />}
-            aria-label="Medya ara"
+            aria-label="Görsellerde ara"
             placeholder="Dosya adıyla ara"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -160,7 +160,7 @@ export default function MediaManagement({ user }) {
         </span>
       </div>
       {loading ? (
-        <p role="status">Medya yükleniyor…</p>
+        <p role="status">Görseller yükleniyor…</p>
       ) : (
         <div className="media-grid">
           {visible.map((a) => {
@@ -208,7 +208,7 @@ export default function MediaManagement({ user }) {
                       title={
                         linked.length
                           ? "Önce ürün bağlantısını kaldırın."
-                          : "Medyayı sil"
+                          : "Görseli sil"
                       }
                       aria-label={a.name + " sil"}
                       onClick={() => {
@@ -239,7 +239,7 @@ export default function MediaManagement({ user }) {
       {dialog && (
         <Modal
           title={
-            dialog.action === "delete" ? "Medyayı sil" : "Medya adını düzenle"
+            dialog.action === "delete" ? "Görseli sil" : "Görsel adını düzenle"
           }
           busy={busy}
           onClose={() => setDialog(null)}

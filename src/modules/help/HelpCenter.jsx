@@ -11,7 +11,7 @@ export default function HelpCenter({ user, onNavigate }) {
       "Ana modüller ve alt modüller",
       "Ürün yönetimi ana modülü",
       "catalog.read",
-      "Ürün yönetimi altında kategori, ürün, varyant ve kod/SKU; Satış yönetimi altında fiyat, satış grupları ve menü; Kanal yönetimi altında mağazalar, dijital mağazalar ve yemek sipariş platformları bulunur. Menüde ana modül başlığına tıklayarak alt modülleri açın. Modüle genel bakış sayfasından alt modüllere geçebilirsiniz. Hazırlık aşamasında yazan alanlarda kayıt işlemleri henüz devrede değildir.",
+      "Ürün yönetimi altında kategori, ürün ve varyant; Satış yönetimi altında fiyat, satış grupları ve menü; Kanal yönetimi altında mağazalar, dijital mağazalar ve yemek sipariş platformları; Sistem Ayarları altında Kod/SKU, para birimleri ve diller; Kullanıcı Yönetimi altında kullanıcılar ve kullanıcı rolleri; Kütüphane altında görseller ve dokümanlar bulunur. Menüde ana modül başlığına tıklayarak alt modülleri açın. Modüle genel bakış sayfasından alt modüllere geçebilirsiniz. Hazırlık aşamasında yazan alanlarda kayıt işlemleri henüz devrede değildir.",
     ],
     [
       "Kategori oluşturma",
@@ -51,7 +51,7 @@ export default function HelpCenter({ user, onNavigate }) {
     ],
     [
       "Ekibin erişimini yönetme",
-      "Kullanıcı yönetimi",
+      "Kullanıcılar",
       "users.manage",
       "Kullanıcı ekle ile hesap ve geçici parola tanımlayın. Yönetici tam erişime, editör katalog ve fiyat yönetimine, görüntüleyici okuma erişimine sahiptir. Yeni hesaplar ilk girişte şifre değiştirir. Pasifleştirme açık oturumları kapatır.",
     ],
@@ -62,10 +62,10 @@ export default function HelpCenter({ user, onNavigate }) {
       "Ürün kodlarını ve ürün / varyant SKU’larını arayın veya dışa aktarın. Kodlar kalıcıdır. Yöneticiler yeni ürünlerde kullanılacak SKU önekini değiştirebilir.",
     ],
     [
-      "Medya kütüphanesi",
-      "Medya",
+      "Görsel kütüphanesi",
+      "Görseller",
       "catalog.read",
-      "Yönetici ve editörler PNG, JPEG, WEBP veya GIF görselleri yükleyebilir. Dosya başına sınır 2 MB’dır. Görseli ürün düzenleyicisindeki medya alanından seçin. Kullanılan görseli silmeden önce üründeki bağlantıyı kaldırın.",
+      "Yönetici ve editörler PNG, JPEG, WEBP veya GIF görselleri yükleyebilir. Dosya başına sınır 2 MB’dır. Görseli ürün düzenleyicisindeki kütüphane alanından seçin. Kullanılan görseli silmeden önce üründeki bağlantıyı kaldırın.",
     ],
     [
       "Profil ve parola",

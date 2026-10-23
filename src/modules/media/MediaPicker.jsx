@@ -20,8 +20,8 @@ export default function MediaPicker({ value, onChange }) {
     <div className="media-picker">
       <div>
         <Select
-          label="Medya kütüphanesinden görsel"
-          aria-label="Ürün medya görseli"
+          label="Kütüphaneden görsel"
+          aria-label="Ürün kütüphane görseli"
           value={value}
           onChange={(e) =>
             onChange(assets.find((a) => a.id === e.target.value) || null)
@@ -47,7 +47,7 @@ export default function MediaPicker({ value, onChange }) {
         </SlAlert>
       )}
       <small className="input-help">
-        Yeni görselleri Medya modülünden yükleyebilirsiniz.
+        Yeni görselleri Kütüphane → Görseller alt modülünden yükleyebilirsiniz.
       </small>
     </div>
   );
