@@ -208,13 +208,23 @@ export const Select = forwardRef(function Select(
       {...control}
       className={className}
       label={label || props["aria-label"]}
-      value={encode(value)}
+      value={
+        props.multiple
+          ? (Array.isArray(value) ? value : value ? [value] : []).map(encode)
+          : encode(value)
+      }
       hoist
       onSlChange={(e) => {
         const value = e.target.value;
         onChange?.({
           target: {
-            value: value === "__empty__" ? "" : decodeURIComponent(value),
+            value: Array.isArray(value)
+              ? value.map((v) =>
+                  v === "__empty__" ? "" : decodeURIComponent(v),
+                )
+              : value === "__empty__"
+                ? ""
+                : decodeURIComponent(value),
           },
           currentTarget: e.currentTarget,
         });
@@ -225,6 +235,8 @@ export const Select = forwardRef(function Select(
           key={i}
           value={encode(o.props.value ?? o.props.children)}
           disabled={o.props.disabled}
+          className={o.props.className}
+          style={o.props.style}
         >
           {o.props.children}
         </SlOption>

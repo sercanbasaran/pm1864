@@ -107,3 +107,36 @@ test("column buttons toggle sort direction and hierarchy order can be restored",
   await settle();
   expect(rows()[0].textContent).toContain("Baklava");
 });
+test("category filters support multiple selections and show hierarchical category badges", async () => {
+  await setup();
+  const selects = [...document.querySelectorAll(".category-filters sl-select")];
+  expect(selects.slice(0, 2).map((s) => s.label)).toEqual([
+    "Kategori türü",
+    "Kategori",
+  ]);
+  for (const label of [
+    "Kategori türü",
+    "Kategori",
+    "Satış kanalı",
+    "Tamamlanacak kayıtlar",
+  ]) {
+    expect(selects.find((s) => s.label === label).multiple).toBe(true);
+  }
+  const categorySelect = selects.find((s) => s.label === "Kategori");
+  const options = [...categorySelect.querySelectorAll("sl-option")];
+  expect(options.map((o) => o.value)).toEqual(["a", "b", "c"]);
+  expect(options[0].querySelector(".category-filter-code").textContent).toBe(
+    "0100",
+  );
+  expect(options[1].className).toBe("category-filter-child");
+  await choose("Kategori", ["b", "c"]);
+  expect(rows()).toHaveLength(2);
+  await choose("Kategori türü", ["main", "child"]);
+  expect(rows()).toHaveLength(2);
+  fireEvent.click(button("Filtreleri temizle"));
+  await settle();
+  await choose("Satış kanalı", ["store", "online"]);
+  expect(rows()).toHaveLength(2);
+  await choose("Tamamlanacak kayıtlar", ["description", "empty"]);
+  expect(rows()).toHaveLength(1);
+});

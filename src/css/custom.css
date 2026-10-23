@@ -228,3 +228,7 @@ sl-textarea::part(textarea) {
 .category-results { margin-bottom: var(--sl-spacing-small); color: var(--sl-color-neutral-600); }
 .category-sort-button::part(base) { border: 0; background: transparent; color: inherit; }
 @media (max-width: 900px) { .category-channel-grid { grid-template-columns: 1fr; } }
+
+.category-filter-code { display: inline-flex; padding: 0.1rem 0.4rem; margin-inline-start: 0.4rem; border-radius: var(--sl-border-radius-pill); background: var(--sl-color-neutral-100); color: var(--sl-color-neutral-700); font-size: var(--sl-font-size-small); font-variant-numeric: tabular-nums; }
+.category-filter-main::part(label) { font-weight: 600; }
+.category-filter-child::part(label) { padding-inline-start: 1.25rem; }

@@ -6,12 +6,12 @@ import {
 
 export const emptyCategoryFilters = {
   query: "",
-  parent: "",
-  type: "",
+  parent: [],
+  type: [],
   status: "",
-  channel: "",
+  channel: [],
   channelState: "enabled",
-  quality: "",
+  quality: [],
 };
 export function categoryProductCount(category, categories, products) {
   return products.filter((p) =>
@@ -67,18 +67,28 @@ export function categoryRows(
   sort = { key: "code", direction: "asc" },
 ) {
   const f = { ...emptyCategoryFilters, ...filters };
+  const selected = (value) =>
+    Array.isArray(value) ? value : value ? [value] : [];
+  const any = (value, predicate) =>
+    !selected(value).length || selected(value).some(predicate);
   const matches = (c) => {
     const text = `${c.name} ${c.code}`.toLocaleLowerCase("tr");
     return (
       text.includes(f.query.trim().toLocaleLowerCase("tr")) &&
-      (!f.parent || c.id === f.parent || c.parentId === f.parent) &&
-      (!f.type || (f.type === "main" ? !c.parentId : !!c.parentId)) &&
+      any(f.parent, (id) => c.id === id || c.parentId === id) &&
+      any(f.type, (type) => (type === "main" ? !c.parentId : !!c.parentId)) &&
       (!f.status ||
         categoryActive(c, categories) === (f.status === "active")) &&
-      (!f.channel ||
-        categorySalesAvailability(c, categories)[f.channel] ===
-          (f.channelState === "enabled")) &&
-      (!f.quality || categoryQuality(c, categories, products)[f.quality])
+      any(
+        f.channel,
+        (channel) =>
+          categorySalesAvailability(c, categories)[channel] ===
+          (f.channelState === "enabled"),
+      ) &&
+      any(
+        f.quality,
+        (quality) => categoryQuality(c, categories, products)[quality],
+      )
     );
   };
   const value = (c) => {

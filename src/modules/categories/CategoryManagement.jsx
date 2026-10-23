@@ -216,7 +216,7 @@ export default function CategoryManager({
             categories={categories}
             products={products}
             onQuality={(quality) =>
-              setFilters({ ...emptyCategoryFilters, quality })
+              setFilters({ ...emptyCategoryFilters, quality: [quality] })
             }
           />
           <Card className="category-list-card">
@@ -393,7 +393,11 @@ export default function CategoryManager({
                           <h3>Kategori bulunamadı</h3>
                           <p>
                             {Object.entries(filters).some(
-                              ([key, value]) => key !== "channelState" && value,
+                              ([key, value]) =>
+                                key !== "channelState" &&
+                                (Array.isArray(value)
+                                  ? value.length > 0
+                                  : !!value),
                             )
                               ? "Aramanızı veya filtrelerinizi değiştirerek yeniden deneyin."
                               : "Yeni kategori ekleyerek başlayın."}
