@@ -27,22 +27,23 @@ export const slugify = (value) =>
 export const normalizeName = (value) =>
   value.trim().replace(/\s+/g, " ").toLocaleLowerCase("tr");
 export function nextCategoryCode(categories) {
-  const used = new Set(categories.map((c) => c.code));
-  return (
-    Array.from({ length: 9 }, (_, i) => String((i + 1) * 100)).find(
-      (c) => !used.has(c),
-    ) ||
-    Array.from({ length: 899 }, (_, i) => String(i + 101)).find(
-      (c) => !used.has(c),
-    ) ||
-    ""
+  const used = new Set(
+    categories
+      .filter((c) => !c.parentId)
+      .map((c) => String(c.code).padStart(4, "0")),
   );
+  for (let value = 100; value <= 9900; value += 100) {
+    const code = String(value).padStart(4, "0");
+    if (!used.has(code)) return code;
+  }
+  return "";
 }
 export function nextSubcategoryCode(categories, parentId) {
   const parent = categories.find((c) => c.id === parentId && !c.parentId);
-  if (!parent || !/^\d{3}$/.test(parent.code)) return "";
+  // Three-digit roots are accepted only for the legacy hierarchy migration.
+  if (!parent || !/^\d{3,4}$/.test(parent.code)) return "";
   const used = new Set(categories.map((c) => c.code));
-  for (let value = Number(parent.code) + 1; value <= 999; value++) {
+  for (let value = (Number(parent.code) % 1000) + 1; value <= 999; value++) {
     const code = String(value).padStart(3, "0");
     if (!used.has(code)) return code;
   }
@@ -52,8 +53,10 @@ export function validateCategory(draft, categories) {
   const salesError = validateSalesAvailability(draft.salesAvailability);
   if (salesError) return salesError;
   if (!draft.name.trim()) return "Kategori adı gerekli.";
-  if (!/^\d{3}$/.test(draft.code))
-    return "Kategori kodu 100–999 arasında üç rakam olmalı.";
+  if (!(draft.parentId ? /^\d{3}$/ : /^\d{4}$/).test(draft.code))
+    return draft.parentId
+      ? "Alt kategori kodu üç rakam olmalı."
+      : "Ana kategori kodu dört rakam olmalı (örnek: 0100, 1000).";
   if (!slugify(draft.slug)) return "Geçerli bir kategori bağlantısı gerekli.";
   const others = categories.filter((c) => c.id !== draft.id);
   if (

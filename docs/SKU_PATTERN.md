@@ -1,22 +1,38 @@
 # SKU kodlama düzeni
 
-Kategori ekleme formunda ilk alan ana kategori seçimidir; seçenekler `Kategori adı (100)` biçiminde kodlarıyla gösterilir. Yeni alt kategori kodu, seçilen ana kategori kodu + 1 değerinden başlayarak tüm mevcut kategori kodlarını (pasif olanlar dahil) atlayıp ilk boş üç haneli kod olarak önerilir. Örneğin 100 ana kategorisinde 101 ve 102 doluysa 103 önerilir. Ana kategori değiştirildiğinde öneri yeniden hesaplanır; ana kategori olarak oluşturma seçildiğinde standart ana kategori önerisine dönülür. Mevcut kategorilerin kodları değiştirilmez. Ana kategoriden büyük boş bir kod 999'a kadar bulunamazsa form uyarı gösterir.
-
-Varyantların uygulamada gösterilen biçimi `000.000000.00` şeklindedir: `Kategori.AltKategoriÜrün.Varyant`. Örnek: `100.101001.01`.
+Varyant gösterimi `0000.000000.00`: `AnaKategori.AltKategoriÜrün.Varyant`.
 
 | Alan | Uzunluk | Örnek |
 | --- | --- | --- |
-| Ana kategori | 3 rakam | 100 |
-| Alt kategori | 3 rakam | 101 |
+| Ana kategori | 4 rakam | 0100, 1000, 1100 |
+| Alt kategori | 3 rakam | 101; alt kategori yoksa 000 |
 | Ürün | 3 rakam | 001 |
 | Varyant | 2 rakam | 01 |
 
-Veritabanında ürün SKU'su `HM100.101001`, varyant SKU'su `HM100.101001.01` saklanır. Uygulama API'si, ekranlar, public ürün kartları ve CSV çıktıları öneksiz SKU kullanır. Önek `HM` olarak sabittir ve arayüzden değiştirilemez. Ürünün kendi `productCode` alanı üç rakamdır ve yalnızca kategori bağlamında anlamlıdır; küresel kayıt kimliği `id` olarak korunur.
+Ürün SKU'su `0100.101001`, varyant SKU'su `0100.101001.01` olur. Veritabanında sabit `HM` ön eki bulunur; API, arayüz, public kart ve CSV öneksizdir. Ürünün `productCode` alanı üç hane olarak kalır. Kayıt kimlikleri kategori kodlarından bağımsızdır.
 
-Ürün numaraları ana/alt kategori kod çifti içinde `001–999`; varyant numaraları ürün içinde `01–99` aralığında atanır. Ürün SKU'su varyant eklenmeden de kullanılabilir. Kapasite aşıldığında yeni kayıt HTTP 422 `SKU_RANGE_EXHAUSTED` ile reddedilir; kısmi kayıt veya sayaç ilerlemesi oluşmaz. İsim/kategori düzenleme ve varyant sıralama mevcut SKU'yu değiştirmez. SKU kategori bölümleri ilk kodun verildiği kategoriyi temsil eder. Silinen varyant kodu tekrar kullanılmaz.
+## Kategori kodları
 
-`skuSchemaVersion` olmayan mevcut katalog, veritabanı başlangıcındaki tek bir işlemde yeni biçime geçirilir. Ürünler kayıt kimlikleri sırasıyla, varyantlar mevcut sırasıyla numaralanır. Eski kodlar `document.skuMigrationBackup` içinde yalnızca sunucuda saklanır; bu alan katalog API'sinde yayınlanmaz. Geçiş tekrar çalıştırıldığında numaralar değişmez. Eksik kategori bağlantısı veya kapasite sorunu varsa işlem tamamen geri alınır.
+Ana kategori önerileri ilk boş yüzlük değeri seçer: `0100`, `0200`, …, `0900`, `1000`, `1100`, `1200`, …, `9900`. Mevcut üç haneli ana kategoriler başlarına sıfır eklenerek dönüştürülür. Yeni ana kategoride dört, alt kategoride üç rakam zorunludur. Kayıt sonrası kod ve ana/alt kategori türü değiştirilmez; bir alt kategori başka ana kategoriye taşınabilir.
 
-QR adresleri üç rakamlık ürün koduna bağlanmaz. Eski `productCode` bağlantısı ayrı `publicCardCode` alanına taşınır; yeni ürünler de benzersiz ve kalıcı `P000001` benzeri public bağlantı kimliği alır. Böylece farklı alt kategorilerde `001` kodu kullanılabilmesine rağmen QR bağlantıları karışmaz. Public kartta görünen ürün kodu yine üç rakamdır.
+Kategori ekleme formunun ilk alanı ana kategori seçimidir. Seçenekler `Kategori adı (0100)` biçimindedir. Alt kategori önerisi, ana kategori kodunun son üç hanesi + 1 değerinden başlar ve kullanılan kategori kodlarını (pasif olanlar dahil) atlar. `0100 → 101`, `0900 → 901`, `1000 → 001`, `1100 → 101` (101 doluysa bir sonraki boş kod). 999'a kadar boş kod kalmazsa oluşturma engellenir. Alt kategori kodları üç haneli olarak ve kategoriler arasında benzersiz tutulur.
 
-Manuel SQL gerekmez. Yeni sürüm devreye alındığında mevcut katalog otomatik geçirilir. Önceki kodlarla çalışan harici dosya ve sistemler varsa yeni SKU'lara göre güncellenmelidir. Katalog tamamen elle sıfırlanırken `products`, `categories` ve `nextProductId` yanında `nextProductNumbers` da `{}` yapılmalıdır; aksi halde ayrılmış alt kategori ürün numaraları korunur.
+Alt kategori isteğe bağlıdır. Doğrudan ana kategoriye bağlanan ürün için sanal alt kategori bölümü `000` kullanılır: `1000.000001.01`, `1000.000002.01`. Her ana/alt kategori kod grubu kendi ürün sırasını tutar.
+
+## Sınırlar ve kalıcı kimlikler
+
+Ürün sırası kod grubu içinde `001–999`, varyant sırası ürün içinde `01–99` aralığındadır. Silinen kayıtların ayrılmış numaraları korunur; isim/kategori düzenlemesi SKU'yu değiştirmez. SKU'nun kategori bölümü, kod verildiği andaki kategoriyi temsil eder. Sınır aşılırsa HTTP 422 `SKU_RANGE_EXHAUSTED` döner; kısmi kayıt yapılmaz.
+
+QR adresi üç haneli ürün numarası yerine ayrı `publicCardCode` kimliğine bağlıdır: `/p/P000001`. Biçim geçişinde ve kategori düzenlemesinde QR adresi değişmez.
+
+## Sürüm 2 geçişi
+
+Veritabanı açılışında geçiş tek bir transaction içinde çalışır; PostgreSQL katalog satırını kilitler. Manuel SQL gerekmez.
+
+- Sürüm 1: ana kategori `100 → 0100`, ürün `HM100.101007 → HM0100.101007`, varyant `HM100.101007.24 → HM0100.101007.24`. Yalnızca ilk bölüm genişler; ürün/varyant numaraları yeniden atanmaz. Önceden kategorisi taşınmış ürünlerin SKU'su da kayıtlı SKU üzerinden genişletilir.
+- Ürün sayaçlarının ana kategori bölümü de genişler. Silinmiş ürünlere ait sayaçlar ve varyantların `nextVariantNumber` değerleri korunur.
+- Önceki kodlar ve sayaçlar `document.skuWidthMigrationBackup` içinde saklanır. Daha eski `skuMigrationBackup` korunur. Bu yedekler katalog API'sinde yayınlanmaz.
+- SKU sürümü olmayan eski kataloglarda hiyerarşi/varyant geçişi ve ilk numaralama doğrudan dört haneli biçime yapılır; önceki kodlar `skuMigrationBackup` alanında saklanır.
+- Tekrar çalıştırma değişiklik veya yeni revision üretmez. Geçersiz/çakışan kod durumunda transaction geri alınır.
+
+Daha önce dışa aktarılmış SKU dosyaları dört haneli biçime güncellenmelidir. Hesap, medya, ürün kimliği, fiyat, varyant kimliği ve QR adresi bu geçişte değişmez.

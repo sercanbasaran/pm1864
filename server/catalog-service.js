@@ -51,7 +51,7 @@ export const seedCatalog = () => ({
   ].map(([name, code]) => ({
     id: "cat-" + code,
     name,
-    code,
+    code: code.padStart(4, "0"),
     slug: slugify(name),
     description: "",
     parentId: "",
@@ -170,14 +170,10 @@ export function createCatalogService(db) {
             true,
           ),
         };
-      if (
-        old?.parentId &&
-        !c.parentId &&
-        doc.products.some((p) => p.categoryId === old.id)
-      )
+      if (old && Boolean(old.parentId) !== Boolean(c.parentId))
         throw new ApiError(
           422,
-          "Ürün bağlı alt kategori ana kategoriye dönüştürülemez.",
+          "Ana/alt kategori türü kayıt sonrası değiştirilemez.",
         );
       const error =
         validateSalesAvailability(input.salesAvailability) ||
@@ -278,10 +274,7 @@ export function createCatalogService(db) {
         throw new ApiError(422, "Kategori bulunamadı.");
       if (!c) throw new ApiError(422, "Kategori seçin.");
       if ((!old || old.categoryId !== c.id) && !selectable(c, doc.categories))
-        throw new ApiError(
-          422,
-          "Aktif bir kategori seçin.",
-        );
+        throw new ApiError(422, "Aktif bir kategori seçin.");
       const productId = old?.id || doc.nextProductId,
         p = {
           id: productId,

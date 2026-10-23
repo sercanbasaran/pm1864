@@ -100,7 +100,7 @@ Dosya sınırı 2 MB. Desteklenen türler PNG, JPEG, WEBP, GIF; MIME ve dosya im
 
 ## Ürün kodu
 
-Katalog ürünlerinde `productCode` üç rakamdır (`001`). Ürün SKU biçimi `100.101001`, varyant SKU biçimi `100.101001.01` olur. Saklanan SKU başına sunucuda sabit `HM` eklenir; API ve ekranlar bu öneki göstermez. Kodlar istemciden değiştirilemez. Kalıcı QR kimliği ayrı `publicCardCode` alanında saklanır. Ayrıntılar: [SKU düzeni](SKU_PATTERN.md).
+Katalog ürünlerinde `productCode` üç rakamdır (`001`). Ürün SKU biçimi `0100.101001`, varyant SKU biçimi `0100.101001.01` olur. Saklanan SKU başına sunucuda sabit `HM` eklenir; API ve ekranlar bu öneki göstermez. Kodlar istemciden değiştirilemez. Kalıcı QR kimliği ayrı `publicCardCode` alanında saklanır. Ayrıntılar: [SKU düzeni](SKU_PATTERN.md).
 
 ## Public ürün kartları ve QR
 
@@ -125,3 +125,5 @@ Kullanıcı yanıtındaki `avatarUrl`, fotoğraf yoksa boş metindir. Görsel UR
 
 
 SKU şeması: [SKU_PATTERN.md](SKU_PATTERN.md). Ürün numarası alt kategori içinde 001–999, varyant numarası ürün içinde 01–99 aralığındadır; kapasite aşımı HTTP 422 `SKU_RANGE_EXHAUSTED` döndürür. Eski katalog otomatik, atomik ve tekrarlanabilir bir geçişle güncellenir. `skuMigrationBackup` ve sayaçlar public API’ye dahil edilmez.
+
+Ana kategori kodu dört, alt kategori kodu üç rakam olmalıdır. Yeni kategori isteğinde ana/alt türüne uygun genişlik zorunludur. SKU sürüm 2 geçişi mevcut ana kategori kodlarını ve SKU ilk bölümünü sıfırla doldurur; ürün/varyant numaraları, QR adresleri ve sayaç rezervasyonları korunur.

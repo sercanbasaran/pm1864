@@ -121,7 +121,7 @@ Katalog yapısı **Ana kategori → Alt kategori → Ürün → Varyant** şekli
 
 Varyant yönetimi ekranı kategori, alt kategori, ürün, aktiflik ve SKU araması sunar. Ürün seçip varyant ekleyebilir; mevcut varyantları düzenleyebilir, çoğaltabilir, sıralayabilir, pasifleştirebilir ve silebilirsiniz. Değişiklikler ürün düzenleyicisindeki **Değişiklikleri kaydet** ile birlikte kaydedilir. Son varyant silinemez; ürün başına en fazla 50 varyant vardır.
 
-Her varyantın kalıcı `id` ve otomatik `sku` değeri bulunur (`100.101001.01`). İsim, sıra veya kategori değişikliği mevcut ürün / varyant SKU’sunu değiştirmez. Silinen varyantın sıra numarası yeni varyantta tekrar kullanılmaz. Varyantlar aynı ürün içinde benzersiz adlandırılır.
+Her varyantın kalıcı `id` ve otomatik `sku` değeri bulunur (`0100.101001.01`). İsim, sıra veya kategori değişikliği mevcut ürün / varyant SKU’sunu değiştirmez. Silinen varyantın sıra numarası yeni varyantta tekrar kullanılmaz. Varyantlar aynı ürün içinde benzersiz adlandırılır.
 
 Mevcut katalog ilk çalışmada sürüm 2 yapısına transaction içinde geçirilir: ana kategoriye doğrudan bağlı ürünler aynı ana kategorinin **Genel** alt kategorisine alınır; ürün, kullanıcı, fiyat ve SKU verileri korunur. Daha derin eski kategori yolları, kimlikler korunarak iki seviyeye indirilir; eski ara yol alt kategori adına yansır. Önceki API istemcilerinin kategori adıyla gönderdiği kayıtlar için Genel alt kategorisi uyumluluğu korunmuştur; yeni arayüz `categoryId` gönderir. Ek ortam değişkeni veya elle SQL kurulumu gerekmez.
 
@@ -131,7 +131,7 @@ Ana menü sırası: Kategori yönetimi → Ürün yönetimi → Varyant yönetim
 
 `src/main.jsx` yalnızca uygulamayı başlatır. `src/app/` uygulama çatısı, modül kaydı ve merkezi katalog durumunu; `src/components/` ortak bileşenleri; `src/modules/` iş alanlarına göre ekranları içerir. Modüller ayrı JavaScript parçaları olarak gerektiğinde yüklenir. Teknik rehber: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Ürün kodu (`001`), ürün SKU’su (`100.101001`) ve varyant SKU’su (`100.101001.01`) ayrı alanlardır. Kod modülü arama, listeleme ve CSV sunar. Kalıcı QR kimliği ayrı tutulur.
+Ürün kodu (`001`), ürün SKU’su (`0100.101001`) ve varyant SKU’su (`0100.101001.01`) ayrı alanlardır. Kod modülü arama, listeleme ve CSV sunar. Kalıcı QR kimliği ayrı tutulur.
 
 Medya modülü gerçek dosya yükleme, önizleme, yeniden adlandırma, arama, ürüne bağlama ve kullanılmayan dosyayı onayla silme işlemleri içerir. PNG / JPEG / WEBP / GIF, en fazla 2 MB desteklenir. Dosyalar `app_media` tablosunda saklanır; katalog yalnızca medya kimliği ve URL’sini taşır. Görsel içeriği yetkili oturumla okunur. Yönetici ve editör yükleyebilir / düzenleyebilir; görüntüleyici okuyabilir. Kullanımdaki dosya sunucuda da silinemez. Yeni ortam değişkeni gerekmez; tablo uygulama açılışında oluşturulur.
 
@@ -185,8 +185,14 @@ Sistem Ayarları (`#system-settings`), Kullanıcı Yönetimi (`#user-management`
 
 ## Güncel SKU düzeni
 
-Varyant gösterimi **000.000000.00**: kategori (3), alt kategori (3), ürün (3), varyant (2) rakam. Örnek **100.101001.01**. Veritabanında sabit `HM` önekiyle saklanır; ekranlar ve CSV öneksizdir. Önek değiştirme alanı kaldırılmıştır. Ürün numarası alt kategori içinde, varyant numarası ürün içinde artar. Mevcut katalog otomatik geçirilir; eski kodlar belge içinde yedeklenir, kayıt kimlikleri ve QR adresleri korunur. [Geçiş, sınırlar ve ayrıntılar](docs/SKU_PATTERN.md).
+Varyant gösterimi **0000.000000.00**: ana kategori (4), alt kategori (3), ürün (3), varyant (2) rakam. Örnek **0100.101001.01**. Veritabanında sabit `HM` önekiyle saklanır; ekranlar ve CSV öneksizdir. Önek değiştirme alanı kaldırılmıştır. Ürün numarası alt kategori içinde, varyant numarası ürün içinde artar. Mevcut katalog otomatik geçirilir; eski kodlar belge içinde yedeklenir, kayıt kimlikleri ve QR adresleri korunur. [Geçiş, sınırlar ve ayrıntılar](docs/SKU_PATTERN.md).
 
 ### Ana kategoriye doğrudan ürün ekleme
 
-Ürün formunda ana kategori zorunludur; alt kategori isteğe bağlıdır. Alt kategori seçilmezse ürün ana kategoriye bağlanır ve SKU alt kategori bölümü `000` olur. Örneğin ana kategori `100` için ilk iki varyant SKU’su `100.000001.01` ve `100.000002.01` biçimindedir. `000` sabit alt kategori bölümüdür; ürün sırası her kod grubunda `001`–`999` aralığında artar. Gerçek bir alt kategori seçildiğinde onun kodu kullanılır ve ürün sırası ayrı tutulur. Veritabanında `HM` ön eki korunur. Mevcut ürünlerin SKU ve QR adresleri değişmez; veritabanı temizliği gerekmez.
+Ürün formunda ana kategori zorunludur; alt kategori isteğe bağlıdır. Alt kategori seçilmezse ürün ana kategoriye bağlanır ve SKU alt kategori bölümü `000` olur. Örneğin ana kategori `0100` için ilk iki varyant SKU’su `0100.000001.01` ve `0100.000002.01` biçimindedir. `000` sabit alt kategori bölümüdür; ürün sırası her kod grubunda `001`–`999` aralığında artar. Gerçek bir alt kategori seçildiğinde onun kodu kullanılır ve ürün sırası ayrı tutulur. Veritabanında `HM` ön eki korunur. Normal kategori düzenlemesinde SKU ve QR adresleri değişmez; veritabanı temizliği gerekmez.
+
+### Dört haneli ana kategori kodları
+
+Ana kategori kodları dört hanelidir: `0100`, `0200`, …, `0900`, `1000`, `1100`, `1200` (otomatik öneri üst sınırı `9900`). Alt kategori ve ürün üçer, varyant iki hane kalır: `0100.101001.01`. Alt kategorisiz ürün: `1000.000001.01`.
+
+Yeni sürüm açılırken `skuSchemaVersion: 1` kayıtlar tek bir veritabanı işlemiyle sürüm 2'ye geçirilir. Ana kategori kodlarına ve SKU'nun ilk bölümüne sıfır eklenir; ürün/varyant sıra numaraları, ayrılmış sayaçlar ve QR adresleri korunur. Manuel SQL veya veri temizliği gerekmez. Geçiş öncesi kodlar sunucuya özel `skuWidthMigrationBackup` alanında saklanır. Daha önce dışa aktarılmış SKU'ları kullanan dosyalarda dört haneli biçim esas alınmalıdır. Ayrıntılar: [SKU kodlama düzeni](docs/SKU_PATTERN.md).

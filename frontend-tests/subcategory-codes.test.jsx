@@ -7,7 +7,7 @@ const categories = [
   {
     id: "r",
     name: "Baklava",
-    code: "100",
+    code: "0100",
     slug: "baklava",
     active: true,
     parentId: "",
@@ -23,7 +23,7 @@ const categories = [
   {
     id: "r2",
     name: "Lokum",
-    code: "300",
+    code: "0300",
     slug: "lokum",
     active: true,
     parentId: "",
@@ -31,7 +31,7 @@ const categories = [
   {
     id: "last",
     name: "Son",
-    code: "999",
+    code: "0999",
     slug: "son",
     active: true,
     parentId: "",
@@ -56,8 +56,8 @@ test("parent selector is first, labels include codes and switching parent recalc
   await settle();
   const first = document.querySelector(".editor-content").firstElementChild;
   expect(first.querySelector("sl-select")).toBeTruthy();
-  expect(first.textContent).toContain("Baklava (100)");
-  expect(first.textContent).toContain("Lokum (300)");
+  expect(first.textContent).toContain("Baklava (0100)");
+  expect(first.textContent).toContain("Lokum (0300)");
   await choose("r");
   expect(
     [...document.querySelectorAll("sl-input")].find(
@@ -75,7 +75,7 @@ test("parent selector is first, labels include codes and switching parent recalc
     [...document.querySelectorAll("sl-input")].find(
       (node) => node.label === "Kategori kodu",
     ).value,
-  ).toBe("200");
+  ).toBe("0200");
 });
 test("direct child creation uses the same suggestion; existing category codes remain unchanged on parent edits", async () => {
   const view = render(
@@ -104,10 +104,42 @@ test("exhausted code range warns and disables create actions", async () => {
       (node) => node.label === "Kategori kodu",
     ).value,
   ).toBe("");
-  expect(document.body.textContent).toContain("boş üç haneli kod kalmadı");
+  expect(document.body.textContent).toContain("boş alt kategori kodu kalmadı");
   const buttons = [...document.querySelectorAll("sl-button")].filter((b) =>
     b.textContent.includes("Kategoriyi oluştur"),
   );
   expect(buttons).toHaveLength(2);
   expect(buttons.every((b) => b.disabled)).toBe(true);
+});
+
+test("new main categories continue at 1000 and form constraints switch to three digits for children", async () => {
+  const mainCategories = Array.from({ length: 9 }, (_, i) => ({
+    id: "root-" + i,
+    name: "Root " + i,
+    code: String((i + 1) * 100).padStart(4, "0"),
+    slug: "root-" + i,
+    active: true,
+    parentId: "",
+  }));
+  render(
+    <CategoryManagement
+      {...props}
+      categories={mainCategories}
+      route="categories/new"
+    />,
+  );
+  await settle();
+  const code = () =>
+    [...document.querySelectorAll("sl-input")].find(
+      (node) => node.label === "Kategori kodu",
+    );
+  expect(code().value).toBe("1000");
+  expect(code().maxlength).toBe(4);
+  expect(code().pattern).toBe("[0-9]{4}");
+  await choose("root-8");
+  expect(code().value).toBe("901");
+  expect(code().maxlength).toBe(3);
+  expect(code().pattern).toBe("[0-9]{3}");
+  await choose("");
+  expect(code().value).toBe("1000");
 });

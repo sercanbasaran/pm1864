@@ -424,6 +424,7 @@ export default function CategoryManager({
                     label="Ana kategori"
                     aria-label="Ana kategori"
                     value={draft.parentId}
+                    disabled={!draft.isNew && !draft.parentId}
                     onChange={(e) =>
                       setDraft({
                         ...draft,
@@ -439,7 +440,12 @@ export default function CategoryManager({
                       })
                     }
                   >
-                    <option value="">Ana kategori olarak oluştur</option>
+                    <option
+                      value=""
+                      disabled={!draft.isNew && !!draft.parentId}
+                    >
+                      Ana kategori olarak oluştur
+                    </option>
                     {main
                       .filter((c) => c.id !== draft.id)
                       .map((c) => (
@@ -457,7 +463,7 @@ export default function CategoryManager({
                 {noCodeAvailable && (
                   <SlAlert open variant="warning">
                     {draft.parentId
-                      ? "Bu ana kategorinin kodundan büyük boş üç haneli kod kalmadı. Başka bir ana kategori seçin."
+                      ? "Ana kategori kodunun son üç hanesinden sonraki aralıkta boş alt kategori kodu kalmadı. Başka bir ana kategori seçin."
                       : "Kullanılabilir kategori kodu bulunamadı."}
                   </SlAlert>
                 )}
@@ -490,22 +496,24 @@ export default function CategoryManager({
                       label="Kategori kodu"
                       aria-label="Kategori kodu"
                       required
-                      pattern="[0-9]{3}"
+                      pattern={draft.parentId ? "[0-9]{3}" : "[0-9]{4}"}
                       readOnly={!draft.isNew}
-                      maxLength={3}
+                      maxLength={draft.parentId ? 3 : 4}
                       value={draft.code}
                       onChange={(e) =>
                         setDraft({
                           ...draft,
-                          code: e.target.value.replace(/\D/g, "").slice(0, 3),
+                          code: e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, draft.parentId ? 3 : 4),
                         })
                       }
                     />
                     <small className="input-help">
                       {draft.isNew
                         ? draft.parentId
-                          ? "Kod, ana kategori kodundan sonraki ilk boş kod olarak önerilir."
-                          : "Kod otomatik önerilir; kayıttan sonra değiştirilemez."
+                          ? "Üç haneli kod, ana kategori kodunun son üç hanesinden sonraki ilk boş değer olarak önerilir."
+                          : "Dört haneli kod otomatik önerilir: 0100, 0200, …, 1000, 1100. Kayıttan sonra değiştirilemez."
                         : "Ürün kodlarını korumak için kayıt sonrası sabittir."}
                     </small>
                   </div>

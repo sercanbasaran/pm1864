@@ -9,7 +9,7 @@ const categories = [
   {
     id: "a",
     name: "Baklava",
-    code: "100",
+    code: "0100",
     slug: "baklava",
     active: true,
     salesAvailability: { store: true, online: false, foodDelivery: true },
@@ -23,7 +23,7 @@ const categories = [
     active: true,
     description: "Açıklama",
   },
-  { id: "c", name: "Lokum", code: "200", slug: "lokum", active: false },
+  { id: "c", name: "Lokum", code: "0200", slug: "lokum", active: false },
   {
     id: "d",
     parentId: "c",
@@ -35,7 +35,7 @@ const categories = [
   {
     id: "e",
     name: "Çay",
-    code: "300",
+    code: "0300",
     slug: "cay",
     active: true,
     salesAvailability: { online: true, foodDelivery: false, store: false },

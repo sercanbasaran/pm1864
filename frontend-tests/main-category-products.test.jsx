@@ -6,9 +6,9 @@ import CategoryFields from "../src/modules/categories/CategoryFields.jsx";
 
 afterEach(cleanup);
 const categories = [
-  {id:"r",name:"Baklava",code:"100",active:true},
+  {id:"r",name:"Baklava",code:"0100",active:true},
   {id:"c",name:"Fistikli",code:"101",active:true,parentId:"r"},
-  {id:"r2",name:"Lokum",code:"200",active:true},
+  {id:"r2",name:"Lokum",code:"0200",active:true},
 ];
 function Form() {
   const [product,setProduct]=useState({categoryId:"r",category:"Baklava"});

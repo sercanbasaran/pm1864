@@ -1,4 +1,4 @@
-import { normalizeName, slugify, nextCategoryCode } from "./catalog.js";
+import { normalizeName, slugify, nextSubcategoryCode } from "./catalog.js";
 export const roots = (categories) => categories.filter((c) => !c.parentId);
 export function categoryOf(product, categories) {
   return (
@@ -40,16 +40,16 @@ export function defaultSubcategory(doc, root) {
     child = {
       id: `default-${root.id}`,
       name: "Genel",
-      code:
-        !doc.categories.some((c) => c.code === String(Number(root.code) + 1)) &&
-        Number(root.code) < 999
-          ? String(Number(root.code) + 1)
-          : nextCategoryCode(doc.categories),
+      code: nextSubcategoryCode(doc.categories, root.id),
       slug: slugify(root.slug + "-genel"),
       description: "Önceki ürün kayıtlarının korunduğu alt kategori.",
       parentId: root.id,
       active: root.active,
     };
+    if (!child.code)
+      throw new Error(
+        "Eski ürünler için kullanılabilir alt kategori kodu bulunamadı.",
+      );
     doc.categories.push(child);
   }
   return child;

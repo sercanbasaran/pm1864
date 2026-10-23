@@ -14,7 +14,7 @@ const categories = [
   {
     id: "r",
     name: "Baklava",
-    code: "100",
+    code: "0100",
     slug: "baklava",
     active: true,
     parentId: "",

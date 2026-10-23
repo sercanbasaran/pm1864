@@ -35,7 +35,7 @@ test('variant ids and SKUs survive rename/reorder; deleted suffixes are never re
 });
 test('existing catalog migrates transactionally once, updating SKU format while retaining account data and product ids',async()=>{
  const db=await openDatabase({SQLITE_PATH:':memory:'});try{await db.query('CREATE TABLE app_catalog (id INTEGER PRIMARY KEY,revision INTEGER NOT NULL,document TEXT NOT NULL)');const old={categories:[{id:'root',name:'Baklavalar',code:'100',slug:'baklavalar',parentId:'',active:true}],products:[{id:7,name:'Legacy',sku:'HM-100-0007',category:'Baklavalar',version:3,status:'Aktif',variants:[variant()]}],logs:[],settings:{skuPrefix:'HM'},nextProductId:8};await db.query('INSERT INTO app_catalog VALUES (1,4,?)',[JSON.stringify(old)]);
- const app=await createApp({env:{ADMIN_EMAIL:'test@example.test',ADMIN_PASSWORD_HASH:hash},database:db});const c=await app.service.read();assert.equal(c.revision,5);assert.equal(c.products[0].id,7);assert.equal(c.products[0].sku,"100.101001");assert.equal(c.products[0].publicCardCode,"P000007");assert.equal(categoryPath(categoryOf(c.products[0],c.categories),c.categories),'Baklavalar / Genel');assert.ok(c.products[0].variants[0].id);assert.match(c.products[0].variants[0].sku,/\.01$/);const second=await createApp({env:{},database:db});assert.deepEqual(await second.service.read(),c);assert.equal((await second.users.list()).users.length,1);
+ const app=await createApp({env:{ADMIN_EMAIL:'test@example.test',ADMIN_PASSWORD_HASH:hash},database:db});const c=await app.service.read();assert.equal(c.revision,5);assert.equal(c.products[0].id,7);assert.equal(c.products[0].sku,"0100.101001");assert.equal(c.products[0].publicCardCode,"P000007");assert.equal(categoryPath(categoryOf(c.products[0],c.categories),c.categories),'Baklavalar / Genel');assert.ok(c.products[0].variants[0].id);assert.match(c.products[0].variants[0].sku,/\.01$/);const second=await createApp({env:{},database:db});assert.deepEqual(await second.service.read(),c);assert.equal((await second.users.list()).users.length,1);
  }finally{await db.close()}
 });
 test('viewers cannot create categories or mutate variant collections',async()=>{const f=await fixture('viewer');try{assert.equal((await f.call('/categories','POST',{})).status,403);assert.equal((await f.call('/products/1','PUT',{product:{variants:[variant()]}})).status,403)}finally{await f.app.close()}});
@@ -80,11 +80,11 @@ test('direct root products keep their category, use 000 and have independent chi
  const f=await fixture();try{
  const root=(await f.call('/catalog')).catalog.categories[0];
  let r=await save(f,root.id);assert.equal(r.status,200);
- const p=r.catalog.products[0];assert.equal(p.categoryId,root.id);assert.equal(p.sku,'100.000001');assert.equal(p.variants[0].sku,'100.000001.01');
+ const p=r.catalog.products[0];assert.equal(p.categoryId,root.id);assert.equal(p.sku,'0100.000001');assert.equal(p.variants[0].sku,'0100.000001.01');
  assert.equal(r.catalog.categories.some(c=>c.parentId===root.id),false);
- r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'100.000002');
- const child=await sub(f,root);r=await save(f,child.id);assert.equal(r.catalog.products[0].sku,'100.101001');
- r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'100.000003');
+ r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'0100.000002');
+ const child=await sub(f,root);r=await save(f,child.id);assert.equal(r.catalog.products[0].sku,'0100.101001');
+ r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'0100.000003');
  assert.equal(r.catalog.products.find(x=>x.id===p.id).categoryId,root.id);
  r=await f.call('/categories/'+root.id,'PUT',{expectedRevision:r.catalog.revision,category:{...root,active:false}});
  assert.equal(r.status,200);assert.equal((await save(f,root.id)).status,422);

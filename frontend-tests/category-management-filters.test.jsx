@@ -8,7 +8,7 @@ const categories = [
   {
     id: "a",
     name: "Baklava",
-    code: "100",
+    code: "0100",
     slug: "baklava",
     active: true,
     salesAvailability: { store: true, online: false, foodDelivery: true },
@@ -22,7 +22,7 @@ const categories = [
     active: true,
     description: "Tam",
   },
-  { id: "c", name: "Lokum", code: "200", slug: "lokum", active: false },
+  { id: "c", name: "Lokum", code: "0200", slug: "lokum", active: false },
 ];
 async function setup() {
   render(

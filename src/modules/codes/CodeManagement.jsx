@@ -32,8 +32,8 @@ export default function CodeManagement({ user }) {
         <div>
           <h2>Ürün kodları ve SKU kayıtları</h2>
           <p className="muted">
-            Ürün kodu kategori kod grubu içindeki sıra numarasıdır. Ürün SKU'su ve her varyantın SKU'su
-            ayrı, kalıcı kodlardır.
+            Ürün kodu kategori kod grubu içindeki sıra numarasıdır. Ürün SKU'su
+            ve her varyantın SKU'su ayrı, kalıcı kodlardır.
           </p>
         </div>
         <Button
@@ -124,16 +124,16 @@ export default function CodeManagement({ user }) {
           Kodlama kuralları
         </h3>
         <p>
-          Kategori (3 rakam) · Alt kategori (3 rakam) · Ürün (3 rakam) · Varyant
-          (2 rakam).
+          Ana kategori (4 rakam) · Alt kategori (3 rakam) · Ürün (3 rakam) ·
+          Varyant (2 rakam).
         </p>
         <p>
-          Varyant SKU örneği: <code>100.101001.01</code>. Ürün SKU örneği:{" "}
-          <code>100.101001</code>.
+          Varyant SKU örneği: <code>0100.101001.01</code>. Ürün SKU örneği:{" "}
+          <code>0100.101001</code>.
         </p>
         <p>
-          Ürün numaraları alt kategori içinde 001–999; varyant numaraları ürün
-          içinde 01–99 aralığında üretilir. Kodlar sunucuda atanır. Silinen
+          Ürün numaraları kategori kod grubu içinde 001–999; varyant numaraları
+          ürün içinde 01–99 aralığında üretilir. Kodlar sunucuda atanır. Silinen
           varyant numaraları tekrar kullanılmaz. İsim veya kategori değişikliği
           mevcut SKU'yu değiştirmez.
         </p>
