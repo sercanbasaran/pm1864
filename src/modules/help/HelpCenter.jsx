@@ -11,7 +11,7 @@ export default function HelpCenter({ user, onNavigate }) {
       "Ana modüller ve alt modüller",
       "Ürün yönetimi ana modülü",
       "catalog.read",
-      "Ürün yönetimi altında kategori, ürün ve varyant; Satış yönetimi altında fiyat, satış grupları ve menü; Kanal yönetimi altında mağazalar, dijital mağazalar ve yemek sipariş platformları; Sistem Ayarları altında Kod/SKU, para birimleri ve diller; Kullanıcı Yönetimi altında kullanıcılar ve kullanıcı rolleri; Kütüphane altında görseller ve dokümanlar bulunur. Menüde ana modül başlığına tıklayarak alt modülleri açın. Modüle genel bakış sayfasından alt modüllere geçebilirsiniz. Hazırlık aşamasında yazan alanlarda kayıt işlemleri henüz devrede değildir.",
+      "Ürün yönetimi altında kategori, ürün ve varyant; Satış yönetimi altında fiyat, satış grupları ve menü; Kanal yönetimi altında Mağaza, E-Mağaza ve Sipariş Platformları; Sistem Ayarları altında Kod/SKU, para birimleri ve diller; Kullanıcı Yönetimi altında kullanıcılar ve kullanıcı rolleri; Kütüphane altında görseller ve dokümanlar bulunur. Menüde ana modül başlığına tıklayarak alt modülleri açın. Modüle genel bakış sayfasından alt modüllere geçebilirsiniz. Hazırlık aşamasında yazan alanlarda kayıt işlemleri henüz devrede değildir.",
     ],
     [
       "Kategori oluşturma",

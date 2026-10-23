@@ -191,3 +191,17 @@ sl-textarea::part(textarea) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Main categories stand out without changing table geometry. */
+.category-table .category-main-row > th,
+.category-table .category-main-row > td {
+  background-color: color-mix(in srgb, var(--sl-color-primary-600) 8%, var(--sl-panel-background-color));
+}
+.category-table .category-main-row > th[scope="row"] {
+  box-shadow: inset 3px 0 0 var(--sl-color-primary-600);
+}
+
+/* Closed channels keep their labels visible in a disabled appearance. */
+.sales-channel-tag.is-disabled::part(base) {
+  opacity: 0.5;
+}

@@ -1,7 +1,7 @@
 export const salesChannels = [
-  { key: "store", label: "Mağaza satışı" },
-  { key: "online", label: "Online satış" },
-  { key: "foodDelivery", label: "Yemek sipariş platformu satışı" },
+  { key: "store", label: "Mağaza" },
+  { key: "online", label: "E-Mağaza" },
+  { key: "foodDelivery", label: "Sipariş Platformları" },
 ];
 export function validateSalesAvailability(value) {
   if (value === undefined) return "";
@@ -34,10 +34,15 @@ export function categorySalesAvailability(category, categories) {
   while (current) {
     if (seen.has(current.id)) return salesAvailability();
     seen.add(current.id);
-    const preferences = salesAvailability(current.salesAvailability, undefined, true);
-    for (const { key } of salesChannels) values[key] = values[key] && current.active !== false && preferences[key];
+    const preferences = salesAvailability(
+      current.salesAvailability,
+      undefined,
+      true,
+    );
+    for (const { key } of salesChannels)
+      values[key] = values[key] && current.active !== false && preferences[key];
     if (!current.parentId) return values;
-    current = categories.find(c => c.id === current.parentId);
+    current = categories.find((c) => c.id === current.parentId);
     if (!current) return salesAvailability();
   }
   return values;
@@ -45,7 +50,16 @@ export function categorySalesAvailability(category, categories) {
 export function effectiveSales(product, variant, categories) {
   const parent = salesAvailability(product.salesAvailability),
     child = salesAvailability(variant?.salesAvailability, undefined, true),
-    category = categories ? categorySalesAvailability(categories.find(c => product.categoryId ? c.id === product.categoryId : c.name === product.category), categories) : salesAvailability(undefined, undefined, true);
+    category = categories
+      ? categorySalesAvailability(
+          categories.find((c) =>
+            product.categoryId
+              ? c.id === product.categoryId
+              : c.name === product.category,
+          ),
+          categories,
+        )
+      : salesAvailability(undefined, undefined, true);
   return Object.fromEntries(
     salesChannels.map(({ key }) => [
       key,

@@ -170,7 +170,7 @@ Navigasyon tanımları `src/app/modules.js` içindedir. `moduleGroups` ana modü
 | --- | --- |
 | Ürün yönetimi | Kategori yönetimi, Ürün yönetimi, Varyant yönetimi |
 | Satış yönetimi | Fiyat yönetimi, Satış grupları, Menü |
-| Kanal yönetimi | Mağazalar, Dijital mağazalar, Yemek sipariş platformları |
+| Kanal yönetimi | Mağaza, E-Mağaza, Sipariş Platformları |
 | Sistem Ayarları | Ürün kodu ve SKU yönetimi, Para birimleri, Diller |
 | Kullanıcı Yönetimi | Kullanıcılar, Kullanıcı rolleri |
 | Kütüphane | Görseller, Dokümanlar |

@@ -13,9 +13,9 @@ test('category editor shows inherited switches and persists independent channel 
   await settle();
   const controls=[...document.querySelectorAll('sl-switch')];
   expect(controls).toHaveLength(3);
-  const online=controls.find(c=>c.getAttribute('aria-label')==='Online satış');
+  const online=controls.find(c=>c.getAttribute('aria-label')==='E-Mağaza');
   expect(online.disabled).toBe(true);expect(online.checked).toBe(false);
-  const store=controls.find(c=>c.getAttribute('aria-label')==='Mağaza satışı');
+  const store=controls.find(c=>c.getAttribute('aria-label')==='Mağaza');
   store.checked=false;fireEvent(store,new CustomEvent('sl-change',{bubbles:true}));await settle();
   fireEvent.submit(document.querySelector('form'));
   await waitFor(()=>expect(onSave).toHaveBeenCalled());
@@ -27,5 +27,5 @@ test('category list shows channel status and read-only mode has no editing switc
   await settle();
   expect(document.querySelectorAll('sl-switch')).toHaveLength(0);
   expect(document.querySelector('table').textContent).toContain('Satış kanalları');
-  expect(document.querySelector('table').textContent).toContain('Online: Kapalı');
+  expect(document.querySelector('table').textContent).toContain('E-Mağaza');
 });

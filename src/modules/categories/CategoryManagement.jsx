@@ -256,7 +256,10 @@ export default function CategoryManager({
                           : categoryMatches(p, category.id, categories),
                       ).length;
                     return (
-                      <TableRow key={category.id}>
+                      <TableRow
+                        key={category.id}
+                        className={isChild ? undefined : "category-main-row"}
+                      >
                         <TableHeading scope="row">
                           <div
                             className={

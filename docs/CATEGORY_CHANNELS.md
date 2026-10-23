@@ -1,5 +1,7 @@
 # Kategori satış kanalları
 
+Uygulama genelindeki kanal adları **Mağaza**, **E-Mağaza**, **Sipariş Platformları** şeklindedir. Teknik anahtarlar sırasıyla `store`, `online`, `foodDelivery` olarak korunur. Kategori, ürün ve varyant özetlerindeki etiketler küçük boyuttadır; etkin kanal yeşil, kapalı kanal soluk/pasif görünür. Görünür etiketlerde yalnızca kanal adı bulunur; durum ekran okuyucuya ayrıca iletilir. Kategori tablosunda ana kategori satırları tema uyumlu renk ve sol vurgu ile alt kategorilerden ayrılır.
+
 Ana ve alt kategorilerde `salesAvailability` alanı üç boolean tercih saklar: `store`, `online`, `foodDelivery`. Alanın bulunmadığı eski kategoriler tüm kanallarda geçerli kabul edilir; kayıtların kodları, SKU'ları ve ürün tercihleri değiştirilmez. Manuel SQL veya şema değişikliği gerekmez.
 
 Yeni kategori formunda kanallar başlangıçta açıktır. Üst kategoride kapalı kanal veya pasif üst kategori, alt kategori formunda ilgili anahtarı devre dışı bırakır. Engellenen kanalın alt kategorideki kayıtlı tercihi korunur. Üst kategori tekrar açıldığında alt kategori, ürün ve varyantın kendi tercihleri yeniden uygulanır.

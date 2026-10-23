@@ -95,12 +95,12 @@ test('product nutrition, storage and allergen fields save and reopen through the
 });
 test('product and variant sales switches persist and inherit product channel restrictions',async()=>{
  await show();await navigate('Ürün kataloğu');await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));let dialog=screen.getByRole('region',{name:'Ürün düzenle'});
- await click.selectOptions(within(dialog).getByLabelText('Ürün durumu'),'Aktif');await click.click(within(dialog).getByRole('switch',{name:'Mağaza satışı'}));await click.click(within(dialog).getByRole('switch',{name:'Online satış'}));
- await click.click(within(dialog).getByRole('button',{name:'Varyant & fiyat'}));const first=within(dialog).getAllByRole('switch',{name:'Online satış'})[0];expect(first.checked).toBe(true);await click.click(first);
- expect(within(dialog).getAllByRole('switch',{name:'Yemek sipariş platformu satışı'}).every(input=>input.disabled)).toBe(true);
+ await click.selectOptions(within(dialog).getByLabelText('Ürün durumu'),'Aktif');await click.click(within(dialog).getByRole('switch',{name:'Mağaza'}));await click.click(within(dialog).getByRole('switch',{name:'E-Mağaza'}));
+ await click.click(within(dialog).getByRole('button',{name:'Varyant & fiyat'}));const first=within(dialog).getAllByRole('switch',{name:'E-Mağaza'})[0];expect(first.checked).toBe(true);await click.click(first);
+ expect(within(dialog).getAllByRole('switch',{name:'Sipariş Platformları'}).every(input=>input.disabled)).toBe(true);
  await click.click(within(dialog).getAllByRole('button',{name:'Değişiklikleri kaydet'}).at(-1));await waitFor(()=>expect(openEditor()).toBeNull());
  let p=(await(await fetch('/api/catalog')).json()).catalog.products[0];expect(p.salesAvailability.store).toBe(true);expect(p.variants[0].effectiveSales.online).toBe(false);expect(p.variants[1].effectiveSales.online).toBe(true);
- await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));dialog=screen.getByRole('region',{name:'Ürün düzenle'});await click.click(within(dialog).getByRole('switch',{name:'Online satış'}));await click.click(within(dialog).getByRole('button',{name:'Varyant & fiyat'}));expect(within(dialog).getAllByRole('switch',{name:'Online satış'}).every(input=>input.disabled&&!input.checked)).toBe(true);
+ await click.click(screen.getByRole('button',{name:'Kontrol Baklava düzenle'}));dialog=screen.getByRole('region',{name:'Ürün düzenle'});await click.click(within(dialog).getByRole('switch',{name:'E-Mağaza'}));await click.click(within(dialog).getByRole('button',{name:'Varyant & fiyat'}));expect(within(dialog).getAllByRole('switch',{name:'E-Mağaza'}).every(input=>input.disabled&&!input.checked)).toBe(true);
  await click.click(within(dialog).getAllByRole('button',{name:'Değişiklikleri kaydet'}).at(-1));await waitFor(()=>expect(openEditor()).toBeNull());p=(await(await fetch('/api/catalog')).json()).catalog.products[0];expect(p.variants[1].salesAvailability.online).toBe(true);expect(p.variants[1].effectiveSales.online).toBe(false);
 });
 test('resource editor URLs support history, reload and missing-record handling',async()=>{
@@ -180,8 +180,8 @@ test('variant types can be added and removed; new product enforces type and slic
  const channel=[...document.querySelectorAll('sl-details.workspace-module-group')][2];
  await click.click(channel.querySelector('[slot=summary]'));
  const channelGroup=await screen.findByRole('group',{name:'Kanal yönetimi alt modülleri'});
- await click.click(within(channelGroup).getByRole('button',{name:'Dijital mağazalar',exact:true}));
- await screen.findByRole('heading',{name:'Dijital mağazalar',level:1});
+ await click.click(within(channelGroup).getByRole('button',{name:'E-Mağaza',exact:true}));
+ await screen.findByRole('heading',{name:'E-Mağaza',level:1});
  expect(screen.getByRole('navigation',{name:'Modül yolu'})).toBeTruthy();
  window.history.pushState(null,'','#products/1/edit?tab=variants');window.dispatchEvent(new Event('hashchange'));await settle();
  expect(await screen.findByRole('region',{name:'Ürün düzenle'})).toBeTruthy();

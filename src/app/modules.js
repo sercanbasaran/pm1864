@@ -142,21 +142,21 @@ const plannedModules = [
   },
   {
     id: "stores",
-    label: "Mağazalar",
+    label: "Mağaza",
     icon: Storefront,
     description: "Fiziksel mağazaların ve şubelerin yönetimi.",
   },
   {
     id: "digital-stores",
-    label: "E-Mağazalar",
+    label: "E-Mağaza",
     icon: Globe,
     description: "E-ticaret mağazalarının yönetimi.",
   },
   {
     id: "food-platforms",
-    label: "Sipariş platformları",
+    label: "Sipariş Platformları",
     icon: Motorcycle,
-    description: "Yemek sipariş platformlarındaki satış kanallarının yönetimi.",
+    description: "Sipariş Platformları üzerindeki satış kanallarının yönetimi.",
   },
 ].map((module) => ({
   ...module,
