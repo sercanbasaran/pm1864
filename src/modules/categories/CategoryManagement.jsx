@@ -2,7 +2,11 @@ import {
   CategoryChannelSwitches,
   CategoryChannelSummary,
 } from "../../components/ui/SalesChannels.jsx";
-import { salesAvailability } from "../../sales-availability.js";
+import {
+  salesChannels,
+  categorySalesAvailability,
+  salesAvailability,
+} from "../../sales-availability.js";
 import CategorySummary from "./CategorySummary.jsx";
 import CategoryFilters from "./CategoryFilters.jsx";
 import {
@@ -46,6 +50,8 @@ import { roots } from "../../hierarchy.js";
 function EditableField({
   children,
   label,
+  value,
+  creating,
   enabled,
   editing,
   busy,
@@ -62,7 +68,33 @@ function EditableField({
         flexWrap: "wrap",
       }}
     >
-      <div style={{ flex: "1 1 240px", minWidth: 0 }}>{children}</div>
+      <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+        {creating || editing ? (
+          children
+        ) : (
+          <dl
+            style={{
+              margin: 0,
+              padding: "0 0 16px",
+              borderBottom: "1px solid var(--sl-color-neutral-200)",
+              overflowWrap: "anywhere",
+            }}
+          >
+            <dt
+              style={{
+                fontSize: "0.875rem",
+                color: "var(--sl-color-neutral-600)",
+                marginBottom: 8,
+              }}
+            >
+              {label}
+            </dt>
+            <dd style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+              {value || "—"}
+            </dd>
+          </dl>
+        )}
+      </div>
       {enabled && (
         <div style={{ display: "flex", gap: 8 }}>
           {editing ? (
@@ -229,8 +261,26 @@ export default function CategoryManager({
     }
   }
   function fieldProps(field, label, locked = false) {
+    const values = {
+      parentId: draft.parentId
+        ? main.find((c) => c.id === draft.parentId)?.name
+        : "Ana kategori",
+      name: draft.name,
+      code: draft.code,
+      slug: draft.slug,
+      description: draft.description,
+      active: draft.active ? "Aktif" : "Pasif",
+      salesAvailability: salesChannels
+        .map(
+          ({ key, label }) =>
+            `${label}: ${categorySalesAvailability(draft, categories)[key] ? "Açık" : "Kapalı"}`,
+        )
+        .join("\n"),
+    };
     return {
       label,
+      value: values[field],
+      creating: draft.isNew,
       enabled: !draft.isNew && !locked,
       editing: editingField === field,
       busy: saving,
@@ -622,7 +672,7 @@ export default function CategoryManager({
                     }}
                   />
                 </EditableField>
-                <div>
+                <EditableField {...fieldProps("code", "Kategori kodu", true)}>
                   <div>
                     <Input
                       label="Kategori kodu"
@@ -650,7 +700,7 @@ export default function CategoryManager({
                         : "Ürün kodlarını korumak için kayıt sonrası sabittir."}
                     </small>
                   </div>
-                </div>
+                </EditableField>
                 <EditableField {...fieldProps("slug", "Kategori bağlantısı")}>
                   <Input
                     disabled={!draft.isNew && editingField !== "slug"}
