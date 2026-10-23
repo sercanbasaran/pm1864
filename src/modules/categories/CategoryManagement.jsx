@@ -66,44 +66,23 @@ function EditableField({
 }) {
   return (
     <section
-      className="category-field-card"
-      style={{
-        display: "flex",
-        gap: 12,
-        alignItems: "flex-start",
-        flexWrap: "wrap",
-      }}
+      className={
+        "category-field-card" + (creating || editing ? " is-editing" : "")
+      }
     >
-      <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+      <div className="category-field-content">
         {creating || editing ? (
           children
         ) : (
-          <dl
-            style={{
-              margin: 0,
-              padding: "0 0 16px",
-
-              overflowWrap: "anywhere",
-            }}
-          >
-            <dt
-              style={{
-                fontSize: "0.875rem",
-                color: "var(--sl-color-neutral-600)",
-                marginBottom: 8,
-              }}
-            >
-              {label}
-            </dt>
-            <dd style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-              {value || "—"}
-            </dd>
+          <dl className="category-field-value">
+            <dt>{label}</dt>
+            <dd>{value || "—"}</dd>
           </dl>
         )}
       </div>
       {displayAction ||
         (enabled && (
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="category-field-actions">
             {editing ? (
               <>
                 <Button
@@ -670,6 +649,7 @@ export default function CategoryManager({
                   creating={false}
                   displayAction={
                     <SlSwitch
+                      className="category-status-switch"
                       aria-label="Kategori durumu"
                       checked={draft.active}
                       disabled={saving}

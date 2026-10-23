@@ -45,20 +45,21 @@ export default function ProfileMenu({ user, onNavigate, onLogout, onError }) {
         <Button
           slot="trigger"
           type="button"
-          caret
           className="profile-menu-trigger"
           aria-label="Profil menüsünü aç"
           aria-haspopup="menu"
           aria-expanded={open}
           disabled={busy}
         >
-          <UserAvatar user={user} />
-          <span className="profile-menu-name">{user.name}</span>
-          <CaretDown
-            className="profile-mobile-chevron"
-            size={16}
-            aria-hidden="true"
-          />
+          <span className="profile-trigger-content">
+            <UserAvatar user={user} />
+            <span className="profile-menu-name">{user.name}</span>
+            <CaretDown
+              className="profile-menu-chevron"
+              size={16}
+              aria-hidden="true"
+            />
+          </span>
         </Button>
         <SlMenu aria-label="Profil menüsü" onSlSelect={select}>
           <div className="profile-menu-heading">
