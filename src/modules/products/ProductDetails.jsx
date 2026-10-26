@@ -1,9 +1,8 @@
-import UnitPricing from "./UnitPricing.jsx";
+import "./product-details.css";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import ProductVariantsTable from "./ProductVariantsTable.jsx";
 import React from "react";
 import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
-import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import Card from "../../components/ui/Card.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
@@ -14,10 +13,8 @@ import { hasSatiety } from "../../satiety.js";
 import { productDetailSteps } from "../../product-information.js";
 
 export default function ProductDetails({ product }) {
-  const information = productDetailSteps.filter((field) =>
-    field.key === "satiety"
-      ? hasSatiety(product.satiety)
-      : field.key && product[field.key],
+  const information = productDetailSteps.filter(
+    (field) => field.key && field.key !== "satiety" && product[field.key],
   );
   return (
     <div className="product-details">
@@ -34,15 +31,35 @@ export default function ProductDetails({ product }) {
           )}
           <div>
             <p className="product-detail-category">{product.category}</p>
+            <small className="product-detail-identifiers">
+              {product.productCode}
+            </small>
             <h2>{product.name}</h2>
-            <div className="product-detail-identifiers">
-              <SlTag>{product.productCode}</SlTag>
-            </div>
-            {hasUnitPricing(product.unitPricing) && <section aria-label="Birim fiyat"><h3>Birim fiyat</h3><UnitPricing value={product.unitPricing} /></section>}
             {product.description && (
               <p className="product-detail-description">
                 {product.description}
               </p>
+            )}
+            {hasSatiety(product.satiety) && (
+              <section aria-label="Doygunluk bilgisi">
+                <ProductSatiety value={product.satiety} />
+              </section>
+            )}
+            {hasUnitPricing(product.unitPricing) && (
+              <dl className="public-unit-pricing">
+                <dt>Birim fiyatı</dt>
+                <dd>
+                  {money(product.unitPricing.price)} /{" "}
+                  {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
+                </dd>
+                <dt>Birim gramaj</dt>
+                <dd>
+                  {new Intl.NumberFormat("tr-TR").format(
+                    product.unitPricing.weight,
+                  )}{" "}
+                  g / {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
+                </dd>
+              </dl>
             )}
           </div>
         </div>
@@ -60,9 +77,7 @@ export default function ProductDetails({ product }) {
               summary={field.label}
               open={field.key === "allergens"}
             >
-              {field.key === "satiety" ? (
-                <ProductSatiety value={product.satiety} />
-              ) : field.key === "nutrition" ? (
+              {field.key === "nutrition" ? (
                 <NutritionTable value={product.nutrition} />
               ) : (
                 <p>{product[field.key]}</p>

@@ -1,0 +1,5 @@
+
+.public-unit-pricing { display: grid; gap: .4rem; margin-top: 1.25rem; }
+.public-unit-pricing dt { font-size: .875rem; color: var(--sl-color-neutral-600); }
+.public-unit-pricing dd { margin: 0 0 .65rem; font-weight: 600; }
+small.product-detail-identifiers { display: block; font-size: .8rem; color: var(--sl-color-neutral-600); margin: .5rem 0; }

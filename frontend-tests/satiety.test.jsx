@@ -68,7 +68,7 @@ test("product pages hide empty satiety and render entered satiety without object
     [...document.querySelectorAll("sl-details")].some(
       (item) => item.summary === "Doygunluk bilgisi",
     ),
-  ).toBe(true);
+  ).toBe(false);
   expect(
     document.querySelector(".satiety-display").getAttribute("aria-label"),
   ).toBe("Ceviz yoğunluğu: 2 / 5 · Hafif");
