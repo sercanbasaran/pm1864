@@ -1,3 +1,8 @@
+import ProductQualitySummary from "./ProductQualitySummary.jsx";
+import {
+  productQualityChecks,
+  missingProductInformation,
+} from "./product-quality.js";
 import UnitPricing from "./UnitPricing.jsx";
 import { variantTypeName } from "../../variant-types.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
@@ -99,8 +104,7 @@ export default function ProductManagement({
       (p) =>
         categoryMatches(p, category, categories) &&
         (!status || p.status === status) &&
-        (!quality ||
-          (quality === "image" ? !p.customImage : !p.description?.trim())) &&
+        (!quality || missingProductInformation(p, quality)) &&
         `${p.name} ${p.productCode} ${p.variants.map((v) => v.size).join(" ")}`
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
@@ -224,6 +228,16 @@ export default function ProductManagement({
         description="Ürün bilgilerini, varyantları ve kategori ilişkilerini yönetin."
         action={addAction}
       />
+      <ProductQualitySummary
+        products={products}
+        selected={quality}
+        onSelect={(key) => {
+          setQuality(key);
+          setPage(1);
+          setSelected([]);
+          setFilters(true);
+        }}
+      />
       <Card className="catalog">
         <div className="catalog-heading">
           <div>
@@ -338,8 +352,12 @@ export default function ProductManagement({
               onChange={(e) => filter(setQuality, e.target.value)}
             >
               <option value="">Tüm ürünler</option>
-              <option value="image">Görseli olmayanlar</option>
-              <option value="description">Açıklaması olmayanlar</option>
+              <option value="any">Eksik bilgili tüm ürünler</option>
+              {productQualityChecks.map((check) => (
+                <option key={check.key} value={check.key}>
+                  {check.label}
+                </option>
+              ))}
             </Select>
             <Button className="text-btn" onClick={clear}>
               Filtreleri temizle

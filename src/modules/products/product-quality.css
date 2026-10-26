@@ -1,0 +1,22 @@
+.product-quality-summary {
+  display: block;
+  margin-block: var(--sl-spacing-large);
+}
+.product-quality-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sl-spacing-small);
+}
+.product-quality-actions sl-button {
+  max-width: 100%;
+  min-width: 0;
+}
+.product-quality-actions sl-button::part(label) {
+  white-space: normal;
+  text-align: start;
+}
+.product-quality-actions .control-content {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
