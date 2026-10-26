@@ -20,3 +20,38 @@
   gap: 0.5rem;
   align-items: center;
 }
+.product-quality-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.product-quality-actions sl-button {
+  width: 100%;
+}
+.product-quality-actions sl-button::part(base) {
+  height: 100%;
+  min-height: 44px;
+}
+.product-quality-actions sl-button::part(label) {
+  width: 100%;
+}
+.product-quality-actions .control-content {
+  width: 100%;
+  justify-content: space-between;
+}
+.product-quality-actions .control-content > span {
+  flex: 1;
+}
+.product-quality-actions sl-badge {
+  flex-shrink: 0;
+}
+@media (max-width: 1000px) {
+  .product-quality-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .product-quality-actions {
+    grid-template-columns: 1fr;
+  }
+}

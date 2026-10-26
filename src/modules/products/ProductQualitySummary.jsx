@@ -14,8 +14,11 @@ export default function ProductQualitySummary({
 }) {
   return (
     <SlDetails
-      open
-      summary="Tamamlanacak ürün kayıtları"
+      summary={
+        "Tamamlanacak ürün kayıtları · " +
+        products.filter((p) => missingProductInformation(p, "any")).length +
+        " ürün"
+      }
       className="product-quality-summary"
     >
       <div className="product-quality-actions">

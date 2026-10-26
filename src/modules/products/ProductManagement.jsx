@@ -1,3 +1,4 @@
+import "./product-management.css";
 import ProductQualitySummary from "./ProductQualitySummary.jsx";
 import {
   productQualityChecks,
@@ -252,22 +253,12 @@ export default function ProductManagement({
             Dışa aktar
           </Button>
         </div>
-        <div className="tabs">
-          {[{ id: "", name: "Tüm ürünler" }, ...roots(categories)].map((c) => (
-            <Button
-              key={c.id}
-              className={category === c.id ? "selected" : ""}
-              onClick={() => filter(setCategory, c.id)}
-            >
-              {c.name}
-            </Button>
-          ))}
-        </div>
         <div className="toolbar">
           <div className="search">
             <Input
               prefix={<MagnifyingGlass size={17} />}
               ref={search}
+              label="Ürün ara"
               aria-label="Ürün ara"
               placeholder="Ürün adı veya ürün kodu ara"
               value={query}
@@ -295,12 +286,19 @@ export default function ProductManagement({
               <option value="price-asc">Birim fiyat: düşükten yükseğe</option>
               <option value="price-desc">Birim fiyat: yüksekten düşüğe</option>
             </Select>
-            <Button className="btn" onClick={() => setFilters(!filters)}>
+            <Button
+              type="button"
+              className="btn"
+              aria-expanded={filters}
+              aria-controls="product-filter-panel"
+              onClick={() => setFilters(!filters)}
+            >
               Filtrele
             </Button>
             <Button
               className="icon-btn"
               aria-label="Liste görünümü"
+              aria-pressed={view === "list"}
               onClick={() => setView("list")}
             >
               <List size={18} />
@@ -308,6 +306,7 @@ export default function ProductManagement({
             <Button
               className="icon-btn"
               aria-label="Kart görünümü"
+              aria-pressed={view === "grid"}
               onClick={() => setView("grid")}
             >
               <GridFour size={18} />
@@ -315,7 +314,7 @@ export default function ProductManagement({
           </div>
         </div>
         {filters && (
-          <div className="filter-panel">
+          <div className="filter-panel" id="product-filter-panel">
             <Select
               aria-label="Katalog ana kategorisi"
               value={parent}
@@ -369,7 +368,7 @@ export default function ProductManagement({
             <strong>
               {selected.length
                 ? selected.length + " ürün seçildi"
-                : visible.length + " ürün listeleniyor"}
+                : "Toplu işlem için ürün seçebilirsiniz"}
             </strong>
             <Button
               disabled={busy || !visible.length}
