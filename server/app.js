@@ -300,6 +300,16 @@ export async function createApp({ env = process.env, database } = {}) {
           decodeURIComponent(match[1]),
           user.email,
         );
+      } else if (
+        (match = route.match(/^\/api\/categories\/([^/]+)\/promote$/)) &&
+        method === "POST"
+      ) {
+        requirePermission("categories.write");
+        catalog = await service.promoteCategory(
+          body,
+          decodeURIComponent(match[1]),
+          user.email,
+        );
       } else if (route === "/api/categories" && method === "POST") {
         requirePermission("categories.write");
         catalog = await service.saveCategory(body, null, user.email);

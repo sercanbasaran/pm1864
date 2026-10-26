@@ -224,6 +224,13 @@ function Workspace({ user, onLogout, onUserUpdated }) {
       return false;
     }
   }
+  async function promoteCategory(id, preview) {
+    await mutate("/categories/" + encodeURIComponent(id) + "/promote", preview);
+    notify(
+      "Kategori ana kategoriye dönüştürüldü. Mevcut ürün kodları korundu.",
+    );
+    return true;
+  }
   async function savePrices(id, prices) {
     try {
       await mutate("/prices/products/" + id, { prices }, "PATCH");
@@ -246,6 +253,8 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         categories={categories}
         products={products}
         onSave={saveCategory}
+        onPromote={promoteCategory}
+        revision={catalog.revision}
         onRefresh={catalog.refresh}
         onProducts={(category) => browse({ category })}
         onNewProduct={create}

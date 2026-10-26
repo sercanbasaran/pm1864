@@ -1,3 +1,4 @@
+import CategoryPromotion from "./CategoryPromotion.jsx";
 import EditableField from "../../components/ui/EditableField.jsx";
 import BackToListButton from "../../components/ui/BackToListButton.jsx";
 import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
@@ -56,6 +57,8 @@ export default function CategoryManager({
   categories,
   products,
   onSave,
+  onPromote,
+  revision,
   onProducts,
   onNewProduct,
   readOnly = false,
@@ -72,6 +75,7 @@ export default function CategoryManager({
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
   const [editingField, setEditingField] = useState(null);
+  const [promotionOpen, setPromotionOpen] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
   const main = roots(categories);
   const suggestedSlug = (name, parentId) =>
@@ -111,6 +115,7 @@ export default function CategoryManager({
     }
     setError("");
     setEditingField(null);
+    setPromotionOpen(false);
     setDraft(
       category
         ? {
@@ -576,6 +581,17 @@ export default function CategoryManager({
             <ActionBar>{saveAction}</ActionBar>
             <fieldset className="editor-fields" disabled={saving}>
               <div className="editor-content">
+                {!draft.isNew && draft.parentId && onPromote && (
+                  <div className="category-promotion-action">
+                    <Button
+                      type="button"
+                      disabled={saving || !!editingField}
+                      onClick={() => setPromotionOpen(true)}
+                    >
+                      Ana kategoriye dönüştür
+                    </Button>
+                  </div>
+                )}
                 <EditableField
                   {...fieldProps("active", "Kategori durumu", true)}
                   creating={false}
@@ -777,6 +793,23 @@ export default function CategoryManager({
             </div>
           </form>
         </EditorPage>
+      )}
+      {promotionOpen && draft && (
+        <CategoryPromotion
+          category={categories.find((c) => c.id === draft.id)}
+          categories={categories}
+          products={products}
+          revision={revision}
+          onClose={() => setPromotionOpen(false)}
+          onPromote={async (id, preview) => {
+            const result = await onPromote(id, preview);
+            if (result) {
+              setPromotionOpen(false);
+              close();
+            }
+            return result;
+          }}
+        />
       )}
       {route.includes("/") && !draft && (
         <EditorPage title="Kategori bulunamadı" onClose={onClose}>

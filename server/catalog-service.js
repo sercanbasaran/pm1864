@@ -1,3 +1,4 @@
+import { categoryPromotion } from "../src/modules/categories/category-promotion.js";
 import {
   productSlug,
   PRODUCT_IDENTITY_VERSION,
@@ -225,6 +226,39 @@ export function createCatalogService(db) {
         doc,
         old ? "Kategori güncellendi" : "Kategori oluşturuldu",
         `${c.name} · ${c.code}`,
+        actor,
+      );
+    });
+  }
+  async function promoteCategory(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      if (body.previewRevision !== body.expectedRevision)
+        throw new ApiError(
+          409,
+          "Dönüştürme önizlemesi güncel değil. Yeniden açıp kontrol edin.",
+          "REVISION_CONFLICT",
+        );
+      const old = doc.categories.find((c) => c.id === id);
+      if (!old) throw new ApiError(404, "Kategori bulunamadı.");
+      let plan;
+      try {
+        plan = categoryPromotion(old, doc.categories, doc.products);
+      } catch (e) {
+        throw new ApiError(422, e.message);
+      }
+      if (body.code !== plan.category.code)
+        throw new ApiError(
+          409,
+          "Ana kategori kodu değişti. Dönüştürme önizlemesini yeniden açın.",
+          "REVISION_CONFLICT",
+        );
+      doc.categories = doc.categories.map((c) =>
+        c.id === id ? plan.category : c,
+      );
+      audit(
+        doc,
+        "Ana kategoriye dönüştürüldü",
+        `${old.name} · ${plan.parent.name} / ${old.code} → ${plan.category.code} · ${plan.productCount} ürün · mevcut ürün kodları korundu`,
         actor,
       );
     });
@@ -786,6 +820,7 @@ export function createCatalogService(db) {
     addVariantType,
     removeVariantType,
     saveCategory,
+    promoteCategory,
     saveProduct,
     bulk,
     settings,

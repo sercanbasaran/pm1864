@@ -17,6 +17,7 @@ API kökü `/api`. Yanıtlar JSON ve `Cache-Control: no-store` kullanır. Yazma 
 | GET | `/catalog` | `catalog.read`; `{catalog}` |
 | POST | `/categories` | `categories.write`; `{expectedRevision,category}` |
 | PUT | `/categories/:id` | `categories.write`; `{expectedRevision,category}` |
+| POST | `/categories/:id/promote` | `categories.write`; `{expectedRevision,previewRevision,code}`; alt kategoriyi yeni kodla ana kategoriye dönüştürür |
 | POST | `/variant-types` | `products.write`; `{expectedRevision,name}`; benzersiz 1–50 karakter ad |
 | DELETE | `/variant-types/:id` | `products.write`; `{expectedRevision}`; kullanımda ise `409 VARIANT_TYPE_IN_USE` |
 | POST | `/products` | `products.write`; `{expectedRevision,product}` |
@@ -78,7 +79,7 @@ Profil güncellemesi oturumdaki kullanıcının adını değiştirir. İstemcide
 
 ## Ana kategori / Alt kategori / Ürün / Varyant
 
-Kategori `parentId: ''` ise ana kategoridir; alt kategori `parentId` ile bir ana kategoriye bağlanır. İki seviyeden derin yapı ve döngü reddedilir. İsimler aynı ebeveyn içinde benzersizdir; kod ve slug katalog genelinde benzersiz kalır. Ürün bağlı alt kategori doğrudan ana kategoriye dönüştürülemez.
+Kategori `parentId: ''` ise ana kategoridir; alt kategori `parentId` ile bir ana kategoriye bağlanır. İki seviyeden derin yapı ve döngü reddedilir. İsimler aynı ebeveyn içinde benzersizdir; kod ve slug katalog genelinde benzersiz kalır. Normal kategori güncellemesiyle ana/alt türü değiştirilemez. Dönüşüm ayrı `POST /categories/:id/promote` işlemiyle yapılır.
 
 Ürün `categoryId` alanı ile alt kategoriye atanır. `category` geriye uyumluluk için alt kategori adını taşır; ilişkiler ve filtreler ID üzerinden çözülür. Doğrudan bir ana kategori ID’si veya geçersiz ID ile ürün oluşturmak 422 döndürür. Yeni atamalarda hem ana hem alt kategori aktif olmalıdır. Eski kategori adı payload’ları otomatik Genel alt kategorisi ile desteklenir.
 
@@ -127,3 +128,10 @@ Kullanıcı yanıtındaki `avatarUrl`, fotoğraf yoksa boş metindir. Görsel UR
 SKU şeması: [SKU_PATTERN.md](SKU_PATTERN.md). Ürün numarası alt kategori içinde 001–999, varyant numarası ürün içinde 01–99 aralığındadır; kapasite aşımı HTTP 422 `SKU_RANGE_EXHAUSTED` döndürür. Eski katalog otomatik, atomik ve tekrarlanabilir bir geçişle güncellenir. `skuMigrationBackup` ve sayaçlar public API’ye dahil edilmez.
 
 Ana kategori kodu dört, alt kategori kodu üç rakam olmalıdır. Yeni kategori isteğinde ana/alt türüne uygun genişlik zorunludur. SKU sürüm 2 geçişi mevcut ana kategori kodlarını ve SKU ilk bölümünü sıfırla doldurur; ürün/varyant numaraları, QR adresleri ve sayaç rezervasyonları korunur.
+
+
+### Alt kategoriyi ana kategoriye dönüştürme
+
+`code`, önizlemede gösterilen `nextCategoryCode(categories)` değeri; `previewRevision`, önizlemenin oluşturulduğu katalog revision değeridir. Sunucu aynı transaction içinde güncel revision, kod, kategori türü ve isim çakışmasını doğrular. Eski önizleme veya kod uyuşmazlığı 409; geçersiz dönüşüm / boş kod kalmaması 422; kayıt bulunamaması 404 döndürür.
+
+İşlem kategori ID’si, slug, görseller, erişim tercihi ve ürün bağlantılarını korur. Yeni ana kategoriye ilk boş dört haneli kod atanır ve `parentId` boşaltılır. Üst kategoriden miras alınan pasiflik ve satış kanalı kısıtları yeni ana kategoriye uygulanır. Mevcut ürün/varyant kodları, URL’ler, QR adresleri ve sıra sayaçları değiştirilmez; sonraki yeni ürünler yeni ana kategori koduyla numaralanır. İşlem geçmişinde eski üst kategori/kod ve yeni kod kaydedilir.
