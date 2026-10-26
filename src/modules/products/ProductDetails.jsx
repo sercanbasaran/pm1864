@@ -64,19 +64,11 @@ export default function ProductDetails({ product }) {
           </div>
         </div>
       </Card>
-      <Card className="product-detail-card">
-        <h3>Varyantlar ve fiyatlar</h3>
-        <ProductVariantsTable product={product} />
-      </Card>
       {information.length > 0 && (
         <Card className="product-detail-card product-detail-information">
           <h3>Ürün bilgileri</h3>
           {information.map((field) => (
-            <SlDetails
-              key={field.key}
-              summary={field.label}
-              open={field.key === "allergens"}
-            >
+            <SlDetails key={field.key} summary={field.label}>
               {field.key === "nutrition" ? (
                 <NutritionTable value={product.nutrition} />
               ) : (
@@ -86,6 +78,14 @@ export default function ProductDetails({ product }) {
           ))}
         </Card>
       )}
+      <Card className="product-detail-card">
+        <h3>Ürün varyantları</h3>
+        {product.variants?.length ? (
+          <ProductVariantsTable product={product} />
+        ) : (
+          <p>Henüz eklenmiş bir varyant bulunmuyor.</p>
+        )}
+      </Card>
     </div>
   );
 }

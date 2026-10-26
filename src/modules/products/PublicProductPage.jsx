@@ -1,3 +1,4 @@
+import BrandLogo from "../../components/ui/BrandLogo.jsx";
 import React, { useEffect, useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import BackendGate from "../../app/BackendGate.jsx";
@@ -71,10 +72,7 @@ export default function PublicProductPage() {
   return (
     <div className="public-product-page">
       <header className="public-product-header">
-        <strong>
-          HAFIZ MUSTAFA <span>1864</span>
-        </strong>
-        <span>Ürün kartı</span>
+        <BrandLogo className="public-product-logo" />
       </header>
       <main className="public-product-content">
         <h1 className="visually-hidden">{product?.name || "Ürün kartı"}</h1>
