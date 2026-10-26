@@ -36,29 +36,39 @@ export default function ProductDetails({ product }) {
             </small>
             <h2>{product.name}</h2>
             {product.description && (
-              <p className="product-detail-description">
-                {product.description}
-              </p>
+              <>
+                <p className="product-detail-description">
+                  {product.description}
+                </p>
+                <hr className="product-summary-divider" />
+              </>
             )}
             {hasSatiety(product.satiety) && (
-              <section aria-label="Doygunluk bilgisi">
-                <ProductSatiety value={product.satiety} />
-              </section>
+              <>
+                <section aria-label="Doygunluk bilgisi">
+                  <ProductSatiety value={product.satiety} />
+                </section>
+                <hr className="product-summary-divider" />
+              </>
             )}
             {hasUnitPricing(product.unitPricing) && (
               <dl className="public-unit-pricing">
-                <dt>Birim fiyatı</dt>
-                <dd>
-                  {money(product.unitPricing.price)} /{" "}
-                  {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
-                </dd>
-                <dt>Birim gramaj</dt>
-                <dd>
-                  {new Intl.NumberFormat("tr-TR").format(
-                    product.unitPricing.weight,
-                  )}{" "}
-                  g / {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
-                </dd>
+                <div>
+                  <dt>Birim fiyatı</dt>
+                  <dd>
+                    {money(product.unitPricing.price)} /{" "}
+                    {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Birim gramaj</dt>
+                  <dd>
+                    {new Intl.NumberFormat("tr-TR").format(
+                      product.unitPricing.weight,
+                    )}{" "}
+                    g / {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
+                  </dd>
+                </div>
               </dl>
             )}
           </div>
