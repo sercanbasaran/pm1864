@@ -1,5 +1,7 @@
+import { DownloadSimple } from "@phosphor-icons/react";
+import { setupProductPrint } from "./product-print.js";
 import BrandLogo from "../../components/ui/BrandLogo.jsx";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import BackendGate from "../../app/BackendGate.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -11,6 +13,26 @@ export default function PublicProductPage() {
     [error, setError] = useState(null),
     [attempt, setAttempt] = useState(0),
     [loading, setLoading] = useState(true);
+  const pageRef = useRef(null),
+    printer = useRef(null);
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    if (!product || !pageRef.current) return;
+    printer.current = setupProductPrint(pageRef.current);
+    return () => {
+      printer.current?.dispose();
+      printer.current = null;
+    };
+  }, [product]);
+  async function downloadPdf() {
+    if (printing || !printer.current) return;
+    setPrinting(true);
+    try {
+      await printer.current.print();
+    } finally {
+      setPrinting(false);
+    }
+  }
   useEffect(() => {
     let active = true;
     const controller = new AbortController(),
@@ -70,9 +92,20 @@ export default function PublicProductPage() {
   if (error?.status === 401)
     return <BackendGate>{() => <PublicProductPage />}</BackendGate>;
   return (
-    <div className="public-product-page">
+    <div className="public-product-page" ref={pageRef}>
       <header className="public-product-header">
         <BrandLogo className="public-product-logo" />
+        {product && (
+          <div className="product-pdf-action">
+            <Button type="button" disabled={printing} onClick={downloadPdf}>
+              <DownloadSimple size={18} />
+              PDF indir
+            </Button>
+            <small>
+              Açılan pencerede “PDF olarak kaydet” seçeneğini kullanın.
+            </small>
+          </div>
+        )}
       </header>
       <main className="public-product-content">
         <h1 className="visually-hidden">{product?.name || "Ürün kartı"}</h1>
