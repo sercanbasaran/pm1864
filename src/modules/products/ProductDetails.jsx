@@ -7,9 +7,16 @@ import MediaGallery from "../categories/CategoryGallery.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
 import { money } from "../../catalog-tools.js";
 import NutritionTable from "./NutritionTable.jsx";
+import SatietyIndicator from "./SatietyIndicator.jsx";
+import { hasSatiety } from "../../satiety.js";
 import { productDetailSteps } from "../../product-information.js";
 
 export default function ProductDetails({ product }) {
+  const information = productDetailSteps.filter((field) =>
+    field.key === "satiety"
+      ? hasSatiety(product.satiety)
+      : field.key && product[field.key],
+  );
   return (
     <div className="product-details">
       <Card className="product-detail-card">
@@ -41,26 +48,24 @@ export default function ProductDetails({ product }) {
         <h3>Varyantlar ve fiyatlar</h3>
         <ProductVariantsTable product={product} />
       </Card>
-      {productDetailSteps.some(
-        (field) => field.key !== "variants" && product[field.key],
-      ) && (
+      {information.length > 0 && (
         <Card className="product-detail-card product-detail-information">
           <h3>Ürün bilgileri</h3>
-          {productDetailSteps
-            .filter((field) => field.key !== "variants" && product[field.key])
-            .map((field) => (
-              <SlDetails
-                key={field.key}
-                summary={field.label}
-                open={field.key === "allergens"}
-              >
-                {field.key === "nutrition" ? (
-                  <NutritionTable value={product.nutrition} />
-                ) : (
-                  <p>{product[field.key]}</p>
-                )}
-              </SlDetails>
-            ))}
+          {information.map((field) => (
+            <SlDetails
+              key={field.key}
+              summary={field.label}
+              open={field.key === "allergens"}
+            >
+              {field.key === "satiety" ? (
+                <SatietyIndicator value={product.satiety} />
+              ) : field.key === "nutrition" ? (
+                <NutritionTable value={product.nutrition} />
+              ) : (
+                <p>{product[field.key]}</p>
+              )}
+            </SlDetails>
+          ))}
         </Card>
       )}
     </div>

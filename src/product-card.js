@@ -2,6 +2,7 @@ import { displaySku } from "./sku.js";
 import { defaultVariantTypes, variantTypeName } from "./variant-types.js";
 import { categoryOf, rootOf, categoryPath } from "./hierarchy.js";
 import { productInformationFields } from "./product-information.js";
+import { hasSatiety } from "./satiety.js";
 
 export const productCardCode = (product) =>
   product.publicCardCode ||
@@ -35,6 +36,9 @@ export function productCardData(
     name: product.name,
     category: categoryPath(categoryOf(product, categories), categories),
     description: product.description || "",
+    satiety: hasSatiety(product.satiety)
+      ? { type: product.satiety.type, level: product.satiety.level }
+      : null,
     customImage: image,
     ...Object.fromEntries(
       productInformationFields.map((field) => [

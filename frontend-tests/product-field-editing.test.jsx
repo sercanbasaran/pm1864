@@ -211,7 +211,7 @@ test("new products retain the complete creation form with required fields and pr
     ),
   ).toBe(true);
 });
-test("seven detail steps isolate ingredients and edit nutrition in a table", async () => {
+test("detail steps isolate ingredients and edit nutrition in a table", async () => {
   const { fetch } = await show();
   expect(
     [
@@ -223,6 +223,7 @@ test("seven detail steps isolate ingredients and edit nutrition in a table", asy
     "Genel bilgiler",
     "İçindekiler",
     "Alerjen uyarısı",
+    "Doygunluk bilgisi",
     "Besin Değerleri",
     "Servis Önerisi",
     "Saklama Koşulları",
@@ -376,4 +377,46 @@ test("a duplicated product opens as editable new content and posts to creation e
   expect(sent.sku).toBeUndefined();
   expect(sent.variants[0].id).toBeUndefined();
   expect(sent.publicCardEnabled).toBe(false);
+});
+
+test("satiety can be selected, cancelled, saved and cleared without changing other product fields", async () => {
+  const { fetch } = await show();
+  await action("Doygunluk bilgisi");
+  expect(document.body.textContent).toContain("Henüz girilmedi.");
+  await clickLabel("Doygunluk bilgisi ekle");
+  fireEvent.click(document.querySelector('input[value="3"]'));
+  await settle();
+  expect(document.querySelectorAll(".satiety-icon.is-filled")).toHaveLength(3);
+  await action("Vazgeç");
+  expect(
+    fetch.mock.calls.filter(([url]) => url === "/api/products/1"),
+  ).toHaveLength(0);
+  await clickLabel("Doygunluk bilgisi ekle");
+  fireEvent.click(document.querySelector('input[value="4"]'));
+  await settle();
+  await action("Kaydet");
+  let saved = JSON.parse(
+    fetch.mock.calls.filter(([url]) => url === "/api/products/1").at(-1)[1]
+      .body,
+  ).product;
+  expect(saved.satiety).toEqual({ type: "general", level: 4 });
+  expect(saved.variants).toEqual(product.variants);
+  expect(saved.description).toBe(product.description);
+  await clickLabel("Doygunluk bilgisi düzenle");
+  await action("Seçimi temizle");
+  await action("Kaydet");
+  saved = JSON.parse(
+    fetch.mock.calls.filter(([url]) => url === "/api/products/1").at(-1)[1]
+      .body,
+  ).product;
+  expect(saved.satiety).toBeNull();
+});
+
+test("read-only product information does not offer satiety editing", async () => {
+  await show(true);
+  await action("Doygunluk bilgisi");
+  expect(
+    document.querySelector('[aria-label="Doygunluk bilgisi ekle"]'),
+  ).toBeNull();
+  expect(document.querySelector('input[type="radio"]')).toBeNull();
 });

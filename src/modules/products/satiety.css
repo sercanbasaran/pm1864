@@ -1,0 +1,97 @@
+.satiety-information {
+  display: grid;
+  gap: 1rem;
+  max-width: 30rem;
+  min-width: 0;
+}
+.satiety-picker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.satiety-picker legend,
+.satiety-metric {
+  font-weight: 600;
+  margin-bottom: 0.7rem;
+}
+.satiety-options,
+.satiety-icons {
+  display: flex;
+  gap: 0.5rem;
+}
+.satiety-option {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  min-width: 0;
+}
+.satiety-option input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  inset: 0;
+  cursor: pointer;
+}
+.satiety-option:has(input:focus-visible) {
+  outline: 2px solid var(--sl-color-primary-600);
+  outline-offset: 2px;
+}
+.satiety-option:has(input:checked) {
+  background: var(--sl-color-neutral-100);
+  box-shadow: inset 0 0 0 1px var(--sl-color-neutral-400);
+}
+.satiety-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  filter: grayscale(1);
+  opacity: 0.3;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
+.satiety-icon.is-filled {
+  filter: grayscale(0);
+  opacity: 1;
+}
+.satiety-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.satiety-caption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.satiety-display {
+  display: grid;
+  gap: 0.25rem;
+}
+.satiety-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--sl-color-neutral-600);
+}
+@media (max-width: 480px) {
+  .satiety-options {
+    gap: 0.15rem;
+  }
+  .satiety-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .satiety-icon {
+    transition: none;
+  }
+}

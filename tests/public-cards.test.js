@@ -20,7 +20,7 @@ test('only explicitly published eligible products are public, with an allowlist 
   assert.equal((await f.call(f.path,'GET',undefined,true)).status,404);
   const published=await f.call('/products/'+f.product.id+'/card','PATCH',{expectedRevision:f.catalog.revision,enabled:true});assert.equal(published.status,200);
   const response=await f.raw(f.path,'GET',undefined,true);assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
-  const {product}=await response.json();assert.deepEqual(Object.keys(product).sort(),['productCode','sku','name','category','description','customImage','ingredients','servingSuggestion','nutrition','storageConditions','allergens','longTermStorage','variants'].sort());
+  const {product}=await response.json();assert.deepEqual(Object.keys(product).sort(),['productCode','sku','name','category','description','customImage','ingredients','servingSuggestion','nutrition','storageConditions','allergens','longTermStorage','satiety','variants'].sort());
   assert.equal(product.name,'Fıstıklı Baklava');assert.equal(product.variants.length,1);assert.equal(product.variants[0].price,100.25);assert.equal(product.variants[0].packaging,'Metal kutu');assert.equal(product.nutrition,f.product.nutrition);
   assert.deepEqual(Object.keys(product.variants[0]).sort(),['sku','size','typeName','weight','unit','packaging','slices','price'].sort());
   assert.equal(JSON.stringify(product).includes('cards@example.test'),false);assert.equal((await f.call('/catalog','GET',undefined,true)).status,401);assert.equal((await f.call('/media','GET',undefined,true)).status,401);

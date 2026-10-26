@@ -19,6 +19,8 @@ import { money } from "../../catalog-tools.js";
 import { effectiveSales, salesChannels } from "../../sales-availability.js";
 import { productCardPath } from "../../product-card.js";
 import NutritionTable from "./NutritionTable.jsx";
+import SatietyIndicator from "./SatietyIndicator.jsx";
+import { hasSatiety, suggestedSatietyType } from "../../satiety.js";
 import {
   productInformationFields,
   productDetailSteps,
@@ -406,6 +408,23 @@ export default function ProductEditor({
                   />
                 </section>
               </>
+            ) : active === "Doygunluk bilgisi" ? (
+              field(
+                "satiety",
+                "Doygunluk bilgisi",
+                hasSatiety(draft.satiety) ? (
+                  <SatietyIndicator value={draft.satiety} />
+                ) : (
+                  "Henüz girilmedi."
+                ),
+                <SatietyIndicator
+                  value={draft.satiety}
+                  editing
+                  suggestedType={suggestedSatietyType(draft, category?.name)}
+                  onChange={(satiety) => setDraft({ ...draft, satiety })}
+                />,
+                !hasSatiety(draft.satiety),
+              )
             ) : (
               productInformationFields
                 .filter(

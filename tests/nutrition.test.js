@@ -40,13 +40,14 @@ test("legacy nutrition notes survive table editing and negative quantities are r
   assert.ok(validateProductInformation({ ingredients: "x".repeat(4001) }));
   assert.ok(validateProductInformation({ servingSuggestion: {} }));
 });
-test("product details expose precisely the seven requested steps", () => {
+test("product details expose the information steps", () => {
   assert.deepEqual(
     productDetailSteps.map((s) => s.label),
     [
       "Genel bilgiler",
       "İçindekiler",
       "Alerjen uyarısı",
+      "Doygunluk bilgisi",
       "Besin Değerleri",
       "Servis Önerisi",
       "Saklama Koşulları",

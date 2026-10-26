@@ -350,6 +350,10 @@ export function createCatalogService(db) {
           ),
           description: text(input.description, 4000),
           ...information,
+          satiety:
+            input.satiety === undefined
+              ? (old?.satiety ?? null)
+              : input.satiety,
           salesAvailability: input.salesAvailability,
           status: input.status === "Aktif" ? "Aktif" : "Taslak",
           customImage: text(

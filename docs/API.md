@@ -85,6 +85,10 @@ Kategori `parentId: ''` ise ana kategoridir; alt kategori `parentId` ile bir ana
 
 Varyantlar mevcut `POST /products` ve `PUT /products/:id` üzerinden atomik kaydedilir. `variants` dizisindeki mevcut varyantlar `id` değerini korumalıdır; yeni varyantta `id` / `sku` gönderilmez. Sunucu SKU ve ID üretir. `active` varsayılanı `true`dur. Başka ürüne ait veya aynı payload’da tekrar kullanılan varyant ID’si reddedilir. Ad değişikliği / sıralama mevcut SKU’yu korur; diziden çıkarılan varyant silinir. En az 1, en fazla 50 varyant gereklidir. Varyant `sku` ve ürün `nextVariantNumber` alanları sunucu yönetimindedir.
 
+## Doygunluk bilgisi
+
+Ürünlerde isteğe bağlı `satiety` alanı doygunluk bilgisini tutar: `{ "type": "pistachio", "level": 3 }`. `type`: `pistachio`, `walnut` veya `general`; `level`: 1–5 arası tam sayı. `null` değeri seçimi temizler; alan gönderilmezse mevcut seçim korunur. Seviyesi `null` olan bilgi tamamlanmamış sayılır ve ürün kartında gösterilmez. Gösterge bir içerik yüzdesi değil karşılaştırmalı yoğunluk ölçeğidir. Mevcut ürünlere otomatik seviye atanmaz. Ürün kartı API’leri yalnızca tamamlanmış `{type, level}` bilgisini, diğer durumlarda `null` döndürür.
+
 ## Medya API’si
 
 | Metot | Yol | İzin / Gövde |
