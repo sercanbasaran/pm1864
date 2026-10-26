@@ -149,7 +149,10 @@ export function createMediaService(db) {
           (p) =>
             p.mediaId === id ||
             p.customImage === mediaUrl(id) ||
-            (p.images || []).some((image) => image.id === id),
+            (p.images || []).some((image) => image.id === id) ||
+            p.variants.some((v) =>
+              (v.images || []).some((image) => image.id === id),
+            ),
         )
       )
         throw new ApiError(

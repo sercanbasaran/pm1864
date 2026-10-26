@@ -8,6 +8,10 @@ import { Plus, X, ArrowUp, ArrowDown, Copy } from "@phosphor-icons/react";
 export function newVariant() {
   return {
     size: "",
+    quantity: 1,
+    priceOverride: null,
+    consumables: [],
+    images: [],
     typeId: "",
     weight: 500,
     unit: "Adet",

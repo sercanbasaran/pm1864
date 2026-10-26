@@ -35,6 +35,9 @@ const VariantManagement = lazy(
 const SatietyProductManagement = lazy(
   () => import("../modules/settings/SatietyProductManagement.jsx"),
 );
+const ConsumableManagement = lazy(
+  () => import("../modules/settings/ConsumableManagement.jsx"),
+);
 const CodeManagement = lazy(
   () => import("../modules/codes/CodeManagement.jsx"),
 );
@@ -208,7 +211,10 @@ function Workspace({ user, onLogout, onUserUpdated }) {
           page === "variants" && params.get("append") === "1"
             ? {
                 ...structuredClone(product),
-                variants: [...structuredClone(product.variants), newVariant()],
+                variants: [
+                  ...structuredClone(product.variants),
+                  { ...newVariant(), sourceProductId: product.id },
+                ],
               }
             : product,
       };
@@ -287,6 +293,9 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     ),
     "satiety-products": (
       <SatietyProductManagement canWrite={can(user, "settings.write")} />
+    ),
+    consumables: (
+      <ConsumableManagement canWrite={can(user, "settings.write")} />
     ),
     codes: <CodeManagement user={user} />,
     users: (

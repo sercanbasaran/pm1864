@@ -3,6 +3,8 @@ import { defaultVariantTypes } from "./variant-types.js";
 import { validateSalesAvailability } from "./sales-availability.js";
 import { validateProductInformation } from "./product-information.js";
 export const variantUnits = [
+  "Dilim",
+  "Kap",
   "Adet",
   "Kilogram",
   "Gram",

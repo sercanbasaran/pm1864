@@ -86,7 +86,7 @@ export default function ProductVariantsTable({
                   "Fiyat (₺)",
                   "Dilim adedi",
                   "Birim",
-                  "Ambalaj",
+                  "Ambalaj / servis",
                   "Durum",
                   ...(editing ? ["Satış kanalları", "İşlemler"] : []),
                 ].map((label) => (
@@ -158,7 +158,9 @@ export default function ProductVariantsTable({
                   <TableCell>
                     {editing
                       ? control(v, i, "packaging", "Ambalaj")
-                      : v.packaging || "—"}
+                      : v.packaging === "Tabakta servis"
+                        ? "Servis: Tabakta servis"
+                        : v.packaging || "—"}
                   </TableCell>
                   <TableCell>
                     {editing ? (

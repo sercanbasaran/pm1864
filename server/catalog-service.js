@@ -1,4 +1,11 @@
-import { validateUnitPricing, normalizeUnitPricing } from "../src/unit-pricing.js";
+import {
+  calculateVariant,
+  defaultConsumables,
+} from "../src/variant-composition.js";
+import {
+  validateUnitPricing,
+  normalizeUnitPricing,
+} from "../src/unit-pricing.js";
 import {
   defaultSatietyProducts,
   satietyEntries,
@@ -72,6 +79,7 @@ export const seedCatalog = () => ({
   })),
   variantTypes: defaultVariantTypes(),
   satietyProducts: defaultSatietyProducts(),
+  consumables: defaultConsumables(),
   products: [],
   logs: [],
   settings: { skuPrefix: "HM" },
@@ -86,6 +94,7 @@ export function publicCatalog(doc, revision) {
   return {
     revision,
     satietyProducts: doc.satietyProducts ?? defaultSatietyProducts(),
+    consumables: doc.consumables ?? defaultConsumables(),
     categories: doc.categories.map((c) => ({
       ...c,
       salesAvailability: salesAvailability(
@@ -315,6 +324,41 @@ export function createCatalogService(db) {
       );
     });
   }
+  async function saveConsumable(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      doc.consumables ??= defaultConsumables();
+      const old = id ? doc.consumables.find((c) => c.id === id) : null;
+      if (id && !old) throw new ApiError(404, "Sarf malzeme bulunamadı.");
+      const name =
+        typeof body.name === "string"
+          ? body.name.trim().replace(/\s+/g, " ")
+          : "";
+      if (!name || name.length > 80)
+        throw new ApiError(422, "Sarf malzeme adı 1–80 karakter olmalıdır.");
+      if (
+        doc.consumables.some(
+          (c) => c.id !== id && normalizeName(c.name) === normalizeName(name),
+        )
+      )
+        throw new ApiError(422, "Bu sarf malzeme zaten var.");
+      if (body.active !== undefined && typeof body.active !== "boolean")
+        throw new ApiError(422, "Geçerli durum seçin.");
+      const item = {
+        id: old?.id || randomUUID(),
+        name,
+        active: body.active ?? true,
+      };
+      if (old)
+        doc.consumables = doc.consumables.map((c) => (c.id === id ? item : c));
+      else doc.consumables.push(item);
+      audit(
+        doc,
+        old ? "Sarf malzeme güncellendi" : "Sarf malzeme eklendi",
+        name,
+        actor,
+      );
+    });
+  }
   async function addVariantType(body, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
       const name =
@@ -403,7 +447,11 @@ export function createCatalogService(db) {
             100,
           ),
           description: text(input.description, 4000),
-          unitPricing: normalizeUnitPricing(input.unitPricing === undefined ? old?.unitPricing : input.unitPricing),
+          unitPricing: normalizeUnitPricing(
+            input.unitPricing === undefined
+              ? old?.unitPricing
+              : input.unitPricing,
+          ),
           ...information,
           satiety:
             input.satiety === undefined
@@ -421,6 +469,15 @@ export function createCatalogService(db) {
           variants: Array.isArray(input.variants)
             ? input.variants.slice(0, 50).map((v) => ({
                 id: v.id,
+                ...(v.sourceProductId !== undefined
+                  ? {
+                      sourceProductId: v.sourceProductId,
+                      quantity: v.quantity,
+                      priceOverride: v.priceOverride ?? null,
+                      consumables: v.consumables ?? [],
+                      images: v.images ?? [],
+                    }
+                  : {}),
                 size: text(v.size, 30),
                 typeId: typeof v.typeId === "string" ? v.typeId : "",
                 price: v.price,
@@ -440,6 +497,36 @@ export function createCatalogService(db) {
             : [],
           isNew: !old,
         };
+      for (let i = 0; i < p.variants.length; i++) {
+        const v = p.variants[i];
+        if (v.sourceProductId !== undefined) {
+          try {
+            p.variants[i] = calculateVariant(
+              v,
+              [...doc.products.filter((item) => item.id !== p.id), p],
+              doc.consumables ?? defaultConsumables(),
+            );
+          } catch (e) {
+            throw new ApiError(422, e.message);
+          }
+          if (!Array.isArray(v.images) || v.images.length > 30)
+            throw new ApiError(422, "En fazla 30 varyant görseli eklenebilir.");
+          for (const image of v.images)
+            if (
+              typeof image?.id !== "string" ||
+              !(
+                await tx.query("SELECT id FROM app_media WHERE id=?", [
+                  image.id,
+                ])
+              ).rows[0]
+            )
+              throw new ApiError(422, "Varyant görseli bulunamadı.");
+          p.variants[i].images = v.images.map((image) => ({
+            id: image.id,
+            url: "/api/media/" + encodeURIComponent(image.id) + "/content",
+          }));
+        }
+      }
       const satietyError = validateSatiety(p.satiety, doc.satietyProducts);
       if (satietyError) throw new ApiError(422, satietyError);
       p.satiety = satietyEntries(p.satiety).map(({ ingredientId, level }) => ({
@@ -896,6 +983,7 @@ export function createCatalogService(db) {
   return {
     read,
     mutate,
+    saveConsumable,
     saveSatietyProduct,
     addVariantType,
     removeVariantType,

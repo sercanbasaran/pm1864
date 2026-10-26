@@ -208,7 +208,7 @@ export const moduleGroups = [
     label: "KÜTÜPHANE",
     icon: Books,
     description: "Görselleri ve dokümanları tek bir kütüphanede toplayın.",
-    children: ["media", "documents"],
+    children: ["media", "consumables", "documents"],
   },
 ].map((group) => ({
   ...group,
@@ -239,6 +239,13 @@ export const primaryModules = [
 ];
 export const modules = [
   ...existingModules,
+  {
+    id: "consumables",
+    label: "Sarf Malzemeler",
+    icon: Stack,
+    permission: "catalog.read",
+    description: "Varyantlarda kullanılan sarf malzeme tanımları.",
+  },
   {
     id: "satiety-products",
     label: "Doygunluk Ürünleri",

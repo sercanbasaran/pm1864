@@ -1,3 +1,9 @@
+import VariantCompositionSummary from "./VariantCompositionSummary.jsx";
+import VariantCompositionFields from "./VariantCompositionFields.jsx";
+import {
+  calculateVariant,
+  defaultConsumables,
+} from "../../variant-composition.js";
 import React, { useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import EditorPage from "../../components/layout/EditorPage.jsx";
@@ -13,6 +19,7 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
     products = [],
     categories,
     variantTypes,
+    consumables = defaultConsumables(),
     busy,
     mutate,
     notify,
@@ -30,7 +37,20 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
   }
   async function save() {
     if (busy || readOnly) return;
-    const next = { ...current, variants: draft.variants };
+    let next;
+    try {
+      next = {
+        ...current,
+        variants: draft.variants.map((v) =>
+          v.sourceProductId !== undefined
+            ? calculateVariant(v, products, consumables)
+            : v,
+        ),
+      };
+    } catch (e) {
+      setError(e.message);
+      return;
+    }
     const invalid = validateProduct(next, categories, variantTypes);
     if (invalid) {
       setError(invalid.message);
@@ -56,7 +76,13 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
       <EditableField
         label="Varyantlar ve fiyatlar"
         value={
-          <ProductVariantsTable product={current} variantTypes={variantTypes} />
+          <div>
+            <ProductVariantsTable
+              product={current}
+              variantTypes={variantTypes}
+            />
+            <VariantCompositionSummary variants={current.variants} />
+          </div>
         }
         empty={!current.variants.length}
         enabled={!readOnly}
@@ -70,11 +96,8 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
         onCancel={cancel}
         onSave={save}
       >
-        <ProductVariantsTable
+        <VariantCompositionFields
           product={draft}
-          variantTypes={variantTypes}
-          categories={categories}
-          editing
           disabled={busy || readOnly}
           onChange={setDraft}
         />
