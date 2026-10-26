@@ -26,7 +26,8 @@ export default function CategoryFields({ product, categories, onChange }) {
               ...product,
               mainCategoryId: e.target.value,
               categoryId: e.target.value,
-              category: categories.find((c) => c.id === e.target.value)?.name || "",
+              category:
+                categories.find((c) => c.id === e.target.value)?.name || "",
             })
           }
         >
@@ -67,7 +68,8 @@ export default function CategoryFields({ product, categories, onChange }) {
         </Select>
         {parent && !children.length && (
           <small className="input-help">
-            Ürün doğrudan ana kategoriye eklenir. Ürün kodunda alt kategori bölümü 000 olur.
+            Ürün doğrudan ana kategoriye eklenir. Ürün kodunda alt kategori
+            bölümü 000 olur.
           </small>
         )}
       </div>
