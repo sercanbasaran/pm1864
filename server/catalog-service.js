@@ -729,11 +729,36 @@ export function createCatalogService(db) {
       const selected = doc.products.filter((p) => ids.includes(p.id));
       if (selected.length !== new Set(ids).size)
         throw new ApiError(422, "Seçili ürünlerin bir kısmı bulunamadı.");
-      if (
-        selected.some((p) =>
-          p.variants.some((v) => bulkPrice(v.price, percent, direction) > 1e8),
+      const entries = selected.flatMap((p) =>
+        p.variants.map((v) => ({ p, v })),
+      );
+      let priceMap = null;
+      if (body.prices !== undefined) {
+        if (
+          !Array.isArray(body.prices) ||
+          body.prices.length !== entries.length
         )
-      )
+          throw new ApiError(422, "Güncellenecek fiyat satırları eşleşmiyor.");
+        priceMap = new Map();
+        for (const row of body.prices) {
+          if (
+            !row ||
+            !entries.some(
+              ({ p, v }) => p.id === row.productId && v.id === row.variantId,
+            ) ||
+            priceMap.has(row.variantId) ||
+            !Number.isFinite(row.price) ||
+            row.price <= 0 ||
+            row.price > 1e8 ||
+            Math.abs(row.price * 100 - Math.round(row.price * 100)) > 0.00001
+          )
+            throw new ApiError(422, "Geçersiz veya tekrarlanan fiyat satırı.");
+          priceMap.set(row.variantId, row.price);
+        }
+      }
+      const nextPrice = (v) =>
+        priceMap ? priceMap.get(v.id) : bulkPrice(v.price, percent, direction);
+      if (entries.some(({ v }) => nextPrice(v) > 1e8))
         throw new ApiError(
           422,
           "Güncellenen fiyat izin verilen üst sınırı aşıyor.",
@@ -741,7 +766,10 @@ export function createCatalogService(db) {
       for (const p of selected) {
         p.variants = p.variants.map((v) => ({
           ...v,
-          price: bulkPrice(v.price, percent, direction),
+          price: nextPrice(v),
+          ...(v.sourceProductId !== undefined
+            ? { priceOverride: nextPrice(v) }
+            : {}),
         }));
         p.version++;
         p.updated = new Date().toISOString();
