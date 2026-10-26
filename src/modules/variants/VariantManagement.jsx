@@ -1,3 +1,8 @@
+import "./variant-management.css";
+import Modal from "../../components/ui/Modal.jsx";
+import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
+import Pagination from "../../components/ui/Pagination.jsx";
+import { hasUnitPricing } from "../../unit-pricing.js";
 import VariantTypeManagement from "./VariantTypeManagement.jsx";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { variantTypeName } from "../../variant-types.js";
@@ -37,6 +42,25 @@ export default function VariantManager({
 }) {
   const { variantTypes = [] } = useCatalog();
   const [typeId, setTypeId] = useState("");
+  const [creating, setCreating] = useState(false),
+    [createId, setCreateId] = useState(""),
+    [page, setPage] = useState(1);
+  const eligible = products.filter(
+    (p) =>
+      p.status === "Aktif" &&
+      hasUnitPricing(p.unitPricing) &&
+      p.variants.length < 50,
+  );
+  function clearFilters() {
+    setQuery("");
+    setRoot("");
+    setSub("");
+    setProductId("");
+    setStatus("");
+    setTypeId("");
+    setPage(1);
+  }
+
   const [query, setQuery] = useState(""),
     [root, setRoot] = useState(""),
     [sub, setSub] = useState(""),
@@ -57,21 +81,17 @@ export default function VariantManager({
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
     );
+  const pages = Math.max(1, Math.ceil(rows.length / 8)),
+    current = Math.min(page, pages),
+    shown = rows.slice((current - 1) * 8, current * 8);
   const addAction = canWrite ? (
     <Button
       type="button"
       variant="primary"
-      className="btn"
-      disabled={
-        !productId ||
-        products.find((p) => String(p.id) === productId)?.variants.length >= 50
-      }
-      onClick={() =>
-        onEdit(
-          products.find((p) => String(p.id) === productId),
-          true,
-        )
-      }
+      onClick={() => {
+        setCreateId("");
+        setCreating(true);
+      }}
     >
       <Plus size={16} />
       Varyant ekle
@@ -92,55 +112,61 @@ export default function VariantManager({
               <div>
                 <h2>Varyant yönetimi</h2>
                 <p className="muted">
-                  Ana kategori / Alt kategori / Ürün / Varyant
+                  Ürün miktarına göre fiyat ve gramajı hesaplanan varyantları
+                  yönetin.
                 </p>
               </div>
-              <Button
-                className="btn"
-                onClick={() =>
-                  downloadCSV(
-                    [
+              <div className="variant-header-actions">
+                {addAction}
+                <Button
+                  type="button"
+                  disabled={!rows.length}
+                  className="btn"
+                  onClick={() =>
+                    downloadCSV(
                       [
-                        "Ana kategori / Alt kategori",
-                        "Ürün",
-                        "Ürün SKU",
-                        "Varyant",
-                        "Varyant SKU",
-                        "Varyant tipi",
-                        "Gramaj (g)",
-                        "Birim",
-                        "Ambalaj",
-                        "Dilim",
-                        "Fiyat TRY",
-                        "Durum",
-                        ...salesChannels.map((c) => c.label),
+                        [
+                          "Ana kategori / Alt kategori",
+                          "Ürün",
+                          "Ürün SKU",
+                          "Varyant",
+                          "Varyant SKU",
+                          "Varyant tipi",
+                          "Gramaj (g)",
+                          "Birim",
+                          "Ambalaj",
+                          "Dilim",
+                          "Fiyat TRY",
+                          "Durum",
+                          ...salesChannels.map((c) => c.label),
+                        ],
+                        ...rows.map(({ p, v, c }) => [
+                          categoryPath(c, categories),
+                          p.name,
+                          p.sku,
+                          v.size,
+                          v.sku,
+                          variantTypeName(v, variantTypes),
+                          v.weight,
+                          v.unit || "Adet",
+                          v.packaging || "",
+                          v.slices,
+                          v.price,
+                          v.active !== false ? "Aktif" : "Pasif",
+                          ...salesChannels.map((c) =>
+                            effectiveSales(p, v, categories)[c.key]
+                              ? "Açık"
+                              : "Kapalı",
+                          ),
+                        ]),
                       ],
-                      ...rows.map(({ p, v, c }) => [
-                        categoryPath(c, categories),
-                        p.name,
-                        p.sku,
-                        v.size,
-                        v.sku,
-                        variantTypeName(v, variantTypes),
-                        v.weight,
-                        v.unit || "Adet",
-                        v.packaging || "",
-                        v.slices,
-                        v.price,
-                        v.active !== false ? "Aktif" : "Pasif",
-                        ...salesChannels.map((c) =>
-                          effectiveSales(p, v, categories)[c.key]
-                            ? "Açık"
-                            : "Kapalı",
-                        ),
-                      ]),
-                    ],
-                    "HM1864_Varyantlar.csv",
-                  )
-                }
-              >
-                Varyantları indir
-              </Button>
+                      "HM1864_Varyantlar.csv",
+                    )
+                  }
+                >
+                  Varyantları indir
+                </Button>
+              </div>
             </div>
             <div className="module-toolbar">
               <div className="search">
@@ -148,114 +174,139 @@ export default function VariantManager({
                   prefix={<MagnifyingGlass size={17} />}
                   aria-label="Varyant ara"
                   value={query}
-                  placeholder="Ürün, varyant adı veya SKU ara"
-                  onChange={(e) => setQuery(e.target.value)}
+                  label="Varyant ara"
+                  placeholder="Ürün, varyant adı veya kod ara"
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setPage(1);
+                  }}
                 />
               </div>
-              <Select
-                aria-label="Varyant ana kategorisi"
-                value={root}
-                onChange={(e) => {
-                  setRoot(e.target.value);
-                  setSub("");
-                }}
-              >
-                <option value="">Tüm ana kategoriler</option>
-                {roots(categories).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                aria-label="Varyant alt kategorisi"
-                value={sub}
-                onChange={(e) => setSub(e.target.value)}
-              >
-                <option value="">Tüm alt kategoriler</option>
-                {categories
-                  .filter((c) => c.parentId && (!root || c.parentId === root))
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {categoryPath(c, categories)}
-                    </option>
-                  ))}
-              </Select>
-              <Select
-                aria-label="Varyant ürünü"
-                value={productId}
-                onChange={(e) => setProductId(e.target.value)}
-              >
-                <option value="">Tüm ürünler</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} · {p.sku}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                aria-label="Varyant durumu"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="">Tüm durumlar</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Pasif</option>
-              </Select>
             </div>
-            <Select
-              label="Varyant tipi filtresi"
-              value={typeId}
-              onChange={(e) => setTypeId(e.target.value)}
-            >
-              <option value="">Tüm varyant tipleri</option>
-              {variantTypes.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              ))}
-            </Select>
-            <p className="muted">{rows.length} varyant</p>
-            {canWrite && (
-              <div className="variant-add-bar">
-                <span>Yeni varyant eklemek için bir ürün seçin.</span>
+            <SlDetails summary="Filtrele" className="variant-filters">
+              <div className="variant-filter-grid">
                 <Select
-                  aria-label="Varyant eklenecek ürün"
-                  value={productId}
-                  onChange={(e) => setProductId(e.target.value)}
+                  label="Ana kategori"
+                  aria-label="Varyant ana kategorisi"
+                  value={root}
+                  onChange={(e) => {
+                    setRoot(e.target.value);
+                    setSub("");
+                    setProductId("");
+                    setPage(1);
+                  }}
                 >
-                  <option value="">Ürün seçin</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
+                  <option value="">Tüm ana kategoriler</option>
+                  {roots(categories).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </Select>
-                {addAction}
+                <Select
+                  label="Alt kategori"
+                  aria-label="Varyant alt kategorisi"
+                  value={sub}
+                  onChange={(e) => {
+                    setSub(e.target.value);
+                    setProductId("");
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Tüm alt kategoriler</option>
+                  {categories
+                    .filter((c) => c.parentId && (!root || c.parentId === root))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {categoryPath(c, categories)}
+                      </option>
+                    ))}
+                </Select>
+                <Select
+                  label="Ürün"
+                  aria-label="Varyant ürünü"
+                  value={productId}
+                  onChange={(e) => {
+                    setProductId(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Tüm ürünler</option>
+                  {products
+                    .filter((p) => {
+                      const c = categoryOf(p, categories);
+                      return (
+                        (!root || rootOf(c, categories)?.id === root) &&
+                        (!sub || c?.id === sub)
+                      );
+                    })
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} · {p.productCode}
+                      </option>
+                    ))}
+                </Select>
+                <Select
+                  label="Durum"
+                  aria-label="Varyant durumu"
+                  value={status}
+                  onChange={(e) => {
+                    setStatus(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Tüm durumlar</option>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Pasif</option>
+                </Select>
+                <Select
+                  label="Varyant tipi filtresi"
+                  value={typeId}
+                  onChange={(e) => {
+                    setTypeId(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Tüm varyant tipleri</option>
+                  {variantTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </Select>
               </div>
-            )}
+              <Button type="button" size="small" onClick={clearFilters}>
+                Filtreleri temizle
+              </Button>
+            </SlDetails>
+            <p className="muted">
+              {rows.length} varyant listeleniyor ·{" "}
+              {products.reduce((n, p) => n + p.variants.length, 0)} kayıtlı
+              varyant
+            </p>
             <div
-              className="table-scroll"
+              className="table-scroll variant-desktop-table"
+              hidden={!rows.length}
               tabIndex={0}
               role="region"
               aria-label="Kaydırılabilir tablo"
             >
-              <Table>
+              <Table aria-label="Varyantlar">
                 <TableHead>
                   <TableRow>
                     <TableHeading>ÜRÜN / KATEGORİ</TableHeading>
                     <TableHeading>VARYANT / SKU</TableHeading>
                     <TableHeading>VARYANT TİPİ</TableHeading>
                     <TableHeading>GRAMAJ / DİLİM</TableHeading>
-                    <TableHeading>BİRİM / AMBALAJ</TableHeading>
-                    <TableHeading>FİYAT</TableHeading>
+                    <TableHeading>MİKTAR / SERVİS</TableHeading>
+                    <TableHeading>SATIŞ FİYATI</TableHeading>
                     <TableHeading>DURUM</TableHeading>
                     <TableHeading>SATIŞ KANALLARI</TableHeading>
                     <TableHeading />
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map(({ p, v, c }) => (
+                  {shown.map(({ p, v, c }) => (
                     <TableRow key={v.id}>
                       <TableCell>
                         <strong>{p.name}</strong>
@@ -272,7 +323,7 @@ export default function VariantManager({
                         {v.weight} g{v.slices > 0 ? ` / ${v.slices} dilim` : ""}
                       </TableCell>
                       <TableCell>
-                        {v.unit || "Adet"}
+                        {v.quantity ?? "—"} {v.unit || "Adet"}
                         <small className="user-email">
                           {v.packaging || "Ambalaj belirtilmedi"}
                         </small>
@@ -313,7 +364,96 @@ export default function VariantManager({
                 <p>Filtreleri değiştirin veya bir ürüne varyant ekleyin.</p>
               </div>
             )}
-            <ActionBar position="bottom">{addAction}</ActionBar>
+            <div className="variant-mobile-cards">
+              {shown.map(({ p, v, c }) => (
+                <article key={v.id}>
+                  <div>
+                    <strong>{v.size}</strong>
+                    <SlBadge
+                      variant={v.active !== false ? "success" : "neutral"}
+                    >
+                      {v.active !== false ? "Aktif" : "Pasif"}
+                    </SlBadge>
+                  </div>
+                  <p>{p.name}</p>
+                  <small>
+                    {categoryPath(c, categories)} · {v.sku}
+                  </small>
+                  <dl>
+                    <div>
+                      <dt>Miktar</dt>
+                      <dd>
+                        {v.quantity ?? "—"} {v.unit}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Gramaj</dt>
+                      <dd>{v.weight} g</dd>
+                    </div>
+                    <div>
+                      <dt>Satış fiyatı</dt>
+                      <dd>{money(v.price)}</dd>
+                    </div>
+                    <div>
+                      <dt>Ambalaj / servis</dt>
+                      <dd>{v.packaging || "—"}</dd>
+                    </div>
+                  </dl>
+                  <Button type="button" onClick={() => onEdit(p, false)}>
+                    {canWrite ? "Yönet" : "Görüntüle"}
+                  </Button>
+                </article>
+              ))}
+            </div>
+            {rows.length > 8 && (
+              <Pagination
+                total={rows.length}
+                page={current}
+                onChange={setPage}
+              />
+            )}
+            {creating && (
+              <Modal title="Yeni varyant" onClose={() => setCreating(false)}>
+                <p>Önce birim fiyatı ve gramajı tamamlanmış bir ürün seçin.</p>
+                <Select
+                  label="Varyant oluşturulacak ürün"
+                  value={createId}
+                  onChange={(e) => setCreateId(e.target.value)}
+                >
+                  <option value="">Ürün seçin</option>
+                  {eligible.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </Select>
+                {!eligible.length && (
+                  <p>
+                    Uygun ürün bulunamadı. Ürünler bölümünden birim fiyat ve
+                    gramaj bilgilerini tamamlayın.
+                  </p>
+                )}
+                <div className="variant-header-actions">
+                  <Button type="button" onClick={() => setCreating(false)}>
+                    Vazgeç
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    disabled={!eligible.some((p) => String(p.id) === createId)}
+                    onClick={() => {
+                      setCreating(false);
+                      onEdit(
+                        eligible.find((p) => String(p.id) === createId),
+                        true,
+                      );
+                    }}
+                  >
+                    Varyant oluştur
+                  </Button>
+                </div>
+              </Modal>
+            )}
           </Card>
         </SlTabPanel>
         <SlTabPanel name="types">

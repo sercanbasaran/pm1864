@@ -1,0 +1,72 @@
+.variant-header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.variant-module .variant-filters {
+  display: block;
+  margin: 0.75rem 0;
+}
+.variant-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.variant-module .variant-manager .module-toolbar {
+  display: block;
+}
+.variant-module .variant-manager .variant-desktop-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.variant-desktop-table td:last-child,
+.variant-desktop-table th:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--sl-color-neutral-0);
+  z-index: 1;
+}
+.variant-mobile-cards {
+  display: none;
+}
+@media (max-width: 767px) {
+  .variant-desktop-table {
+    display: none;
+  }
+  .variant-mobile-cards {
+    display: grid;
+    gap: 1rem;
+  }
+  .variant-mobile-cards article {
+    padding: 1rem;
+    border: 1px solid var(--sl-color-neutral-200);
+    border-radius: 0.5rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .variant-mobile-cards article > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .variant-mobile-cards dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .variant-mobile-cards dt {
+    font-size: 0.8rem;
+    color: var(--sl-color-neutral-600);
+  }
+  .variant-mobile-cards dd {
+    margin: 0.25rem 0 0;
+  }
+  .variant-header-actions {
+    width: 100%;
+  }
+  .variant-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
