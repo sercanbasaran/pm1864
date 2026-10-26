@@ -1,3 +1,4 @@
+import "./category-management.css";
 import CategoryPromotion from "./CategoryPromotion.jsx";
 import EditableField from "../../components/ui/EditableField.jsx";
 import BackToListButton from "../../components/ui/BackToListButton.jsx";
@@ -389,6 +390,7 @@ export default function CategoryManager({
               <div className="search">
                 <Input
                   prefix={<MagnifyingGlass size={17} />}
+                  label="Kategori ara"
                   aria-label="Kategori ara"
                   placeholder="Ana kategori, alt kategori veya kod ara"
                   value={filters.query}

@@ -1,3 +1,4 @@
+import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import "./variant-management.css";
 import Modal from "../../components/ui/Modal.jsx";
 import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
@@ -99,6 +100,30 @@ export default function VariantManager({
   ) : null;
   return (
     <section className="variant-module">
+      <ManagementSummary
+        label="Varyant özeti"
+        items={[
+          {
+            label: "Toplam varyant",
+            value: products.reduce((n, p) => n + p.variants.length, 0),
+            detail: "Kayıtlı tüm varyantlar",
+          },
+          {
+            label: "Aktif varyant",
+            value: products.reduce(
+              (n, p) => n + p.variants.filter((v) => v.active !== false).length,
+              0,
+            ),
+            detail: "Aktif durumundaki varyantlar",
+          },
+          {
+            label: "Varyantlı ürün",
+            value: products.filter((p) => p.variants.length > 0).length,
+            detail: "En az bir varyantı olan ürünler",
+          },
+        ]}
+      />
+
       <SlTabGroup aria-label="Varyant modülü bölümleri">
         <SlTab slot="nav" panel="management" active>
           Varyant yönetimi
