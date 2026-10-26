@@ -70,3 +70,4 @@
     grid-template-columns: 1fr;
   }
 }
+.variant-module sl-tab-panel:not([active]) { display: none; }
