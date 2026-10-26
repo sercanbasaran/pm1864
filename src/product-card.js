@@ -1,3 +1,4 @@
+import { effectiveSales } from "./sales-availability.js";
 import { hasUnitPricing, normalizeUnitPricing } from "./unit-pricing.js";
 import { displaySku } from "./sku.js";
 import { defaultVariantTypes, variantTypeName } from "./variant-types.js";
@@ -38,7 +39,10 @@ export function productCardData(
     name: product.name,
     category: categoryPath(categoryOf(product, categories), categories),
     description: product.description || "",
-    unitPricing: hasUnitPricing(product.unitPricing) ? normalizeUnitPricing(product.unitPricing) : null,
+    salesAvailability: effectiveSales(product, undefined, categories),
+    unitPricing: hasUnitPricing(product.unitPricing)
+      ? normalizeUnitPricing(product.unitPricing)
+      : null,
     satiety: resolvedSatiety(product.satiety, satietyProducts),
     customImage: image,
     ...Object.fromEntries(

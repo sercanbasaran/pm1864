@@ -94,7 +94,12 @@ export default function PublicProductPage() {
         )}
         {product && <ProductDetails product={product} />}
       </main>
-      <footer>HAFIZ MUSTAFA 1864 · Ürün bilgileri</footer>
+      <footer>
+        <a href="https://hafizmustafa.com" target="_blank" rel="noreferrer">
+          hafizmustafa.com
+        </a>
+        <span>Powered by HM 1864 Dijital</span>
+      </footer>
     </div>
   );
 }

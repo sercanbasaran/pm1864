@@ -1,3 +1,4 @@
+import { salesChannels } from "../../sales-availability.js";
 import "./product-details.css";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import ProductVariantsTable from "./ProductVariantsTable.jsx";
@@ -30,7 +31,9 @@ export default function ProductDetails({ product }) {
             <ProductImage product={product} />
           )}
           <div>
-            <p className="product-detail-category">{product.category}</p>
+            <small className="product-detail-category">
+              {product.category}
+            </small>
             <small className="product-detail-identifiers">
               {product.productCode}
             </small>
@@ -70,6 +73,29 @@ export default function ProductDetails({ product }) {
                   </dd>
                 </div>
               </dl>
+            )}
+            {product.salesAvailability && (
+              <>
+                <hr className="product-summary-divider" />
+                <section
+                  aria-label="Satış kanalları"
+                  className="public-sales-channels"
+                >
+                  <h3>Satış kanalları</h3>
+                  <ul>
+                    {salesChannels
+                      .filter(
+                        (channel) => product.salesAvailability[channel.key],
+                      )
+                      .map((channel) => (
+                        <li key={channel.key}>{channel.label}</li>
+                      ))}
+                  </ul>
+                  {!salesChannels.some(
+                    (channel) => product.salesAvailability[channel.key],
+                  ) && <p>Aktif satış kanalı bulunmuyor.</p>}
+                </section>
+              </>
             )}
           </div>
         </div>

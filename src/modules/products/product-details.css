@@ -81,3 +81,47 @@ small.product-detail-identifiers {
 .public-unit-pricing dt {
   margin-bottom: 0.4rem;
 }
+
+.product-detail-hero small.product-detail-category {
+  display: block;
+  font-size: 0.8rem;
+}
+.product-detail-information sl-details::part(base) {
+  transition:
+    color var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+    background-color var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing),
+    border-color var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing),
+    box-shadow var(--sidebar-transition-duration)
+      var(--sidebar-transition-easing);
+}
+.public-sales-channels h3 {
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem;
+}
+.public-sales-channels ul {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.public-sales-channels li {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--sl-color-neutral-200);
+  border-radius: 0.35rem;
+  font-size: 0.8rem;
+}
+.public-product-page > footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-detail-information sl-details::part(base) {
+    transition: none;
+  }
+}
