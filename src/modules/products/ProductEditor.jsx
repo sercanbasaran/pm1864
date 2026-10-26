@@ -19,8 +19,8 @@ import { money } from "../../catalog-tools.js";
 import { effectiveSales, salesChannels } from "../../sales-availability.js";
 import { productCardPath } from "../../product-card.js";
 import NutritionTable from "./NutritionTable.jsx";
-import SatietyIndicator from "./SatietyIndicator.jsx";
-import { hasSatiety, suggestedSatietyType } from "../../satiety.js";
+import ProductSatiety from "./ProductSatiety.jsx";
+import { hasSatiety } from "../../satiety.js";
 import {
   productInformationFields,
   productDetailSteps,
@@ -50,6 +50,7 @@ export default function ProductEditor({
     categories,
     products = [],
     variantTypes,
+    satietyProducts,
     busy,
     mutate,
     notify,
@@ -413,14 +414,17 @@ export default function ProductEditor({
                 "satiety",
                 "Doygunluk bilgisi",
                 hasSatiety(draft.satiety) ? (
-                  <SatietyIndicator value={draft.satiety} />
+                  <ProductSatiety
+                    value={draft.satiety}
+                    definitions={satietyProducts}
+                  />
                 ) : (
                   "Henüz girilmedi."
                 ),
-                <SatietyIndicator
+                <ProductSatiety
                   value={draft.satiety}
+                  definitions={satietyProducts}
                   editing
-                  suggestedType={suggestedSatietyType(draft, category?.name)}
                   onChange={(satiety) => setDraft({ ...draft, satiety })}
                 />,
                 !hasSatiety(draft.satiety),

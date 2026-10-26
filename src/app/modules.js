@@ -191,8 +191,9 @@ export const moduleGroups = [
     id: "system-settings",
     label: "SİSTEM AYARLARI",
     icon: Gear,
-    description: "Kod/SKU, para birimi ve dil tanımlarını yönetin.",
-    children: ["codes", "currencies", "languages"],
+    description:
+      "Kod/SKU, doygunluk ürünleri, para birimi ve dil tanımlarını yönetin.",
+    children: ["codes", "satiety-products", "currencies", "languages"],
   },
   {
     id: "user-management",
@@ -238,6 +239,13 @@ export const primaryModules = [
 ];
 export const modules = [
   ...existingModules,
+  {
+    id: "satiety-products",
+    label: "Doygunluk Ürünleri",
+    icon: Stack,
+    permission: "catalog.read",
+    description: "Ürünlerdeki doygunluk içerikleri ve simgeleri.",
+  },
   ...newMainModules,
   {
     id: "user-roles",

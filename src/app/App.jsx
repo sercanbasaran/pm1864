@@ -32,6 +32,9 @@ const ProductManagement = lazy(
 const VariantManagement = lazy(
   () => import("../modules/variants/VariantManagement.jsx"),
 );
+const SatietyProductManagement = lazy(
+  () => import("../modules/settings/SatietyProductManagement.jsx"),
+);
 const CodeManagement = lazy(
   () => import("../modules/codes/CodeManagement.jsx"),
 );
@@ -281,6 +284,9 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         canWrite={can(user, "products.write")}
         onEdit={(p, append) => open(p, true, append)}
       />
+    ),
+    "satiety-products": (
+      <SatietyProductManagement canWrite={can(user, "settings.write")} />
     ),
     codes: <CodeManagement user={user} />,
     users: (

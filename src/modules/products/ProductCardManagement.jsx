@@ -17,7 +17,8 @@ import {
 import ProductDetails from "./ProductDetails.jsx";
 
 export default function ProductCardManagement({ product, user, onClose }) {
-  const { categories, variantTypes, busy, mutate, notify } = useCatalog(),
+  const { categories, variantTypes, satietyProducts, busy, mutate, notify } =
+      useCatalog(),
     qr = useRef(null),
     [error, setError] = useState(""),
     [downloading, setDownloading] = useState(false);
@@ -95,6 +96,7 @@ export default function ProductCardManagement({ product, user, onClose }) {
             categories,
             product.customImage,
             variantTypes,
+            satietyProducts,
           )}
         />
         <Card className="product-card-sharing">

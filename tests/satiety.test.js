@@ -4,45 +4,66 @@ import { createApp } from "../server/app.js";
 import { hashPassword } from "../server/security.js";
 import {
   hasSatiety,
-  suggestedSatietyType,
   validateSatiety,
+  upgradeSatiety,
+  defaultSatietyProducts,
+  resolvedSatiety,
 } from "../src/satiety.js";
 import { duplicateProduct } from "../src/duplicate-product.js";
 
-test("satiety stays optional and accepts only defined types and whole levels from 1 to 5", () => {
-  for (const value of [undefined, null, { type: "walnut", level: null }]) {
-    assert.equal(validateSatiety(value), "");
+test("multiple independent levels require distinct known ingredients and whole levels", () => {
+  const defs = defaultSatietyProducts();
+  const entries = [
+    { ingredientId: "pistachio", level: 4 },
+    { ingredientId: "walnut", level: 2 },
+  ];
+  assert.equal(validateSatiety(entries, defs), "");
+  assert.equal(hasSatiety(entries), true);
+  for (const value of [undefined, null, []])
     assert.equal(hasSatiety(value), false);
-  }
-  for (const type of ["pistachio", "walnut", "general"])
-    for (let level = 1; level <= 5; level++)
-      assert.equal(hasSatiety({ type, level }), true);
   for (const value of [
     "3",
-    [],
     {},
-    { type: "other", level: 3 },
-    ...[0, 6, 2.5, "3", false].map((level) => ({ type: "walnut", level })),
-    { type: "walnut", level: 3, percent: 60 },
+    [null],
+    [{ ingredientId: "unknown", level: 3 }],
+    [entries[0], entries[0]],
+    ...[null, 0, 6, 2.5, "3"].map((level) => [
+      { ingredientId: "walnut", level },
+    ]),
   ])
-    assert.ok(validateSatiety(value));
-  assert.equal(suggestedSatietyType({ name: "Fıstıklı Baklava" }), "pistachio");
-  assert.equal(
-    suggestedSatietyType({ name: "Baklava" }, "Cevizli Baklavalar"),
-    "walnut",
-  );
-  assert.equal(suggestedSatietyType({ name: "Lokum" }), "general");
-  const source = {
-    name: "Baklava",
-    variants: [],
-    satiety: { type: "walnut", level: 4 },
-  };
+    assert.ok(validateSatiety(value, defs));
+  const source = { name: "Baklava", variants: [], satiety: entries };
   const copy = duplicateProduct(source);
-  copy.satiety.level = 1;
-  assert.equal(source.satiety.level, 4);
+  copy.satiety[0].level = 1;
+  assert.equal(source.satiety[0].level, 4);
 });
-
-test("API persists, preserves and clears satiety and exposes it on product pages", async () => {
+test("migration preserves existing single ratings, seeds only missing definitions and is idempotent", () => {
+  const doc = {
+    products: [
+      { id: 1, satiety: { type: "pistachio", level: 3 } },
+      { id: 2 },
+      { id: 3, satiety: { type: "walnut", level: null } },
+    ],
+  };
+  assert.equal(upgradeSatiety(doc), true);
+  assert.deepEqual(doc.products[0].satiety, [
+    { ingredientId: "pistachio", level: 3 },
+  ]);
+  assert.equal(doc.products[1].satiety, undefined);
+  assert.deepEqual(doc.products[2].satiety, []);
+  assert.deepEqual(
+    doc.satietyProducts.map((d) => d.name),
+    ["Fıstık", "Ceviz"],
+  );
+  assert.equal(upgradeSatiety(doc), false);
+  doc.satietyProducts[0].name = "Antep fıstığı";
+  upgradeSatiety(doc);
+  assert.equal(
+    resolvedSatiety(doc.products[0].satiety, doc.satietyProducts)[0].name,
+    "Antep fıstığı",
+  );
+});
+test("API manages reusable definitions, multiple ratings, visibility, revisions and permissions", async () => {
   const password = "Satiety-test-only-1864";
   const app = await createApp({
     env: {
@@ -71,60 +92,123 @@ test("API persists, preserves and clears satiety and exposes it on product pages
   try {
     await call("/login", "POST", { email: "satiety@example.test", password });
     let catalog = (await call("/catalog")).catalog;
-    const satiety = { type: "pistachio", level: 3 };
+    assert.deepEqual(
+      catalog.satietyProducts.map((d) => d.name),
+      ["Fıstık", "Ceviz"],
+    );
+    const created = await call("/satiety-products", "POST", {
+      expectedRevision: catalog.revision,
+      name: "Çikolata",
+      icon: "chocolate",
+    });
+    assert.equal(created.status, 200);
+    catalog = created.catalog;
+    const chocolate = catalog.satietyProducts.at(-1);
+    assert.equal(
+      (
+        await call("/satiety-products", "POST", {
+          expectedRevision: catalog.revision,
+          name: " Çikolata ",
+          icon: "chocolate",
+        })
+      ).status,
+      422,
+    );
+    assert.equal(
+      (
+        await call("/satiety-products", "POST", {
+          expectedRevision: catalog.revision - 1,
+          name: "Çilek",
+          icon: "strawberry",
+        })
+      ).status,
+      409,
+    );
+    const entries = [
+      { ingredientId: "pistachio", level: 4 },
+      { ingredientId: chocolate.id, level: 2 },
+    ];
     catalog = (
       await call("/products", "POST", {
         expectedRevision: catalog.revision,
         product: {
-          name: "Fıstıklı Baklava",
+          name: "Fıstıklı Çikolatalı Baklava",
           category: "Baklavalar",
           status: "Aktif",
           variants: [],
-          satiety,
+          satiety: entries,
         },
       })
     ).catalog;
-    let product = catalog.products[0];
-    assert.deepEqual(product.satiety, satiety);
-    const path = "/products/" + product.id;
-    const page = "/product-pages/" + product.publicSlug;
-    assert.deepEqual((await call(page)).product.satiety, satiety);
-    const { satiety: omitted, ...legacyClient } = product;
+    const product = catalog.products[0],
+      path = "/products/" + product.id,
+      page = "/product-pages/" + product.publicSlug;
+    assert.deepEqual(product.satiety, entries);
+    assert.deepEqual(
+      (await call(page)).product.satiety.map((e) => [e.name, e.level]),
+      [
+        ["Fıstık", 4],
+        ["Çikolata", 2],
+      ],
+    );
+    catalog = (
+      await call("/satiety-products/" + chocolate.id, "PUT", {
+        expectedRevision: catalog.revision,
+        name: "Bitter çikolata",
+        icon: "chocolate",
+        active: false,
+      })
+    ).catalog;
+    assert.equal((await call(page)).product.satiety[1].name, "Bitter çikolata");
+    const { satiety, ...legacyClient } = catalog.products[0];
     catalog = (
       await call(path, "PUT", {
         expectedRevision: catalog.revision,
-        product: { ...legacyClient, description: "Güncellendi" },
+        product: legacyClient,
       })
     ).catalog;
-    assert.deepEqual(catalog.products[0].satiety, satiety);
-    for (const level of [0, 6, 2.5, "4"]) {
-      const invalid = await call(path, "PUT", {
-        expectedRevision: catalog.revision,
-        product: { ...catalog.products[0], satiety: { type: "walnut", level } },
-      });
-      assert.equal(invalid.status, 422);
-    }
+    assert.deepEqual(catalog.products[0].satiety, entries);
+    for (const invalid of [
+      [entries[0], entries[0]],
+      [{ ingredientId: "unknown", level: 1 }],
+      [{ ingredientId: "walnut", level: 6 }],
+    ])
+      assert.equal(
+        (
+          await call(path, "PUT", {
+            expectedRevision: catalog.revision,
+            product: { ...catalog.products[0], satiety: invalid },
+          })
+        ).status,
+        422,
+      );
+    assert.equal(
+      (
+        await call("/products", "POST", {
+          expectedRevision: catalog.revision,
+          product: { ...product, name: "Başka ürün", satiety: [entries[1]] },
+        })
+      ).status,
+      422,
+    );
     catalog = (
       await call(path, "PUT", {
         expectedRevision: catalog.revision,
-        product: {
-          ...catalog.products[0],
-          satiety: { type: "walnut", level: 5 },
-        },
+        product: { ...catalog.products[0], satiety: [] },
       })
     ).catalog;
-    assert.deepEqual((await call(page)).product.satiety, {
-      type: "walnut",
-      level: 5,
-    });
-    catalog = (
-      await call(path, "PUT", {
-        expectedRevision: catalog.revision,
-        product: { ...catalog.products[0], satiety: null },
-      })
-    ).catalog;
-    assert.equal(catalog.products[0].satiety, null);
-    assert.equal((await call(page)).product.satiety, null);
+    assert.deepEqual((await call(page)).product.satiety, []);
+    await app.db.query("UPDATE app_users SET role='editor'");
+    assert.equal(
+      (
+        await call("/satiety-products", "POST", {
+          expectedRevision: catalog.revision,
+          name: "Vişne",
+          icon: "cherry",
+        })
+      ).status,
+      403,
+    );
   } finally {
     await app.close();
   }

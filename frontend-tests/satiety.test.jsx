@@ -73,3 +73,39 @@ test("product pages hide empty satiety and render entered satiety without object
     document.querySelector(".satiety-display").getAttribute("aria-label"),
   ).toBe("Ceviz yoğunluğu: 2 / 5 · Hafif");
 });
+
+test("product cards render multiple named ingredients and their own levels", () => {
+  render(
+    <ProductDetails
+      product={{
+        name: "Karışık baklava",
+        category: "Baklavalar",
+        variants: [],
+        satiety: [
+          {
+            ingredientId: "pistachio",
+            name: "Fıstık",
+            icon: "pistachio",
+            level: 4,
+          },
+          {
+            ingredientId: "custom-chocolate",
+            name: "Bitter çikolata",
+            icon: "chocolate",
+            level: 2,
+          },
+        ],
+      }}
+    />,
+  );
+  expect(document.querySelectorAll(".satiety-display")).toHaveLength(2);
+  expect(
+    [...document.querySelectorAll(".satiety-display")].map((e) =>
+      e.getAttribute("aria-label"),
+    ),
+  ).toEqual([
+    "Fıstık yoğunluğu: 4 / 5 · Yoğun",
+    "Bitter çikolata yoğunluğu: 2 / 5 · Hafif",
+  ]);
+  expect(document.querySelectorAll(".satiety-icon.is-filled")).toHaveLength(6);
+});

@@ -57,6 +57,72 @@ function NutIcon({ type }) {
             strokeLinecap="round"
           />
         </>
+      ) : type === "chocolate" ? (
+        <g transform="rotate(-12 24 24)">
+          <rect
+            x="9"
+            y="5"
+            width="30"
+            height="38"
+            rx="3"
+            fill="#70432e"
+            stroke="#442719"
+            strokeWidth="2"
+          />
+          <path
+            d="M24 7v34M11 18h26M11 30h26"
+            stroke="#bd8b62"
+            strokeWidth="2"
+          />
+        </g>
+      ) : type === "strawberry" ? (
+        <>
+          <path
+            d="M8 20C8 8 40 8 40 20c0 12-12 24-16 24S8 32 8 20Z"
+            fill="#d74649"
+            stroke="#a12d36"
+            strokeWidth="1.5"
+          />
+          <path d="m24 16-12-7 10 1 3-7 3 7 10-1-12 8" fill="#648e42" />
+          <path
+            d="m16 23 1 3m13-3 1 3m-7 6 1 3m-3-14 1 3"
+            stroke="#ffe3a0"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </>
+      ) : type === "cherry" ? (
+        <>
+          <path
+            d="M16 29C17 16 29 13 30 4c0 13 9 17 7 25"
+            fill="none"
+            stroke="#63833b"
+            strokeWidth="2.5"
+          />
+          <path d="M30 7c9-5 15 0 15 0s-5 7-15 0" fill="#7c9f42" />
+          <circle
+            cx="15"
+            cy="33"
+            r="10"
+            fill="#9e2344"
+            stroke="#701530"
+            strokeWidth="1.5"
+          />
+          <circle
+            cx="35"
+            cy="35"
+            r="9"
+            fill="#bd3151"
+            stroke="#701530"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M11 29l2-2m18 4 2-2"
+            stroke="#ec93aa"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        </>
       ) : (
         <circle
           cx="24"
@@ -76,14 +142,20 @@ export default function SatietyIndicator({
   editing = false,
   suggestedType = "general",
   onChange,
+  label,
+  showTypeSelector = true,
+  radioName = "satiety-level",
+  compact = false,
 }) {
   const type = value?.type || suggestedType;
   const level = value?.level || null;
   const metric =
-    satietyTypes.find((item) => item.value === type)?.metric ||
+    (label
+      ? label + " yoğunluğu"
+      : satietyTypes.find((item) => item.value === type)?.metric) ||
     "Doygunluk seviyesi";
   if (!editing && !hasSatiety(value)) return null;
-  const icons = [1, 2, 3, 4, 5].map((number) => (
+  const icons = (compact ? [1] : [1, 2, 3, 4, 5]).map((number) => (
     <span
       key={number}
       className={"satiety-icon" + (number <= level ? " is-filled" : "")}
@@ -93,7 +165,7 @@ export default function SatietyIndicator({
   ));
   return (
     <div className="satiety-information">
-      {editing && (
+      {editing && showTypeSelector && (
         <Select
           label="Doygunluk gösterimi"
           value={type}
@@ -114,7 +186,7 @@ export default function SatietyIndicator({
               <label className="satiety-option" key={index}>
                 <input
                   type="radio"
-                  name="satiety-level"
+                  name={radioName}
                   value={index + 1}
                   checked={level === index + 1}
                   onChange={() => onChange({ type, level: index + 1 })}
@@ -132,26 +204,30 @@ export default function SatietyIndicator({
           role="img"
           aria-label={`${metric}: ${level} / 5 · ${satietyLevels[level - 1]}`}
         >
-          <span className="satiety-metric" aria-hidden="true">
-            {metric}
-          </span>
+          {!compact && (
+            <span className="satiety-metric" aria-hidden="true">
+              {metric}
+            </span>
+          )}
           <span className="satiety-icons" aria-hidden="true">
             {icons}
           </span>
         </div>
       )}
-      <div className="satiety-caption">
-        <strong>
-          {level
-            ? `${level} / 5 · ${satietyLevels[level - 1]}`
-            : "Henüz seçilmedi"}
-        </strong>
-        {editing && level && (
-          <Button type="button" size="small" onClick={() => onChange(null)}>
-            Seçimi temizle
-          </Button>
-        )}
-      </div>
+      {!compact && (
+        <div className="satiety-caption">
+          <strong>
+            {level
+              ? `${level} / 5 · ${satietyLevels[level - 1]}`
+              : "Henüz seçilmedi"}
+          </strong>
+          {editing && level && (
+            <Button type="button" size="small" onClick={() => onChange(null)}>
+              Seçimi temizle
+            </Button>
+          )}
+        </div>
+      )}
       {editing && (
         <p className="satiety-hint">
           1: Çok hafif · 5: Çok yoğun. Ürünleri karşılaştırmak için kullanılan

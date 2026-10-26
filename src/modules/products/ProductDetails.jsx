@@ -7,7 +7,7 @@ import MediaGallery from "../categories/CategoryGallery.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
 import { money } from "../../catalog-tools.js";
 import NutritionTable from "./NutritionTable.jsx";
-import SatietyIndicator from "./SatietyIndicator.jsx";
+import ProductSatiety from "./ProductSatiety.jsx";
 import { hasSatiety } from "../../satiety.js";
 import { productDetailSteps } from "../../product-information.js";
 
@@ -58,7 +58,7 @@ export default function ProductDetails({ product }) {
               open={field.key === "allergens"}
             >
               {field.key === "satiety" ? (
-                <SatietyIndicator value={product.satiety} />
+                <ProductSatiety value={product.satiety} />
               ) : field.key === "nutrition" ? (
                 <NutritionTable value={product.nutrition} />
               ) : (

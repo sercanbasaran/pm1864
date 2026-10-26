@@ -287,7 +287,20 @@ export async function createApp({ env = process.env, database } = {}) {
       if (route === "/api/profile" && method === "PATCH")
         return json({ user: await users.profile(body, user) });
       let catalog;
-      if (route === "/api/variant-types" && method === "POST") {
+      if (route === "/api/satiety-products" && method === "POST") {
+        requirePermission("settings.write");
+        catalog = await service.saveSatietyProduct(body, null, user.email);
+      } else if (
+        (match = route.match(/^\/api\/satiety-products\/([^/]+)$/)) &&
+        method === "PUT"
+      ) {
+        requirePermission("settings.write");
+        catalog = await service.saveSatietyProduct(
+          body,
+          decodeURIComponent(match[1]),
+          user.email,
+        );
+      } else if (route === "/api/variant-types" && method === "POST") {
         requirePermission("products.write");
         catalog = await service.addVariantType(body, user.email);
       } else if (

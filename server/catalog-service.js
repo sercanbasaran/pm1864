@@ -1,3 +1,10 @@
+import {
+  defaultSatietyProducts,
+  satietyEntries,
+  validateSatiety,
+  satietyTypes,
+  upgradeSatiety,
+} from "../src/satiety.js";
 import { categoryPromotion } from "../src/modules/categories/category-promotion.js";
 import {
   productSlug,
@@ -63,6 +70,7 @@ export const seedCatalog = () => ({
     active: true,
   })),
   variantTypes: defaultVariantTypes(),
+  satietyProducts: defaultSatietyProducts(),
   products: [],
   logs: [],
   settings: { skuPrefix: "HM" },
@@ -76,6 +84,7 @@ const text = (v, max = 200) =>
 export function publicCatalog(doc, revision) {
   return {
     revision,
+    satietyProducts: doc.satietyProducts ?? defaultSatietyProducts(),
     categories: doc.categories.map((c) => ({
       ...c,
       salesAvailability: salesAvailability(
@@ -144,6 +153,7 @@ export function createCatalogService(db) {
           "REVISION_CONFLICT",
         );
       const doc = JSON.parse(row.document);
+      upgradeSatiety(doc);
       await fn(doc, tx);
       upgradeHierarchy(doc);
       const document = JSON.stringify(doc);
@@ -259,6 +269,47 @@ export function createCatalogService(db) {
         doc,
         "Ana kategoriye dönüştürüldü",
         `${old.name} · ${plan.parent.name} / ${old.code} → ${plan.category.code} · ${plan.productCount} ürün · mevcut ürün kodları korundu`,
+        actor,
+      );
+    });
+  }
+  async function saveSatietyProduct(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      const old = id ? doc.satietyProducts.find((d) => d.id === id) : null;
+      if (id && !old) throw new ApiError(404, "Doygunluk ürünü bulunamadı.");
+      const name =
+        typeof body.name === "string"
+          ? body.name.trim().replace(/\s+/g, " ")
+          : "";
+      if (!name || name.length > 60)
+        throw new ApiError(422, "Doygunluk ürünü adı 1–60 karakter olmalıdır.");
+      if (!satietyTypes.some((t) => t.value === body.icon))
+        throw new ApiError(422, "Geçerli bir simge seçin.");
+      if (body.active !== undefined && typeof body.active !== "boolean")
+        throw new ApiError(422, "Geçerli bir durum seçin.");
+      if (
+        doc.satietyProducts.some(
+          (d) => d.id !== id && normalizeName(d.name) === normalizeName(name),
+        )
+      )
+        throw new ApiError(422, "Bu doygunluk ürünü zaten var.");
+      if (!old && doc.satietyProducts.length >= 100)
+        throw new ApiError(422, "En fazla 100 doygunluk ürünü eklenebilir.");
+      const definition = {
+        id: old?.id || randomUUID(),
+        name,
+        icon: body.icon,
+        active: body.active ?? old?.active ?? true,
+      };
+      if (old)
+        doc.satietyProducts = doc.satietyProducts.map((d) =>
+          d.id === id ? definition : d,
+        );
+      else doc.satietyProducts.push(definition);
+      audit(
+        doc,
+        old ? "Doygunluk ürünü güncellendi" : "Doygunluk ürünü eklendi",
+        name,
         actor,
       );
     });
@@ -385,6 +436,23 @@ export function createCatalogService(db) {
             : [],
           isNew: !old,
         };
+      const satietyError = validateSatiety(p.satiety, doc.satietyProducts);
+      if (satietyError) throw new ApiError(422, satietyError);
+      p.satiety = satietyEntries(p.satiety).map(({ ingredientId, level }) => ({
+        ingredientId,
+        level,
+      }));
+      if (
+        p.satiety.some(
+          (entry) =>
+            !doc.satietyProducts.find((d) => d.id === entry.ingredientId)
+              ?.active &&
+            !satietyEntries(old?.satiety).some(
+              (e) => e.ingredientId === entry.ingredientId,
+            ),
+        )
+      )
+        throw new ApiError(422, "Pasif doygunluk ürünü eklenemez.");
       const imageInput = input.images ?? old?.images ?? [];
       if (
         !Array.isArray(imageInput) ||
@@ -702,6 +770,7 @@ export function createCatalogService(db) {
               ? p.customImage
               : "",
           catalog.variantTypes,
+          catalog.satietyProducts,
         ),
       ),
     };
@@ -746,6 +815,7 @@ export function createCatalogService(db) {
             ? product.customImage
             : "",
         catalog.variantTypes,
+        catalog.satietyProducts,
       ),
       images: images.map((image) => ({
         id: image.id,
@@ -791,6 +861,7 @@ export function createCatalogService(db) {
       catalog.categories,
       image,
       catalog.variantTypes,
+      catalog.satietyProducts,
     );
   }
   async function publishCard(body, id, actor) {
@@ -821,6 +892,7 @@ export function createCatalogService(db) {
   return {
     read,
     mutate,
+    saveSatietyProduct,
     addVariantType,
     removeVariantType,
     saveCategory,

@@ -1,3 +1,4 @@
+import { upgradeSatiety } from "../src/satiety.js";
 import { upgradeProductIdentity } from "../src/product-identity.js";
 import { upgradeSku } from "../src/sku.js";
 import { upgradeVariantTypes } from "../src/variant-types.js";
@@ -152,7 +153,14 @@ export async function migrate(db, seed) {
     const typesChanged = upgradeVariantTypes(doc);
     const skuChanged = upgradeSku(doc);
     const identityChanged = upgradeProductIdentity(doc);
-    if (hierarchyChanged || typesChanged || skuChanged || identityChanged) {
+    const satietyChanged = upgradeSatiety(doc);
+    if (
+      hierarchyChanged ||
+      typesChanged ||
+      skuChanged ||
+      identityChanged ||
+      satietyChanged
+    ) {
       await tx.query(
         "UPDATE app_catalog SET revision=?,document=? WHERE id=1",
         [Number(row.revision) + 1, JSON.stringify(doc)],

@@ -379,37 +379,60 @@ test("a duplicated product opens as editable new content and posts to creation e
   expect(sent.publicCardEnabled).toBe(false);
 });
 
-test("satiety can be selected, cancelled, saved and cleared without changing other product fields", async () => {
+test("multiple satiety ingredients save independent levels, cancel and remove without changing other fields", async () => {
   const { fetch } = await show();
   await action("Doygunluk bilgisi");
-  expect(document.body.textContent).toContain("Henüz girilmedi.");
   await clickLabel("Doygunluk bilgisi ekle");
-  fireEvent.click(document.querySelector('input[value="3"]'));
+  async function add(id) {
+    const select = document.querySelector("sl-select");
+    select.value = id;
+    fireEvent(select, new CustomEvent("sl-change", { bubbles: true }));
+    await settle();
+    await action("Bilgi ekle");
+  }
+  await add("pistachio");
+  fireEvent.click(
+    document.querySelector('input[name="satiety-pistachio"][value="3"]'),
+  );
   await settle();
-  expect(document.querySelectorAll(".satiety-icon.is-filled")).toHaveLength(3);
   await action("Vazgeç");
   expect(
     fetch.mock.calls.filter(([url]) => url === "/api/products/1"),
   ).toHaveLength(0);
   await clickLabel("Doygunluk bilgisi ekle");
-  fireEvent.click(document.querySelector('input[value="4"]'));
+  await add("pistachio");
+  fireEvent.click(
+    document.querySelector('input[name="satiety-pistachio"][value="4"]'),
+  );
   await settle();
+  await add("walnut");
+  fireEvent.click(
+    document.querySelector('input[name="satiety-walnut"][value="2"]'),
+  );
+  await settle();
+  expect(
+    document.querySelector('input[name="satiety-pistachio"][value="4"]')
+      .checked,
+  ).toBe(true);
+  expect(document.querySelectorAll(".satiety-icon.is-filled")).toHaveLength(6);
   await action("Kaydet");
   let saved = JSON.parse(
     fetch.mock.calls.filter(([url]) => url === "/api/products/1").at(-1)[1]
       .body,
   ).product;
-  expect(saved.satiety).toEqual({ type: "general", level: 4 });
+  expect(saved.satiety).toEqual([
+    { ingredientId: "pistachio", level: 4 },
+    { ingredientId: "walnut", level: 2 },
+  ]);
   expect(saved.variants).toEqual(product.variants);
-  expect(saved.description).toBe(product.description);
   await clickLabel("Doygunluk bilgisi düzenle");
-  await action("Seçimi temizle");
+  await clickLabel("Fıstık doygunluk bilgisini kaldır");
   await action("Kaydet");
   saved = JSON.parse(
     fetch.mock.calls.filter(([url]) => url === "/api/products/1").at(-1)[1]
       .body,
   ).product;
-  expect(saved.satiety).toBeNull();
+  expect(saved.satiety).toEqual([{ ingredientId: "walnut", level: 2 }]);
 });
 
 test("read-only product information does not offer satiety editing", async () => {

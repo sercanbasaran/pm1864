@@ -87,7 +87,11 @@ Varyantlar mevcut `POST /products` ve `PUT /products/:id` üzerinden atomik kayd
 
 ## Doygunluk bilgisi
 
-Ürünlerde isteğe bağlı `satiety` alanı doygunluk bilgisini tutar: `{ "type": "pistachio", "level": 3 }`. `type`: `pistachio`, `walnut` veya `general`; `level`: 1–5 arası tam sayı. `null` değeri seçimi temizler; alan gönderilmezse mevcut seçim korunur. Seviyesi `null` olan bilgi tamamlanmamış sayılır ve ürün kartında gösterilmez. Gösterge bir içerik yüzdesi değil karşılaştırmalı yoğunluk ölçeğidir. Mevcut ürünlere otomatik seviye atanmaz. Ürün kartı API’leri yalnızca tamamlanmış `{type, level}` bilgisini, diğer durumlarda `null` döndürür.
+`catalog.satietyProducts` merkezi tanımları içerir: `{id, name, icon, active}`. İlk kurulumda Fıstık ve Ceviz oluşturulur. `POST /api/satiety-products` ve `PUT /api/satiety-products/:id` için `settings.write` ve güncel `expectedRevision` gerekir. Gövde: `{name, icon, active}`. Adlar benzersizdir; simgeler `pistachio`, `walnut`, `chocolate`, `strawberry`, `cherry`, `general` olabilir. Pasif tanımlar yeni ürün eşleştirmelerinde kullanılamaz; mevcut eşleştirmeler korunur.
+
+Ürünün isteğe bağlı `satiety` alanı bir dizidir: `[{"ingredientId":"pistachio","level":4},{"ingredientId":"walnut","level":2}]`. Her içerik bir kez seçilebilir ve her seviye 1–5 arasında tam sayı olmalıdır. Boş dizi veya `null` seçimleri temizler; alan gönderilmezse mevcut bilgiler korunur. Geçersiz veya bilinmeyen içerikler ve tamamlanmamış satırlar 422 ile reddedilir. Bu ölçek bir içerik yüzdesi değildir. Eski tekli değerler kurulum sırasında seviyeleri korunarak diziye taşınır; eksik ürünlere seviye atanmaz.
+
+Ürün kartı API’leri bu bilgiyi `[{ingredientId, name, icon, level}]` şeklinde güncel merkezi ad ve simgelerle döndürür; boş bilgi `[]` olur. Tanım değişiklikleri tüm bağlı ürünlere yansır.
 
 ## Medya API’si
 
