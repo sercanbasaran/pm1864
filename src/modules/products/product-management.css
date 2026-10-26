@@ -84,7 +84,7 @@
   background: var(--sl-color-neutral-0);
   z-index: 1;
 }
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .product-module .toolbar {
     grid-template-columns: 1fr;
   }
