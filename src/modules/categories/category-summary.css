@@ -1,0 +1,97 @@
+.category-module > .category-summary-accordion {
+  margin-block: var(--sl-spacing-large);
+}
+.category-module .category-summary-accordion::part(content) {
+  padding: var(--sl-spacing-medium);
+}
+.category-module .category-summary-content {
+  gap: var(--sl-spacing-medium);
+}
+.category-summary-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sl-spacing-small);
+}
+.category-summary-channels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sl-spacing-small);
+}
+.category-channel-summary {
+  min-width: 0;
+  padding: var(--sl-spacing-small) var(--sl-spacing-medium);
+  border: 1px solid var(--sl-color-neutral-200);
+  border-radius: var(--sl-border-radius-medium);
+}
+.category-channel-summary h3,
+.category-summary-quality h3 {
+  margin: 0 0 var(--sl-spacing-small);
+  font-size: var(--sl-font-size-small);
+  line-height: 1.4;
+}
+.category-channel-summary dl,
+.category-channel-summary dl > div {
+  display: flex;
+  align-items: center;
+  gap: var(--sl-spacing-small);
+  margin: 0;
+}
+.category-channel-summary dl {
+  flex-wrap: wrap;
+  column-gap: var(--sl-spacing-large);
+}
+.category-channel-summary dt {
+  color: var(--sl-color-neutral-600);
+  font-size: var(--sl-font-size-small);
+}
+.category-channel-summary dd {
+  margin: 0;
+  font-weight: var(--sl-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.category-summary-quality {
+  min-width: 0;
+  padding-top: var(--sl-spacing-small);
+  border-top: 1px solid var(--sl-color-neutral-200);
+}
+.category-summary-quality .category-quality-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sl-spacing-small);
+}
+.category-summary-quality .category-quality-actions sl-button {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.category-summary-quality .control-content {
+  gap: var(--sl-spacing-small);
+}
+.category-list-card .category-filter-accordion {
+  display: block;
+  margin-block: var(--sl-spacing-medium);
+}
+.category-list-card .category-filter-accordion::part(content) {
+  padding: var(--sl-spacing-medium);
+}
+.category-filter-accordion .category-filters {
+  margin-block: 0;
+}
+@media (max-width: 600px) {
+  .category-summary-channels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .category-channel-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sl-spacing-small);
+  }
+  .category-channel-summary h3 {
+    margin: 0;
+  }
+  .category-summary-quality .category-quality-actions sl-button {
+    width: 100%;
+  }
+}

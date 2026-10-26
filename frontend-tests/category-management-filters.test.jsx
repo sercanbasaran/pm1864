@@ -51,7 +51,9 @@ async function choose(label, value) {
 test("summary shows per-channel counts and can be collapsed with its Shoelace header", async () => {
   await setup();
   const cards = [
-    ...document.querySelectorAll(".category-channel-grid sl-card"),
+    ...document.querySelectorAll(
+      ".category-summary-channels .category-channel-summary",
+    ),
   ];
   expect(cards.map((c) => c.querySelector("h3").textContent)).toEqual([
     "Mağaza",
@@ -65,7 +67,18 @@ test("summary shows per-channel counts and can be collapsed with its Shoelace he
     ["0", "0"],
     ["1", "1"],
   ]);
-  const details = document.querySelector("sl-details");
+  const filters = document.querySelector(".category-filter-accordion");
+  expect(filters.summary).toBe("Filtrele");
+  expect(filters.open).toBe(false);
+  expect(
+    document
+      .querySelector('sl-input[aria-label="Kategori ara"]')
+      .closest("sl-details"),
+  ).toBeNull();
+  filters.shadowRoot.querySelector(".details__header").click();
+  await settle();
+  expect(filters.open).toBe(true);
+  const details = document.querySelector(".category-summary-accordion");
   expect(details.open).toBe(true);
   details.shadowRoot.querySelector(".details__header").click();
   await settle();
