@@ -1,3 +1,5 @@
+import UnitPricing from "./UnitPricing.jsx";
+import { hasUnitPricing } from "../../unit-pricing.js";
 import ProductVariantsTable from "./ProductVariantsTable.jsx";
 import React from "react";
 import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
@@ -36,6 +38,7 @@ export default function ProductDetails({ product }) {
             <div className="product-detail-identifiers">
               <SlTag>{product.productCode}</SlTag>
             </div>
+            {hasUnitPricing(product.unitPricing) && <section aria-label="Birim fiyat"><h3>Birim fiyat</h3><UnitPricing value={product.unitPricing} /></section>}
             {product.description && (
               <p className="product-detail-description">
                 {product.description}

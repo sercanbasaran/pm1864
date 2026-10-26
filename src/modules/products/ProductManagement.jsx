@@ -1,3 +1,4 @@
+import UnitPricing from "./UnitPricing.jsx";
 import { variantTypeName } from "../../variant-types.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
@@ -108,19 +109,9 @@ export default function ProductManagement({
       sort === "name"
         ? a.name.localeCompare(b.name, "tr")
         : sort === "price-asc"
-          ? (a.variants.length
-              ? Math.min(...a.variants.map((v) => v.price))
-              : 0) -
-            (b.variants.length
-              ? Math.min(...b.variants.map((v) => v.price))
-              : 0)
+          ? (a.unitPricing?.price ?? 0) - (b.unitPricing?.price ?? 0)
           : sort === "price-desc"
-            ? (b.variants.length
-                ? Math.min(...b.variants.map((v) => v.price))
-                : 0) -
-              (a.variants.length
-                ? Math.min(...a.variants.map((v) => v.price))
-                : 0)
+            ? (b.unitPricing?.price ?? 0) - (a.unitPricing?.price ?? 0)
             : new Date(b.updated) - new Date(a.updated),
     );
   const current = Math.min(page, Math.max(1, Math.ceil(visible.length / 8))),
@@ -155,13 +146,16 @@ export default function ProductManagement({
           "Ürün",
           "Ürün kodu",
           "Ana kategori / Alt kategori",
+          "Birim fiyat TRY",
+          "Ürün birimi",
+          "Birim gramajı (g)",
           "Varyant",
           "Varyant tipi",
           "Dilim adedi",
           "Gramaj (g)",
           "Birim",
           "Ambalaj",
-          "Fiyat TRY",
+          "Varyant fiyatı TRY",
           "Durum",
           ...salesChannels.map((c) => c.label),
         ],
@@ -170,6 +164,9 @@ export default function ProductManagement({
             p.name,
             p.productCode,
             categoryPath(categoryOf(p, categories), categories),
+            p.unitPricing?.price ?? "",
+            p.unitPricing?.unit ?? "",
+            p.unitPricing?.weight ?? "",
             v?.size || "",
             v ? variantTypeName(v, variantTypes) : "",
             v?.slices ?? "",
@@ -281,8 +278,8 @@ export default function ProductManagement({
             >
               <option value="updated">Son güncellenen</option>
               <option value="name">Ürün adı A–Z</option>
-              <option value="price-asc">Fiyat: düşükten yükseğe</option>
-              <option value="price-desc">Fiyat: yüksekten düşüğe</option>
+              <option value="price-asc">Birim fiyat: düşükten yükseğe</option>
+              <option value="price-desc">Birim fiyat: yüksekten düşüğe</option>
             </Select>
             <Button className="btn" onClick={() => setFilters(!filters)}>
               Filtrele
@@ -407,7 +404,7 @@ export default function ProductManagement({
                   </TableHeading>
                   <TableHeading>ÜRÜN</TableHeading>
                   <TableHeading>KATEGORİ</TableHeading>
-                  <TableHeading>FİYAT</TableHeading>
+                  <TableHeading>BİRİM FİYAT</TableHeading>
                   <TableHeading>DURUM</TableHeading>
                   <TableHeading>SATIŞ KANALLARI</TableHeading>
                   <TableHeading>İŞLEMLER</TableHeading>
@@ -445,9 +442,7 @@ export default function ProductManagement({
                       </SlTag>
                     </TableCell>
                     <TableCell>
-                      {p.variants.length
-                        ? money(Math.min(...p.variants.map((v) => v.price)))
-                        : "—"}
+                      {<UnitPricing value={p.unitPricing} compact />}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={p.status} />
@@ -507,11 +502,7 @@ export default function ProductManagement({
                 <p className="product-summary-category">
                   {categoryPath(categoryOf(p, categories), categories)}
                 </p>
-                <strong>
-                  {p.variants.length
-                    ? money(Math.min(...p.variants.map((v) => v.price)))
-                    : "—"}
-                </strong>
+                <UnitPricing value={p.unitPricing} compact />
                 <div className="product-summary-actions">
                   {write && (
                     <Button

@@ -1,3 +1,5 @@
+import UnitPricing from "./UnitPricing.jsx";
+import { hasUnitPricing } from "../../unit-pricing.js";
 import React, { useEffect, useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
@@ -290,6 +292,13 @@ export default function ProductEditor({
                     onChange={setDraft}
                   />,
                   !category,
+                )}
+                {field(
+                  "unitPricing",
+                  "Birim fiyat ve birim",
+                  <UnitPricing value={draft.unitPricing} />,
+                  <UnitPricing value={draft.unitPricing} editing onChange={(unitPricing) => setDraft({ ...draft, unitPricing })} />,
+                  !hasUnitPricing(draft.unitPricing),
                 )}
                 {field(
                   "description",

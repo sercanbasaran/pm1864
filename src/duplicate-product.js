@@ -30,6 +30,7 @@ export function duplicateProduct(source) {
     "category",
     "mainCategoryId",
     "description",
+    "unitPricing",
     "satiety",
     "salesAvailability",
     "images",

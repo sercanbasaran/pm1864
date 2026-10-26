@@ -1,3 +1,4 @@
+import { validateUnitPricing } from "./unit-pricing.js";
 import { defaultVariantTypes } from "./variant-types.js";
 import { validateSalesAvailability } from "./sales-availability.js";
 import { validateProductInformation } from "./product-information.js";
@@ -109,6 +110,8 @@ export function validateProduct(
     )
   )
     return { tab: "Genel bilgiler", message: "Aktif bir kategori seçin." };
+  const unitPriceError = validateUnitPricing(product.unitPricing);
+  if (unitPriceError) return { tab: "Genel bilgiler", message: unitPriceError };
   const salesError =
     validateSalesAvailability(product.salesAvailability) ||
     product.variants

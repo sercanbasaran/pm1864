@@ -1,3 +1,4 @@
+import { validateUnitPricing, normalizeUnitPricing } from "../src/unit-pricing.js";
 import {
   defaultSatietyProducts,
   satietyEntries,
@@ -361,6 +362,8 @@ export function createCatalogService(db) {
       const old = id ? doc.products.find((p) => p.id === Number(id)) : null;
       if (id && !old) throw new ApiError(404, "Ürün bulunamadı.");
       const input = body.product || {};
+      const pricingError = validateUnitPricing(input.unitPricing);
+      if (pricingError) throw new ApiError(422, pricingError);
       const informationError = validateProductInformation(input);
       if (informationError) throw new ApiError(422, informationError);
       const information = Object.fromEntries(
@@ -400,6 +403,7 @@ export function createCatalogService(db) {
             100,
           ),
           description: text(input.description, 4000),
+          unitPricing: normalizeUnitPricing(input.unitPricing === undefined ? old?.unitPricing : input.unitPricing),
           ...information,
           satiety:
             input.satiety === undefined
