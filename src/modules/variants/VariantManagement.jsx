@@ -11,7 +11,6 @@ import SlTab from "@shoelace-style/shoelace/dist/react/tab/index.js";
 import SlTabPanel from "@shoelace-style/shoelace/dist/react/tab-panel/index.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
 import Card from "../../components/ui/Card.jsx";
-import ActionBar from "../../components/ui/ActionBar.jsx";
 import { SalesChannelSummary } from "../../components/ui/SalesChannels.jsx";
 import { salesChannels, effectiveSales } from "../../sales-availability.js";
 import {
@@ -32,6 +31,7 @@ import {
   MagnifyingGlass,
   PencilSimple,
   Copy,
+  DownloadSimple,
   List,
   GridFour,
 } from "@phosphor-icons/react";
@@ -85,11 +85,12 @@ export default function VariantManager({
         (!sub || c?.id === sub) &&
         (!productId || String(p.id) === productId) &&
         (!status || (v.active !== false) === (status === "active")) &&
-        `${p.name} ${p.sku} ${v.size} ${v.sku} ${variantTypeName(v, variantTypes)}`
+        `${p.name} ${p.productCode || ""} ${p.sku || ""} ${v.size} ${v.sku || ""} ${variantTypeName(v, variantTypes)}`
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
     )
     .sort((a, b) => sort === "name" ? String(a.v.size).localeCompare(String(b.v.size), "tr") : sort === "price-asc" ? a.v.price - b.v.price : sort === "price-desc" ? b.v.price - a.v.price : (new Date(b.v.updated || b.p.updated || 0) - new Date(a.v.updated || a.p.updated || 0)));
+  const hasFilters = !!(query || root || sub || productId || status || typeId);
   const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     current = Math.min(page, pages),
     shown = rows.slice((current - 1) * pageSize, current * pageSize);
@@ -197,7 +198,7 @@ export default function VariantManager({
                     )
                   }
                 >
-                  Varyantları indir
+                  <DownloadSimple size={16} /> Dışa aktar
                 </Button>
               </div>
             </div>
@@ -292,11 +293,10 @@ export default function VariantManager({
                 Filtreleri temizle
               </Button>
             </div>
-            <p className="muted">
-              {rows.length} varyant listeleniyor ·{" "}
-              {products.reduce((n, p) => n + p.variants.length, 0)} kayıtlı
-              varyant
-            </p>
+            <div className="variant-results" role="status">
+              <span>{rows.length} varyant listeleniyor · {products.reduce((n, p) => n + p.variants.length, 0)} kayıtlı varyant</span>
+              {hasFilters && <Button type="button" size="small" onClick={clearFilters}>Filtreleri temizle</Button>}
+            </div>
             <div
               className={"table-scroll variant-desktop-table " + (view === "grid" ? "variant-view-hidden" : "")}
               hidden={!rows.length}
@@ -315,7 +315,7 @@ export default function VariantManager({
                     <TableHeading>SATIŞ FİYATI</TableHeading>
                     <TableHeading>DURUM</TableHeading>
                     <TableHeading>SATIŞ KANALLARI</TableHeading>
-                    <TableHeading />
+                    <TableHeading>İŞLEMLER</TableHeading>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -357,7 +357,8 @@ export default function VariantManager({
                         />
                       </TableCell>
                       <TableCell>
-                        {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title="Varyantı çoğalt" disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /></Button>}
+                        <div className="variant-row-actions">
+                        {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title={p.variants.length >= 50 ? "Bir üründe en fazla 50 varyant olabilir" : "Varyantı çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /></Button>}
                         <Button
                           className="btn"
                           onClick={() => onEdit(p, false)}
@@ -365,6 +366,7 @@ export default function VariantManager({
                           <PencilSimple size={15} />
                           {canWrite ? "Yönet" : "Görüntüle"}
                         </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -375,7 +377,8 @@ export default function VariantManager({
               <div className="empty">
                 <Stack size={30} />
                 <h3>Varyant bulunamadı</h3>
-                <p>Filtreleri değiştirin veya bir ürüne varyant ekleyin.</p>
+                <p>{hasFilters ? "Arama veya filtrelerinizi değiştirerek tekrar deneyin." : "Henüz eklenmiş bir varyant bulunmuyor."}</p>
+                {hasFilters && <Button type="button" onClick={clearFilters}>Filtreleri temizle</Button>}
               </div>
             )}
             <div className={"variant-mobile-cards " + (view === "grid" ? "variant-view-grid" : "")}>
@@ -389,10 +392,9 @@ export default function VariantManager({
                       {v.active !== false ? "Aktif" : "Pasif"}
                     </SlBadge>
                   </div>
-                  <p>{p.name}</p>
-                  <small>
-                    {categoryPath(c, categories)} · {v.sku}
-                  </small>
+                  <p className="variant-card-product">{p.name}</p>
+                  <small className="variant-card-meta">{categoryPath(c, categories)} · {v.sku || "—"}</small>
+                  <small className="variant-card-type">{variantTypeName(v, variantTypes)}</small>
                   <dl>
                     <div>
                       <dt>Miktar</dt>
@@ -413,10 +415,12 @@ export default function VariantManager({
                       <dd>{v.packaging || "—"}</dd>
                     </div>
                   </dl>
+                  <div className="variant-card-actions">
                   {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /> Varyantı çoğalt</Button>}
                   <Button type="button" onClick={() => onEdit(p, false)}>
                     {canWrite ? "Yönet" : "Görüntüle"}
                   </Button>
+                  </div>
                 </article>
               ))}
             </div>

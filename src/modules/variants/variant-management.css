@@ -149,3 +149,37 @@
 @media(max-width:1100px) { .category-module .category-list-toolbar, .variant-module .variant-list-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); } .category-module .category-list-toolbar > :first-child, .variant-module .variant-list-toolbar > :first-child { grid-column:1/-1; } }
 
 .variant-module .variant-filters:not([hidden]) { padding:1rem; border:1px solid var(--sl-color-neutral-200); border-radius:.5rem; background:var(--sl-color-neutral-50); }
+
+.variant-module .variant-list-toolbar .icon-btn[aria-pressed="true"]::part(base) {
+  background: var(--sl-color-primary-600);
+  border-color: var(--sl-color-primary-600);
+  color: white;
+}
+.variant-module .variant-results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+  padding-top: 1rem;
+  margin: 1rem 0;
+  border-top: 1px solid var(--sl-color-neutral-200);
+  color: var(--sl-color-neutral-600);
+  font-size: .875rem;
+}
+.variant-module .variant-desktop-table table { min-width: 76rem; }
+.variant-module .variant-desktop-table th { white-space: nowrap; }
+.variant-module .variant-row-actions { display: flex; align-items: center; gap: .5rem; white-space: nowrap; }
+.variant-module .variant-view-grid article { display: flex; flex-direction: column; gap: .5rem; }
+.variant-module .variant-view-grid .variant-card-product { margin: 0; }
+.variant-module .variant-view-grid .variant-card-meta,
+.variant-module .variant-view-grid .variant-card-type { color: var(--sl-color-neutral-600); }
+.variant-module .variant-view-grid dl { margin: .5rem 0; }
+.variant-module .variant-view-grid .variant-card-actions { display: flex; flex-direction: column; gap: .5rem; margin-top: auto; }
+.variant-module .variant-card-actions sl-button,
+.variant-module .variant-card-actions sl-button::part(base) { width: 100%; }
+.variant-module .variant-manager .empty { text-align: center; padding: 2rem 1rem; }
+.variant-module .variant-manager .empty sl-button { margin: .25rem; }
+@media (max-width: 767px) {
+  .variant-module .variant-results > sl-button { width: 100%; }
+}
