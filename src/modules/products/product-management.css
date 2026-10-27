@@ -151,3 +151,8 @@
 
 .product-module .toolbar-right .icon-btn[aria-pressed="true"]::part(base) { background: var(--sl-color-primary-600); border-color: var(--sl-color-primary-600); color: white; }
 .product-module .toolbar-right .icon-btn[aria-pressed="true"]:hover::part(base) { background: var(--sl-color-primary-700); border-color: var(--sl-color-primary-700); }
+
+.product-module .product-summary-image-link { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.product-module .product-summary-image-link:focus-visible { outline: 2px solid var(--sl-color-primary-600); outline-offset: 3px; }
+.product-module .product-summary-actions { display: flex; flex-direction: column; width: 100%; }
+.product-module .product-summary-actions > sl-button, .product-module .product-summary-actions > sl-button::part(base) { width: 100%; }

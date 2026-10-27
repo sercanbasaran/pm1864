@@ -453,7 +453,7 @@ export default function ProductManagement({
                       </Button>
                     </TableCell>
                     <TableCell>
-                      <SlTag>
+                      <SlTag size="small">
                         {categoryPath(categoryOf(p, categories), categories)}
                       </SlTag>
                     </TableCell>
@@ -505,7 +505,9 @@ export default function ProductManagement({
           <div className="product-grid">
             {shown.map((p) => (
               <Card className="product-summary-card" key={p.id}>
-                <ProductImage product={p} />
+                <button type="button" className="product-summary-image-link" aria-label={p.name + " detayını aç"} onClick={() => onEdit(p)}>
+                  <ProductImage product={p} />
+                </button>
                 <StatusBadge status={p.status} />
                 <h3 title={p.name}>{p.name}</h3>
                 <small>{p.productCode}</small>
