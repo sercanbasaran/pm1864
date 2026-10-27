@@ -55,10 +55,7 @@ export default function AppShell({
         <small>1864 USTA</small>
       </div>
       <nav aria-label="Yönetim modülleri">
-        {links(primaryModules.filter((module) => !module.children))}
-        {primaryModules
-          .filter((module) => module.children && can(user, module.permission))
-          .map((group) => (
+        {primaryModules.filter((module) => can(user, module.permission)).map((group) => group.children ? (
             <SlDetails
               key={
                 group.id +
@@ -90,7 +87,7 @@ export default function AppShell({
                 {links(visibleChildren(group, user, can))}
               </div>
             </SlDetails>
-          ))}
+          ) : links([group]))}
       </nav>
     </div>
   );

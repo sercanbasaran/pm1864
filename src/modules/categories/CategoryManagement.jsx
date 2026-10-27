@@ -45,6 +45,8 @@ import {
   FolderSimple,
   ArrowRight,
   MagnifyingGlass,
+  List,
+  GridFour,
 } from "@phosphor-icons/react";
 import {
   slugify,
@@ -72,6 +74,8 @@ export default function CategoryManager({
   const [draft, setDraft] = useState(null),
     [filters, setFilters] = useState({ ...emptyCategoryFilters }),
     [sort, setSort] = useState({ key: "hierarchy", direction: "asc" }),
+    [filtersOpen, setFiltersOpen] = useState(false),
+    [view, setView] = useState(() => { try { return sessionStorage.getItem("category-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } }),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
   const [editingField, setEditingField] = useState(null);
@@ -330,38 +334,6 @@ export default function CategoryManager({
     </Button>
   ) : null;
   const rows = categoryRows(categories, products, filters, sort);
-  function sortColumn(key, label) {
-    const selected = sort.key === key;
-    return (
-      <TableHeading
-        scope="col"
-        aria-sort={
-          selected
-            ? sort.direction === "asc"
-              ? "ascending"
-              : "descending"
-            : "none"
-        }
-      >
-        <Button
-          type="button"
-          size="small"
-          className="category-sort-button"
-          onClick={() =>
-            setSort({
-              key,
-              direction: selected && sort.direction === "asc" ? "desc" : "asc",
-            })
-          }
-        >
-          {label}
-          <span aria-hidden="true">
-            {selected ? (sort.direction === "asc" ? " ↑" : " ↓") : " ↕"}
-          </span>
-        </Button>
-      </TableHeading>
-    );
-  }
   return (
     <>
       {!route.split("?")[0].includes("/") && (
@@ -373,51 +345,27 @@ export default function CategoryManager({
           <CategorySummary
             categories={categories}
             products={products}
-            onQuality={(quality) =>
-              setFilters({ ...emptyCategoryFilters, quality: [quality] })
-            }
+            onQuality={(quality) => { setFilters({ ...emptyCategoryFilters, quality: [quality] }); setFiltersOpen(true); }}
           />
           <Card className="category-list-card">
-            <div className="category-toolbar">
-              <div>
-                <h2>Kategori listesi</h2>
-                <p>
-                  {main.length} ana kategori · {categories.length - main.length}{" "}
-                  alt kategori
-                </p>
-              </div>
-              <div className="search">
-                <Input
-                  prefix={<MagnifyingGlass size={17} />}
-                  label="Kategori ara"
-                  aria-label="Kategori ara"
-                  placeholder="Ana kategori, alt kategori veya kod ara"
-                  value={filters.query}
-                  onChange={(e) =>
-                    setFilters({ ...filters, query: e.target.value })
-                  }
-                />
-              </div>
+            <div className="category-list-title"><h2>Kategori listesi</h2><p>{main.length} ana kategori · {categories.length - main.length} alt kategori</p></div>
+            <div className="category-list-toolbar">
+              <Input prefix={<MagnifyingGlass size={17} />} label="Kategori ara" aria-label="Kategori ara" placeholder="Ana kategori, alt kategori veya kod ara" value={filters.query} onChange={(e) => setFilters({ ...filters, query: e.target.value })} />
+              <Select label="Durum filtresi" aria-label="Kategori durum filtresi" value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}><option value="">Tüm durumlar</option><option value="active">Aktif</option><option value="inactive">Pasif</option></Select>
+              <Select label="Kategori sıralaması" aria-label="Kategori sıralaması" value={sort.key + ":" + sort.direction} onChange={(e) => { const [key, direction] = e.target.value.split(":"); setSort({ key, direction }); }}><option value="hierarchy:asc">Hiyerarşik sıra</option><option value="name:asc">Kategori adı A–Z</option><option value="name:desc">Kategori adı Z–A</option><option value="code:asc">Kod: küçükten büyüğe</option><option value="code:desc">Kod: büyükten küçüğe</option><option value="count:desc">Ürün sayısı: çoktan aza</option><option value="count:asc">Ürün sayısı: azdan çoğa</option></Select>
+              <Button type="button" aria-expanded={filtersOpen} aria-controls="category-filter-panel" onClick={() => setFiltersOpen(!filtersOpen)}>{filtersOpen ? "Filtreleri Kapat" : "Filtreleri Aç"}</Button>
+              <Button type="button" className="icon-btn" aria-label="Liste görünümü" aria-pressed={view === "list" ? "true" : "false"} onClick={() => { setView("list"); try { sessionStorage.setItem("category-list-view", "list"); } catch {} }}><List size={18} /></Button>
+              <Button type="button" className="icon-btn" aria-label="Döşeme görünümü" aria-pressed={view === "grid" ? "true" : "false"} onClick={() => { setView("grid"); try { sessionStorage.setItem("category-list-view", "grid"); } catch {} }}><GridFour size={18} /></Button>
             </div>
-            <CategoryFilters
-              categories={categories}
-              filters={filters}
-              onChange={setFilters}
-            />
+            <CategoryFilters categories={categories} filters={filters} onChange={setFilters} open={filtersOpen} />
             <div className="category-results">
               <span>
                 {rows.length} / {categories.length} kategori gösteriliyor
               </span>
-              <Button
-                type="button"
-                size="small"
-                onClick={() => setSort({ key: "hierarchy", direction: "asc" })}
-              >
-                Hiyerarşik sıraya dön
-              </Button>
             </div>
             <div
               className="table-scroll"
+              hidden={view !== "list"}
               tabIndex={0}
               role="region"
               aria-label="Kategori listesi"
@@ -425,11 +373,11 @@ export default function CategoryManager({
               <Table className="category-table" aria-label="Kategoriler">
                 <TableHead>
                   <TableRow>
-                    {sortColumn("name", "Kategori adı")}
-                    {sortColumn("code", "Kod")}
-                    {sortColumn("type", "Tür")}
-                    {sortColumn("status", "Durum")}
-                    {sortColumn("count", "Ürün sayısı")}
+                    <TableHeading scope="col">Kategori adı</TableHeading>
+                    <TableHeading scope="col">Kod</TableHeading>
+                    <TableHeading scope="col">Tür</TableHeading>
+                    <TableHeading scope="col">Durum</TableHeading>
+                    <TableHeading scope="col">Ürün sayısı</TableHeading>
                     <TableHeading scope="col">İşlemler</TableHeading>
                   </TableRow>
                 </TableHead>
@@ -561,6 +509,25 @@ export default function CategoryManager({
                 </TableBody>
               </Table>
             </div>
+            {view === "grid" && <div className="category-card-grid">{rows.map((category) => {
+              const parent = main.find((c) => c.id === category.parentId);
+              const active = category.active && (!category.parentId || parent?.active);
+              const count = categoryProductCount(category, categories, products);
+              return <article key={category.id} className="category-grid-card">
+                <SlBadge variant={active ? "success" : "neutral"}>{active ? "Aktif" : "Pasif"}</SlBadge>
+                <div className="category-grid-meta"><SlBadge variant="neutral">{category.code}</SlBadge><SlBadge variant="neutral">{category.parentId ? "Alt kategori" : "Ana kategori"}</SlBadge></div>
+                {parent && <small>{parent.name}</small>}
+                <h3>{category.name}</h3>
+                {category.description && <p>{category.description}</p>}
+                <p>{count} ürün</p>
+                <div className="category-grid-actions">
+                  {!readOnly && <Button type="button" onClick={() => start(category)}>Düzenle</Button>}
+                  {!readOnly && !category.parentId && <Button type="button" onClick={() => start(null, category.id)}>Alt kategori ekle</Button>}
+                  <Button type="button" onClick={() => onProducts(category.id)}>{category.parentId ? "Ürünler" : "Tüm ürünler"}</Button>
+                  {canCreateProduct && <Button type="button" disabled={!active} onClick={() => onNewProduct(category.id)}>Ürün ekle</Button>}
+                </div>
+              </article>;
+            })}{!rows.length && <p>Kategori bulunamadı.</p>}</div>}
           </Card>
         </section>
       )}

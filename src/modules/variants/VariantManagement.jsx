@@ -1,7 +1,6 @@
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import "./variant-management.css";
 import Modal from "../../components/ui/Modal.jsx";
-import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
 import Pagination from "../../components/ui/Pagination.jsx";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import VariantTypeManagement from "./VariantTypeManagement.jsx";
@@ -50,6 +49,7 @@ export default function VariantManager({
     [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
     [filtersOpen, setFiltersOpen] = useState(false),
+    [sort, setSort] = useState("updated"),
     [view, setView] = useState(() => { try { return sessionStorage.getItem("variant-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } });
   const eligible = products.filter(
     (p) =>
@@ -86,7 +86,8 @@ export default function VariantManager({
         `${p.name} ${p.sku} ${v.size} ${v.sku} ${variantTypeName(v, variantTypes)}`
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
-    );
+    )
+    .sort((a, b) => sort === "name" ? String(a.v.size).localeCompare(String(b.v.size), "tr") : sort === "price-asc" ? a.v.price - b.v.price : sort === "price-desc" ? b.v.price - a.v.price : (new Date(b.v.updated || b.p.updated || 0) - new Date(a.v.updated || a.p.updated || 0)));
   const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     current = Math.min(page, pages),
     shown = rows.slice((current - 1) * pageSize, current * pageSize);
@@ -198,26 +199,15 @@ export default function VariantManager({
                 </Button>
               </div>
             </div>
-            <div className="module-toolbar">
-              <div className="search">
-                <Input
-                  prefix={<MagnifyingGlass size={17} />}
-                  aria-label="Varyant ara"
-                  value={query}
-                  label="Varyant ara"
-                  placeholder="Ürün, varyant adı veya kod ara"
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setPage(1);
-                  }}
-                />
-              </div>
+            <div className="variant-list-toolbar">
+              <Input prefix={<MagnifyingGlass size={17} />} aria-label="Varyant ara" value={query} label="Varyant ara" placeholder="Ürün, varyant adı veya kod ara" onChange={(e) => { setQuery(e.target.value); setPage(1); }} />
+              <Select label="Durum filtresi" aria-label="Varyant durum filtresi" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}><option value="">Tüm durumlar</option><option value="active">Aktif</option><option value="inactive">Pasif</option></Select>
+              <Select label="Varyant sıralaması" aria-label="Varyant sıralaması" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}><option value="updated">Son güncellenen</option><option value="name">Varyant adı A–Z</option><option value="price-asc">Fiyat: düşükten yükseğe</option><option value="price-desc">Fiyat: yüksekten düşüğe</option></Select>
+              <Button type="button" aria-expanded={filtersOpen} aria-controls="variant-filter-panel" onClick={() => setFiltersOpen(!filtersOpen)}>{filtersOpen ? "Filtreleri Kapat" : "Filtreleri Aç"}</Button>
+              <Button type="button" className="icon-btn" aria-label="Liste görünümü" aria-pressed={view === "list" ? "true" : "false"} onClick={() => { setView("list"); try { sessionStorage.setItem("variant-list-view", "list"); } catch {} }}><List size={18} /></Button>
+              <Button type="button" className="icon-btn" aria-label="Döşeme görünümü" aria-pressed={view === "grid" ? "true" : "false"} onClick={() => { setView("grid"); try { sessionStorage.setItem("variant-list-view", "grid"); } catch {} }}><GridFour size={18} /></Button>
             </div>
-            <div className="variant-view-actions">
-              <Button type="button" className="icon-btn" aria-label="Liste görünümü" aria-pressed={view === "list"} onClick={() => { setView("list"); try { sessionStorage.setItem("variant-list-view", "list"); } catch {} }}><List size={18} /></Button>
-              <Button type="button" className="icon-btn" aria-label="Kart görünümü" aria-pressed={view === "grid"} onClick={() => { setView("grid"); try { sessionStorage.setItem("variant-list-view", "grid"); } catch {} }}><GridFour size={18} /></Button>
-            </div>
-            <SlDetails summary={filtersOpen ? "Filtreleri Kapat" : "Filtreleri Aç"} onSlShow={() => setFiltersOpen(true)} onSlHide={() => setFiltersOpen(false)} className="variant-filters">
+            <div id="variant-filter-panel" className="variant-filters" hidden={!filtersOpen}>
               <div className="variant-filter-grid">
                 <Select
                   label="Ana kategori"
@@ -281,19 +271,6 @@ export default function VariantManager({
                     ))}
                 </Select>
                 <Select
-                  label="Durum"
-                  aria-label="Varyant durumu"
-                  value={status}
-                  onChange={(e) => {
-                    setStatus(e.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="">Tüm durumlar</option>
-                  <option value="active">Aktif</option>
-                  <option value="inactive">Pasif</option>
-                </Select>
-                <Select
                   label="Varyant tipi filtresi"
                   value={typeId}
                   onChange={(e) => {
@@ -312,7 +289,7 @@ export default function VariantManager({
               <Button type="button" size="small" onClick={clearFilters}>
                 Filtreleri temizle
               </Button>
-            </SlDetails>
+            </div>
             <p className="muted">
               {rows.length} varyant listeleniyor ·{" "}
               {products.reduce((n, p) => n + p.variants.length, 0)} kayıtlı

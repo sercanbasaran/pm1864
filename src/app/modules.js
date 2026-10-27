@@ -234,8 +234,7 @@ export const newMainModules = [
 ];
 export const primaryModules = [
   existingModules[0],
-  ...moduleGroups,
-  ...newMainModules,
+  ...["product-management", "channel-management", "sales-management", "campaign-management", "user-management", "packaging-center", "library", "system-settings"].map((id) => [...moduleGroups, ...newMainModules].find((module) => module.id === id)),
 ];
 export const modules = [
   ...existingModules,

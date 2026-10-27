@@ -1,12 +1,10 @@
-import React, { useState } from "react";
-import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
+import React from "react";
 import { Button, Select } from "../../components/ui/Controls.jsx";
 import { categoryRows } from "./category-list.js";
 import { salesChannels } from "../../sales-availability.js";
 import { emptyCategoryFilters } from "./category-list.js";
 
-export default function CategoryFilters({ categories, filters, onChange }) {
-  const [open, setOpen] = useState(false);
+export default function CategoryFilters({ categories, filters, onChange, open }) {
   const field = (key, label, options, multiple = true) => (
     <Select
       label={label}
@@ -26,7 +24,7 @@ export default function CategoryFilters({ categories, filters, onChange }) {
     </Select>
   );
   return (
-    <SlDetails summary={open ? "Filtreleri Kapat" : "Filtreleri Aç"} onSlShow={() => setOpen(true)} onSlHide={() => setOpen(false)} className="category-filter-accordion">
+    <div id="category-filter-panel" className="category-filter-accordion" hidden={!open}>
       <div className="category-filters">
         {field("type", "Kategori türü", [
           ["", "Tüm türler"],
@@ -60,16 +58,6 @@ export default function CategoryFilters({ categories, filters, onChange }) {
             </option>
           ))}
         </Select>
-        {field(
-          "status",
-          "Kategori durumu",
-          [
-            ["", "Tüm durumlar"],
-            ["active", "Aktif"],
-            ["inactive", "Pasif"],
-          ],
-          false,
-        )}
         {field("channel", "Satış kanalı", [
           ["", "Tüm kanallar"],
           ...salesChannels.map((c) => [c.key, c.label]),
@@ -98,6 +86,6 @@ export default function CategoryFilters({ categories, filters, onChange }) {
           Filtreleri temizle
         </Button>
       </div>
-    </SlDetails>
+    </div>
   );
 }

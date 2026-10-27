@@ -68,20 +68,16 @@ test("summary shows per-channel counts and can be collapsed with its Shoelace he
     ["1", "1"],
   ]);
   const filters = document.querySelector(".category-filter-accordion");
-  expect(filters.summary).toBe("Filtrele");
-  expect(filters.open).toBe(false);
+  expect(filters.hidden).toBe(true);
   expect(
     document
       .querySelector('sl-input[aria-label="Kategori ara"]')
       .closest("sl-details"),
   ).toBeNull();
-  filters.shadowRoot.querySelector(".details__header").click();
+  fireEvent.click(button("Filtreleri Aç"));
   await settle();
-  expect(filters.open).toBe(true);
+  expect(filters.hidden).toBe(false);
   const details = document.querySelector(".category-summary-accordion");
-  expect(details.open).toBe(true);
-  details.shadowRoot.querySelector(".details__header").click();
-  await settle();
   expect(details.open).toBe(false);
   details.shadowRoot.querySelector(".details__header").click();
   await settle();
@@ -103,22 +99,25 @@ test("filters combine, quality links filter records and clearing restores the co
   expect(rows()).toHaveLength(2);
   expect(document.querySelector("tbody").textContent).not.toContain("Fıstıklı");
 });
-test("column buttons toggle sort direction and hierarchy order can be restored", async () => {
+test("sort selector orders categories and restores hierarchy", async () => {
   await setup();
-  fireEvent.click(button("Kod"));
-  await settle();
-  expect(
-    document.querySelectorAll("thead th")[1].getAttribute("aria-sort"),
-  ).toBe("ascending");
-  fireEvent.click(button("Kod"));
-  await settle();
+  await choose("Kategori sıralaması", "code:desc");
   expect(rows()[0].textContent).toContain("Lokum");
-  expect(
-    document.querySelectorAll("thead th")[1].getAttribute("aria-sort"),
-  ).toBe("descending");
-  fireEvent.click(button("Hiyerarşik sıraya dön"));
-  await settle();
+  expect(button("Kod")).toBeUndefined();
+  await choose("Kategori sıralaması", "hierarchy:asc");
   expect(rows()[0].textContent).toContain("Baklava");
+});
+test("category view can switch between list and grid", async () => {
+  await setup();
+  const grid = document.querySelector('sl-button[aria-label="Döşeme görünümü"]');
+  fireEvent.click(grid);
+  await settle();
+  expect(document.querySelectorAll(".category-grid-card")).toHaveLength(3);
+  expect(grid.getAttribute("aria-pressed")).toBe("true");
+  expect(document.querySelector('.table-scroll').hidden).toBe(true);
+  fireEvent.click(document.querySelector('sl-button[aria-label="Liste görünümü"]'));
+  await settle();
+  expect(rows()).toHaveLength(3);
 });
 test("category filters support multiple selections and show hierarchical category badges", async () => {
   await setup();

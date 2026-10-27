@@ -390,6 +390,7 @@ export default function ProductManagement({
             )}
           </div>
         )}
+        {price && view === "grid" && shown.length > 0 && <div className="product-grid-select-all"><Input type="checkbox" aria-label="Sayfadaki tüm ürünleri seç" checked={shown.every((p) => selected.includes(p.id))} onChange={() => setSelected(shown.every((p) => selected.includes(p.id)) ? selected.filter((id) => !shown.some((p) => p.id === id)) : [...new Set([...selected, ...shown.map((p) => p.id)])])} /><span>Sayfadaki tüm ürünleri seç</span></div>}
         {view === "list" ? (
           <div
             className="table-scroll"
@@ -511,6 +512,7 @@ export default function ProductManagement({
           <div className="product-grid">
             {shown.map((p) => (
               <Card className="product-summary-card" key={p.id}>
+                {price && <div className="product-grid-selection"><Input type="checkbox" aria-label={p.name + " seç"} checked={selected.includes(p.id)} onChange={() => toggle(p.id)} /></div>}
                 <button type="button" className="product-summary-image-link" aria-label={p.name + " detayını aç"} onClick={() => onEdit(p)}>
                   <ProductImage product={p} />
                 </button>
