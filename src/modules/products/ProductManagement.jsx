@@ -10,7 +10,6 @@ import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import Card from "../../components/ui/Card.jsx";
 import ActionBar from "../../components/ui/ActionBar.jsx";
-import { SalesChannelSummary } from "../../components/ui/SalesChannels.jsx";
 import { salesChannels, effectiveSales } from "../../sales-availability.js";
 import {
   Button,
@@ -423,7 +422,6 @@ export default function ProductManagement({
                   <TableHeading>KATEGORİ</TableHeading>
                   <TableHeading>BİRİM FİYAT</TableHeading>
                   <TableHeading>DURUM</TableHeading>
-                  <TableHeading>SATIŞ KANALLARI</TableHeading>
                   <TableHeading>İŞLEMLER</TableHeading>
                 </TableRow>
               </TableHead>
@@ -463,12 +461,6 @@ export default function ProductManagement({
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={p.status} />
-                    </TableCell>
-                    <TableCell>
-                      <SalesChannelSummary
-                        categories={categories}
-                        product={p}
-                      />
                     </TableCell>
                     <TableCell>
                       <div className="product-list-actions">
