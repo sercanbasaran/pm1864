@@ -165,3 +165,5 @@
 .product-module .product-summary-card { align-content: start; }
 .product-module .product-summary-card h3 { margin: .35rem 0 .15rem; }
 .product-module .product-summary-meta, .product-module .product-summary-category { margin: .25rem 0 0; }
+
+.product-module .product-catalog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; margin-left: auto; }

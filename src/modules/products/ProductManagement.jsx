@@ -29,6 +29,7 @@ import {
   List,
   GridFour,
   DownloadSimple,
+  UploadSimple,
   Tag,
   PencilSimple,
   QrCode,
@@ -250,11 +251,13 @@ export default function ProductManagement({
               ürün
             </p>
           </div>
-          {write && <Button type="button" onClick={() => setImportOpen(true)}>Excel içe aktar</Button>}
-          <Button type="button" onClick={exportRows}>
-            <DownloadSimple size={16} />
-            Dışa aktar
-          </Button>
+          <div className="product-catalog-actions">
+            {write && <Button type="button" onClick={() => setImportOpen(true)}><UploadSimple size={16} /> Excel içe aktar</Button>}
+            <Button type="button" onClick={exportRows}>
+              <DownloadSimple size={16} />
+              Dışa aktar
+            </Button>
+          </div>
         </div>
         <div className="toolbar">
           <div className="search">
