@@ -3,15 +3,14 @@ import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import { Camera, Trash } from "@phosphor-icons/react";
 import { Button, Input } from "../../components/ui/Controls.jsx";
 import UserAvatar from "../../components/ui/UserAvatar.jsx";
+import useImageDrop from "../../components/ui/useImageDrop.js";
 import { request } from "../../api.js";
 export default function AvatarSettings({ user, onChanged }) {
   const input = useRef(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
-  async function upload(e) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
+  async function uploadFile(file) {
     if (!file || busy) return;
     setError("");
     setMessage("");
@@ -48,6 +47,7 @@ export default function AvatarSettings({ user, onChanged }) {
       setBusy(false);
     }
   }
+  const { dragging, dropProps } = useImageDrop(files => uploadFile(files[0]), busy);
   async function remove() {
     if (busy) return;
     setBusy(true);
@@ -68,7 +68,8 @@ export default function AvatarSettings({ user, onChanged }) {
   }
   return (
     <section
-      className="avatar-settings"
+      className={`avatar-settings image-drop-target${dragging ? " is-dragging" : ""}`}
+      {...dropProps}
       aria-labelledby="avatar-settings-title"
       aria-busy={busy}
     >
@@ -76,7 +77,7 @@ export default function AvatarSettings({ user, onChanged }) {
       <div className="avatar-settings-content">
         <UserAvatar user={user} className="account-avatar" />
         <div>
-          <p>PNG, JPEG, WEBP veya GIF · En fazla 2 MB</p>
+          <p>PNG, JPEG, WEBP veya GIF · En fazla 2 MB<br />Fotoğrafı buraya sürükleyip bırakabilirsiniz.</p>
           <Input
             ref={input}
             type="file"
@@ -84,7 +85,7 @@ export default function AvatarSettings({ user, onChanged }) {
             aria-label="Profil fotoğrafı dosyası"
             accept="image/png,image/jpeg,image/webp,image/gif"
             disabled={busy}
-            onChange={upload}
+            onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; uploadFile(file); }}
           />
           <div className="overview-actions">
             <Button

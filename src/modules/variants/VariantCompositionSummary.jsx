@@ -20,7 +20,7 @@ export default function VariantCompositionSummary({ variants }) {
                       return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`;
                     }).join(" · ")
                   : `${products.find((p) => p.id === v.sourceProductId)?.name || "Ürün"} · ${v.quantity} ${v.unit}`}
-                {" · "}{v.weight} g
+                {" · "}≈ {v.weight} g
               </p>
               <p>
                 Hesaplanan fiyat: {money(v.calculatedPrice)} · Satış fiyatı:{" "}

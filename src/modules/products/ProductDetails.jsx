@@ -66,7 +66,7 @@ export default function ProductDetails({ product }) {
                 <div>
                   <dt>Birim gramaj</dt>
                   <dd>
-                    {new Intl.NumberFormat("tr-TR").format(
+                    ≈ {new Intl.NumberFormat("tr-TR").format(
                       product.unitPricing.weight,
                     )}{" "}
                     g / {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
@@ -77,7 +77,7 @@ export default function ProductDetails({ product }) {
             {product.variantPricing && (
               <dl className="public-unit-pricing">
                 <div><dt>Satış fiyatı</dt><dd>{money(product.variantPricing.price)}</dd></div>
-                <div><dt>Net gramaj</dt><dd>{new Intl.NumberFormat("tr-TR").format(product.variantPricing.weight)} g</dd></div>
+                <div><dt>Net gramaj</dt><dd>≈ {new Intl.NumberFormat("tr-TR").format(product.variantPricing.weight)} g</dd></div>
               </dl>
             )}
             {product.salesAvailability && (

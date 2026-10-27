@@ -308,7 +308,7 @@ export default function VariantManager({
                         </Button>
                       </TableCell>
                       <TableCell>
-                        {v.weight} g{v.slices > 0 ? ` / ${v.slices} dilim` : ""}
+                        ≈ {v.weight} g{v.slices > 0 ? ` / ${v.slices} dilim` : ""}
                       </TableCell>
                       <TableCell>
                         <div className="variant-serving-cell">
@@ -369,7 +369,7 @@ export default function VariantManager({
                     </div>
                     <div>
                       <dt>Gramaj</dt>
-                      <dd>{v.weight} g</dd>
+                      <dd>≈ {v.weight} g</dd>
                     </div>
                     <div>
                       <dt>Satış fiyatı</dt>

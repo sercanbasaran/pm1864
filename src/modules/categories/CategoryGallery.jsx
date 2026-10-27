@@ -1,6 +1,7 @@
 import { Plus } from "@phosphor-icons/react";
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui/Controls.jsx";
+import useImageDrop from "../../components/ui/useImageDrop.js";
 import { uploadFile } from "../media/media-api.js";
 
 export default function CategoryGallery({
@@ -30,10 +31,8 @@ export default function CategoryGallery({
     );
     return () => clearInterval(timer);
   }, [paused, images.length]);
-  async function upload(event) {
-    const files = [...event.target.files];
-    event.target.value = "";
-    if (!files.length) return;
+  async function uploadFiles(files) {
+    if (!files.length || disabled || uploading || !editable) return;
     setUploading(true);
     setError("");
     const added = [];
@@ -67,6 +66,7 @@ export default function CategoryGallery({
       setUploading(false);
     }
   }
+  const { dragging, dropProps } = useImageDrop(uploadFiles, disabled || uploading || !editable);
   async function remove() {
     setError("");
     try {
@@ -79,7 +79,8 @@ export default function CategoryGallery({
   const busy = disabled || uploading;
   return (
     <div
-      className="category-gallery"
+      className={`category-gallery image-drop-target${dragging ? " is-dragging" : ""}`}
+      {...dropProps}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -95,7 +96,7 @@ export default function CategoryGallery({
           multiple
           hidden
           aria-label={label + " görsellerini yükle"}
-          onChange={upload}
+          onChange={(event) => { const files = [...event.target.files]; event.target.value = ""; uploadFiles(files); }}
           disabled={busy}
         />
       )}
@@ -168,6 +169,7 @@ export default function CategoryGallery({
           )}
         </div>
       )}
+      {editable && <small className="image-drop-help">Görselleri buraya sürükleyip bırakabilirsiniz.</small>}
       {error && <p role="alert">{error}</p>}
     </div>
   );

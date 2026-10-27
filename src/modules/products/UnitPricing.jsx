@@ -6,7 +6,7 @@ export default function UnitPricing({ value, editing = false, onChange, compact 
   const pricing = value || { price: null, unit: "", weight: null };
   if (!editing) {
     if (!hasUnitPricing(value)) return <>—</>;
-    return <div className="unit-pricing-summary"><strong>{money(value.price)} / {value.unit.toLocaleLowerCase("tr-TR")}</strong>{!compact && <span>{new Intl.NumberFormat("tr-TR").format(value.weight)} g / {value.unit.toLocaleLowerCase("tr-TR")}</span>}</div>;
+    return <div className="unit-pricing-summary"><strong>{money(value.price)} / {value.unit.toLocaleLowerCase("tr-TR")}</strong>{!compact && <span>≈ {new Intl.NumberFormat("tr-TR").format(value.weight)} g / {value.unit.toLocaleLowerCase("tr-TR")}</span>}</div>;
   }
   function update(patch) { onChange({ ...pricing, ...patch }); }
   return <div className="unit-pricing-fields">

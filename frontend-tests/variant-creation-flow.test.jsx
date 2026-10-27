@@ -17,6 +17,8 @@ test('sihirbaz türü seçtirir, ürünleri arama ve kategoriyle filtreler',asyn
  render(<CatalogProvider snapshot={snapshot} notify={vi.fn()}><VariantCreatePage onClose={vi.fn()}/></CatalogProvider>);await settle();
  expect(document.querySelector('[aria-label="Varyant oluştur"]')).toBeTruthy();
  const type=[...document.querySelectorAll('sl-select')].find(s=>s.label==='Varyant türü');type.value='portion';fireEvent(type,new CustomEvent('sl-change',{bubbles:true}));
+ expect([...document.querySelectorAll('sl-input')].find(i=>i.label==='Servis şekli')?.value).toBe('Tabakta Servis');
+ expect([...document.querySelectorAll('sl-select')].find(i=>i.label==='Kutu tipi')).toBeUndefined();
  const name=[...document.querySelectorAll('sl-input')].find(i=>i.label==='Varyant adı');name.value='Porsiyon';fireEvent(name,new CustomEvent('sl-input',{bubbles:true}));await settle();
  fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.trim()==='Devam et'));await settle();
  const cat=document.querySelector('sl-select[aria-label="Varyant ürün kategorisi"]');cat.value='a';fireEvent(cat,new CustomEvent('sl-change',{bubbles:true}));await settle();

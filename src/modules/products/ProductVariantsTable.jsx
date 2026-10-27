@@ -127,7 +127,7 @@ export default function ProductVariantsTable({
                   <TableCell>
                     {editing
                       ? control(v, i, "weight", "Gramaj (g)", "number")
-                      : v.weight}
+                      : `≈ ${v.weight}`}
                   </TableCell>
                   <TableCell>
                     {editing

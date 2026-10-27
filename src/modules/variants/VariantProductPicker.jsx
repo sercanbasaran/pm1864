@@ -16,8 +16,8 @@ export default function VariantProductPicker({ products, categories, exclude = [
     </div>
     <p className="variant-product-picker-count" role="status">{matches.length} uygun ürün{matches.length > 25 ? " · İlk 25 sonuç gösteriliyor, aramanızı daraltın" : ""}</p>
     <div className="variant-product-picker-results">{matches.slice(0,25).map(p => <div className="variant-product-picker-row" key={p.id}>
-      <div><strong>{p.name}</strong><small>{p.productCode || "—"} · {categoryPath(categoryOf(p,categories),categories)}</small><small>{money(p.unitPricing.price)} / {p.unitPricing.unit} · {p.unitPricing.weight} g</small></div>
-      <Button type="button" disabled={disabled} aria-label={`${p.name} seç`} onClick={() => onSelect(p)}>Seç</Button>
+      <div><strong>{p.name}</strong><small>{p.productCode || "—"} · {categoryPath(categoryOf(p,categories),categories)}</small><small>{money(p.unitPricing.price)} / {p.unitPricing.unit} · ≈ {p.unitPricing.weight} g</small></div>
+      <Button type="button" disabled={disabled} aria-label={`${p.name} seç`} onClick={() => onSelect(p)}>Ekle →</Button>
     </div>)}{!matches.length && <p>Uygun ürün bulunamadı. Aramayı veya kategori filtresini değiştirin.</p>}</div>
   </section>;
 }

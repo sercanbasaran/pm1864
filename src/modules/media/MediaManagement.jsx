@@ -14,6 +14,7 @@ import { request } from "../../api.js";
 import { can } from "../../permissions.js";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { uploadFile } from "./media-api.js";
+import useImageDrop from "../../components/ui/useImageDrop.js";
 import Modal from "../../components/ui/Modal.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 export default function MediaManagement({ user }) {
@@ -41,23 +42,21 @@ export default function MediaManagement({ user }) {
   useEffect(() => {
     load();
   }, []);
-  async function uploaded(e) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+  async function uploadFiles(files) {
+    if (!files.length || busy || !write) return;
     setBusy(true);
     setError("");
+    let uploadedCount = 0;
     try {
-      await uploadFile(file);
-      await load();
-      await refresh();
-      notify("Görsel kütüphaneye yüklendi.");
+      for (const file of files) { await uploadFile(file); uploadedCount++; }
     } catch (e) {
       setError(e.message);
     } finally {
+      try { if (uploadedCount) { await load(); await refresh(); notify(`${uploadedCount} görsel kütüphaneye yüklendi.`); } } catch (e) { setError(e.message); }
       setBusy(false);
     }
   }
+  const { dragging, dropProps } = useImageDrop(uploadFiles, busy || !write);
   async function save(e) {
     e.preventDefault();
     setBusy(true);
@@ -110,12 +109,12 @@ export default function MediaManagement({ user }) {
       </Button>
     ) : null;
   return (
-    <Card className="panel media-management">
+    <Card className={`panel media-management image-drop-target${dragging ? " is-dragging" : ""}`} {...dropProps}>
       <div className="panel-title">
         <div>
           <h2>Görsel kütüphanesi</h2>
           <p className="muted">
-            PNG, JPEG, WEBP ve GIF · Dosya başına en fazla 2 MB
+            PNG, JPEG, WEBP ve GIF · Dosya başına en fazla 2 MB{write && " · Görselleri buraya sürükleyip bırakabilirsiniz"}
           </p>
         </div>
         <div className="overview-actions">
@@ -130,9 +129,10 @@ export default function MediaManagement({ user }) {
                 className="visually-hidden"
                 aria-label="Görsel dosyası"
                 type="file"
+                multiple
                 accept="image/png,image/jpeg,image/webp,image/gif"
                 disabled={busy}
-                onChange={uploaded}
+                onChange={(e) => { const files = [...(e.target.files || [])]; e.target.value = ""; uploadFiles(files); }}
               />
               {uploadAction}
             </>

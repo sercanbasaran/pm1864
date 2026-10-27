@@ -193,7 +193,7 @@ export default function PriceManager({
                       {v.active === false ? "Varyant pasif" : "Varyant aktif"}
                     </small>
                   </TableCell>
-                  <TableCell>{v.weight} g</TableCell>
+                  <TableCell>≈ {v.weight} g</TableCell>
                   <TableCell>
                     <strong>{money(v.price)}</strong>
                   </TableCell>
@@ -252,7 +252,7 @@ export default function PriceManager({
             {draft.variants.map((v, index) => (
               <div key={index}>
                 <Input
-                  label={v.size + " · " + v.weight + " g"}
+                  label={v.size + " · ≈ " + v.weight + " g"}
                   aria-label={v.size + " fiyatı"}
                   type="number"
                   min="0.01"

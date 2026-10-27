@@ -58,3 +58,16 @@ test("gallery slides, detaches selected image and uploads multiple images before
     onChange.mock.invocationCallOrder[1],
   );
 });
+
+test("gallery accepts dropped images and ignores drops when disabled", async () => {
+  uploadFile.mockImplementation(async file => ({asset:{id:file.name,url:"/"+file.name}}));
+  const onChange = vi.fn(async () => true), onRefresh = vi.fn(async () => ({}));
+  const {rerender} = render(<CategoryGallery onChange={onChange} onRefresh={onRefresh} />);
+  const file = new File(["x"], "drop.png", {type:"image/png"});
+  fireEvent.drop(document.querySelector(".category-gallery"), {dataTransfer:{types:["Files"], files:[file]}});
+  await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+  expect(onChange.mock.calls[0][0][0].id).toBe("drop.png");
+  rerender(<CategoryGallery onChange={onChange} onRefresh={onRefresh} disabled />);
+  fireEvent.drop(document.querySelector(".category-gallery"), {dataTransfer:{types:["Files"], files:[file]}});
+  expect(uploadFile).toHaveBeenCalledTimes(1);
+});

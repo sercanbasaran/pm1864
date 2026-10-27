@@ -14,10 +14,16 @@ test("wizard tür, ürünler, fiyat ve bilgileri sırayla düzenler",async()=>{
  render(<CatalogProvider snapshot={catalog} notify={vi.fn()}><Harness /></CatalogProvider>);await settle();
  expect(document.querySelector('[aria-current="step"]').textContent).toContain('Varyant türü');
  await click('Devam et');
+ expect(document.querySelector('.variant-product-transfer > div:first-child').textContent).toContain('Eklenebilir ürünler');
+ expect(document.querySelector('.variant-product-transfer > div:last-child').textContent).toContain('Eklenen ürünler');
+ expect(document.querySelector('sl-button[aria-label="Fıstıklı kaldır"]').disabled).toBe(true);
  fireEvent.click(document.querySelector('sl-button[aria-label="Cevizli seç"]'));await settle();
  expect(document.querySelectorAll('.variant-wizard-item')).toHaveLength(2);
+ fireEvent.click(document.querySelector('sl-button[aria-label="Fıstıklı kaldır"]'));await settle();
+ expect(document.querySelector('sl-button[aria-label="Cevizli kaldır"]').disabled).toBe(true);
+ fireEvent.click(document.querySelector('sl-button[aria-label="Fıstıklı seç"]'));await settle();
  await click('Devam et');
- const packaging=[...document.querySelectorAll('sl-select')].find(s=>s.label==='Ambalaj / servis şekli');packaging.value='Metal%20kutu';fireEvent(packaging,new CustomEvent('sl-change',{bubbles:true}));await settle();
+ const service=[...document.querySelectorAll('sl-input')].find(s=>s.label==='Servis şekli');expect(service.value).toBe('Tabakta Servis');expect(service.disabled).toBe(true);
  expect(document.querySelector('.variant-calculation').textContent).toContain('180');
  await click('Devam et');
  expect(document.querySelector('[aria-current="step"]').textContent).toContain('Ürün bilgileri');
