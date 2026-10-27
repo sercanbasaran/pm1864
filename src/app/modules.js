@@ -228,7 +228,6 @@ export const newMainModules = [
     label: "AMBALAJ MERKEZİ",
     icon: Cube,
     permission: "catalog.read",
-    status: "planned",
     description: "Ambalaj tanımları ve ambalaj bilgilerinin yönetimi.",
   },
 ];

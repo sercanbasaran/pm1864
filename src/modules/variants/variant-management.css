@@ -184,7 +184,15 @@
   .variant-module .variant-results > sl-button { width: 100%; }
 }
 
-.variant-module .variant-desktop-table table { min-width: 66rem; }
+.variant-module .variant-desktop-table table { min-width: 58rem; }
 .variant-module .variant-cell-main { display:flex; flex-direction:column; gap:.2rem; align-items:flex-start; min-width:0; }
 .variant-module .variant-cell-main small { color:var(--sl-color-neutral-600); line-height:1.3; }
 .variant-module .variant-row-actions { justify-content:flex-end; }
+
+.variant-module .variant-identity::part(base) { border-color:transparent; background:transparent; box-shadow:none; }
+.variant-module .variant-identity:hover::part(base) { background:var(--sl-color-neutral-50); }
+.variant-module .variant-identity::part(label) { padding-inline:0; }
+.variant-module .variant-identity .control-content { justify-content:flex-start; text-align:left; }
+.variant-module .variant-identity .product-image { flex:none; width:4rem; }
+.variant-module .variant-serving-cell, .variant-module .variant-price-cell { display:flex; flex-direction:column; align-items:flex-start; gap:.3rem; }
+.variant-module .variant-price-cell small { color:var(--sl-color-neutral-600); white-space:nowrap; }

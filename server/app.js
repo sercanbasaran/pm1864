@@ -321,6 +321,15 @@ export async function createApp({ env = process.env, database } = {}) {
           decodeURIComponent(match[1]),
           user.email,
         );
+      } else if (route === "/api/packaging" && method === "POST") {
+        requirePermission("products.write");
+        catalog = await service.savePackaging(body, null, user.email);
+      } else if ((match = route.match(/^\/api\/packaging\/([^/]+)$/)) && method === "PUT") {
+        requirePermission("products.write");
+        catalog = await service.savePackaging(body, decodeURIComponent(match[1]), user.email);
+      } else if ((match = route.match(/^\/api\/packaging\/([^/]+)$/)) && method === "DELETE") {
+        requirePermission("products.write");
+        catalog = await service.removePackaging(body, decodeURIComponent(match[1]), user.email);
       } else if (route === "/api/variant-types" && method === "POST") {
         requirePermission("products.write");
         catalog = await service.addVariantType(body, user.email);

@@ -33,6 +33,7 @@ const ProductManagement = lazy(
 const VariantTypeManagement = lazy(() => import("../modules/variants/VariantTypeManagement.jsx"));
 const VariantCardManagement = lazy(() => import("../modules/variants/VariantCardManagement.jsx"));
 const VariantCreatePage = lazy(() => import("../modules/variants/VariantCreatePage.jsx"));
+const PackagingCenter = lazy(() => import("../modules/packaging/PackagingCenter.jsx"));
 const VariantManagement = lazy(
   () => import("../modules/variants/VariantManagement.jsx"),
 );
@@ -307,6 +308,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         onCard={(p, v) => navigate(`variants/${p.id}/card?variant=${encodeURIComponent(v.id)}`)}
       />
     ),
+    "packaging-center": <PackagingCenter canWrite={can(user, "products.write")} />,
     "variant-types": <VariantTypeManagement canWrite={can(user, "products.write")} />,
     "satiety-products": (
       <SatietyProductManagement canWrite={can(user, "settings.write")} />

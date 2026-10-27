@@ -38,3 +38,14 @@ test("çok varyantlı ürün kompakt seçim listesiyle açılır", async () => {
  const names = [...document.querySelectorAll('sl-input')].filter(input => input.label === 'Varyant adı');
  expect(names).toHaveLength(1); expect(names[0].value).toBe('Kutu');
 });
+test("düzenlemede bölümlere doğrudan geçilir ve değişiklikler korunur", async () => {
+ render(<CatalogProvider snapshot={catalog} notify={vi.fn()}><VariantEditor product={base} focusVariantId="v1" onClose={vi.fn()} /></CatalogProvider>); await settle();
+ const nav = document.querySelector('nav[aria-label="Varyant düzenleme bölümleri"]');
+ const buttons = [...nav.querySelectorAll('button')]; expect(buttons).toHaveLength(4);
+ fireEvent.click(buttons[2]); await settle();
+ expect(nav.querySelector('[aria-current="step"]').textContent).toContain('Fiyat ve ambalaj');
+ const price=[...document.querySelectorAll('sl-input')].find(i=>i.label==='Satış fiyatı düzeltmesi (isteğe bağlı)');price.value='245';fireEvent(price,new CustomEvent('sl-input',{bubbles:true}));await settle();
+ fireEvent.click(buttons[3]);await settle();expect(document.querySelector('.variant-wizard-section').textContent).toContain('Ürün bilgileri');
+ fireEvent.click(buttons[2]);await settle();expect([...document.querySelectorAll('sl-input')].find(i=>i.label==='Satış fiyatı düzeltmesi (isteğe bağlı)').value).toBe('245');
+ expect([...document.querySelectorAll('sl-button')].find(b=>b.textContent.trim()==='Varyantı kaydet').disabled).toBe(false);
+});

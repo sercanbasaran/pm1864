@@ -12,7 +12,7 @@ const products=[{id:1,name:"Fıstıklı",productCode:"01001",categoryId:"a",stat
 const setup=async()=>{render(<CatalogProvider snapshot={{products,categories,variantTypes:[{id:"box",name:"Kutu"}]}} notify={vi.fn()}><VariantManagement products={products} categories={categories} canWrite onCreate={vi.fn()} onEdit={vi.fn()} onCard={vi.fn()} onDuplicate={vi.fn()} /></CatalogProvider>);await settle();};
 const choose=async(selector,value)=>{const el=document.querySelector(selector);el.value=value;fireEvent(el,new CustomEvent('sl-change',{bubbles:true}));await settle();};
 test("karma varyantın her iki ürününü ve kategori filtresini bulur",async()=>{
- await setup();expect(document.querySelector('.variant-cell-main').textContent).toContain('Fıstıklı');expect(document.querySelector('.variant-cell-main').textContent).toContain('Güllü lokum');
+ await setup();expect(document.querySelector('thead').textContent).not.toContain('İÇERİKTEKİ ÜRÜNLER');expect(document.querySelector('.variant-desktop-table tbody').textContent).not.toContain('Güllü lokum');
  expect(document.querySelector('thead').textContent).not.toContain('KATEGORİ');
  fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.trim()==='Filtreleri Aç'));await settle();
  await choose('sl-select[aria-label="İçerikteki ana kategori"]','b');expect(document.querySelector('.variant-results').textContent).toContain('1 varyant');

@@ -1,3 +1,4 @@
+import { defaultPackagingItems, isBoxVariant } from "../src/modules/packaging/packaging-data.js";
 import {
   calculateVariant,
   defaultConsumables,
@@ -82,6 +83,7 @@ export const seedCatalog = () => ({
   variantTypes: defaultVariantTypes(),
   satietyProducts: defaultSatietyProducts(),
   consumables: defaultConsumables(),
+  packagingItems: defaultPackagingItems(),
   products: [],
   logs: [],
   settings: { skuPrefix: "HM" },
@@ -97,6 +99,7 @@ export function publicCatalog(doc, revision) {
     revision,
     satietyProducts: doc.satietyProducts ?? defaultSatietyProducts(),
     consumables: doc.consumables ?? defaultConsumables(),
+    packagingItems: doc.packagingItems ?? defaultPackagingItems(),
     categories: doc.categories.map((c) => ({
       ...c,
       salesAvailability: salesAvailability(
@@ -115,6 +118,7 @@ export function publicCatalog(doc, revision) {
         effectiveSales: effectiveSales(p, undefined, doc.categories),
         variants: p.variants.map((v) => ({
           ...v,
+          packagingName: v.packagingId ? (doc.packagingItems ?? defaultPackagingItems()).find((item) => item.id === v.packagingId)?.name || "" : "",
           sku: displaySku(v.sku),
           salesAvailability: salesAvailability(
             v.salesAvailability,
@@ -361,6 +365,40 @@ export function createCatalogService(db) {
       );
     });
   }
+  async function savePackaging(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      doc.packagingItems ??= defaultPackagingItems();
+      const old = id ? doc.packagingItems.find((item) => item.id === id) : null;
+      if (id && !old) throw new ApiError(404, "Ambalaj bulunamadı.");
+      const name = typeof body.name === "string" ? body.name.trim().replace(/\s+/g, " ") : "";
+      const code = typeof body.code === "string" ? body.code.trim() : "";
+      const material = body.material;
+      if (!name || name.length > 120 || code.length > 50 || !["Metal", "Karton", "Diğer"].includes(material)) throw new ApiError(422, "Ambalaj adı, kodu veya malzemesi geçersiz.");
+      if (doc.packagingItems.some(item => item.id !== id && (normalizeName(item.name) === normalizeName(name) || (code && item.code && normalizeName(item.code) === normalizeName(code))))) throw new ApiError(422, "Bu ambalaj adı veya kodu zaten kullanılıyor.");
+      if (body.active !== undefined && typeof body.active !== "boolean") throw new ApiError(422, "Geçerli durum seçin.");
+      if (body.description !== undefined && (typeof body.description !== "string" || body.description.length > 4000)) throw new ApiError(422, "Açıklama en fazla 4000 karakter olmalıdır.");
+      const dimensions = {};
+      for (const key of ["length", "width", "height", "emptyWeight"]) {
+        const value = body[key];
+        if (value !== null && value !== undefined && (!Number.isFinite(value) || value <= 0 || value > 100000)) throw new ApiError(422, "Ölçü ve ağırlıklar boş veya pozitif sayı olmalıdır.");
+        dimensions[key] = value ?? null;
+      }
+      if (!old && doc.packagingItems.length >= 500) throw new ApiError(422, "Ambalaj kayıt sınırına ulaşıldı.");
+      const item = { id: old?.id || randomUUID(), name, code, material, ...dimensions, description: text(body.description, 4000), active: body.active ?? true };
+      if (old) doc.packagingItems = doc.packagingItems.map(value => value.id === id ? item : value); else doc.packagingItems.push(item);
+      audit(doc, old ? "Ambalaj güncellendi" : "Ambalaj eklendi", name, actor);
+    });
+  }
+  async function removePackaging(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      doc.packagingItems ??= defaultPackagingItems();
+      const item = doc.packagingItems.find(value => value.id === id);
+      if (!item) throw new ApiError(404, "Ambalaj bulunamadı.");
+      if (doc.products.some(product => product.variants.some(variant => variant.packagingId === id))) throw new ApiError(422, "Bu ambalaj bir varyantta kullanılıyor. Önce varyantın ambalajını değiştirin veya ambalajı pasife alın.");
+      doc.packagingItems = doc.packagingItems.filter(value => value.id !== id);
+      audit(doc, "Ambalaj kaldırıldı", item.name, actor);
+    });
+  }
   async function addVariantType(body, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
       const name =
@@ -475,6 +513,7 @@ export function createCatalogService(db) {
                   ? {
                       sourceProductId: v.sourceProductId,
                       quantity: v.quantity,
+                      ...(v.packagingId !== undefined ? { packagingId: v.packagingId } : {}),
                       ...(v.items !== undefined ? { items: v.items } : {}),
                       ...(v.information !== undefined ? { information: v.information } : {}),
                       ...(v.informationOverrides !== undefined ? { informationOverrides: v.informationOverrides } : {}),
@@ -506,6 +545,11 @@ export function createCatalogService(db) {
       for (let i = 0; i < p.variants.length; i++) {
         const v = p.variants[i];
         if (v.sourceProductId !== undefined) {
+          if (v.packagingId !== undefined && v.packagingId !== "") {
+            const box = (doc.packagingItems ?? defaultPackagingItems()).find(item => item.id === v.packagingId);
+            const previous = old?.variants.find(item => item.id === v.id);
+            if (!box || (!box.active && previous?.packagingId !== box.id) || !isBoxVariant(v, doc.variantTypes)) throw new ApiError(422, "Geçerli ve aktif bir kutu tipi seçin.");
+          }
           if (v.items !== undefined && (!Array.isArray(v.items) || v.items.some(item => !item || typeof item !== "object" || Object.keys(item).some(key => !["productId", "quantity"].includes(key)))))
             throw new ApiError(422, "Varyant ürünleri geçersiz.");
           for (const information of [v.information, v.informationOverrides]) {
@@ -1057,6 +1101,8 @@ export function createCatalogService(db) {
     read,
     mutate,
     saveConsumable,
+    savePackaging,
+    removePackaging,
     saveSatietyProduct,
     addVariantType,
     removeVariantType,

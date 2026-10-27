@@ -82,7 +82,7 @@ export function variantCardData(product, variant, categories, products = [], sat
     name: variant.size,
     category: "",
     description: items.map((item) => item.name).join(" · "),
-    variantPricing: { price: variant.price, weight: variant.weight, packaging: variant.packaging || "" },
+    variantPricing: { price: variant.price, weight: variant.weight, packaging: variant.packagingName || variant.packaging || "" },
     variantContents: items,
     salesAvailability: effectiveSales(product, variant, categories),
     satiety: resolvedSatiety(information.satiety, satietyProducts),

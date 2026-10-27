@@ -6,6 +6,7 @@ import { useCatalog } from "../../app/CatalogContext.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import ProductSatiety from "../products/ProductSatiety.jsx";
 import VariantProductPicker from "./VariantProductPicker.jsx";
+import { defaultPackagingItems, isBoxVariant } from "../packaging/packaging-data.js";
 import { productInformationFields } from "../../product-information.js";
 import { calculateVariant, defaultConsumables, deriveVariantInformation, packagingOptions } from "../../variant-composition.js";
 import { hasUnitPricing } from "../../unit-pricing.js";
@@ -13,12 +14,14 @@ import { money } from "../../catalog-tools.js";
 
 const steps = ["Varyant türü", "Ürünler", "Fiyat ve ambalaj", "Ürün bilgileri"];
 export default function VariantCompositionFields({ product, onChange, disabled, focusVariantId = "", initialStep = 0, onReady }) {
-  const { products, categories, variantTypes, satietyProducts, consumables = defaultConsumables(), refresh } = useCatalog();
+  const { products, categories, variantTypes, satietyProducts, packagingItems = defaultPackagingItems(), consumables = defaultConsumables(), refresh } = useCatalog();
   const [step, setStep] = useState(initialStep), [error, setError] = useState("");
   const index = focusVariantId ? product.variants.findIndex(v => String(v.id) === focusVariantId) : product.variants.findIndex(v => !v.id);
   const i = index < 0 ? 0 : index, v = product.variants[i];
-  useEffect(() => { onReady?.(step === steps.length - 1); }, [step, onReady]);
+  useEffect(() => { onReady?.(!!v?.id || step === steps.length - 1); }, [step, onReady, v?.id]);
   if (!v) return <p>Varyant bulunamadı.</p>;
+  const isBox = isBoxVariant(v, variantTypes);
+  const selectedBox = packagingItems.find(item => item.id === v.packagingId);
   const items = Array.isArray(v.items) ? v.items : [{ productId: v.sourceProductId ?? product.id, quantity: v.quantity ?? (v.slices || 1) }];
   const update = patch => onChange({ ...product, variants: product.variants.map((item, n) => n === i ? { ...item, ...patch } : item) });
   const updateItems = next => update({ items: next, sourceProductId: next[0]?.productId, quantity: next[0]?.quantity });
@@ -31,23 +34,25 @@ export default function VariantCompositionFields({ product, onChange, disabled, 
   function next() {
     setError("");
     if (step === 0 && (!v.typeId || !v.size.trim())) return setError("Varyant türünü ve adını girin.");
+    if (step === 0 && isBox && !v.id && !selectedBox) return setError("Kutu tipi seçin.");
     if (step === 1 && (!items.length || items.some(item => { const source = products.find(p => p.id === item.productId); return !source || !hasUnitPricing(source.unitPricing) || !Number.isFinite(item.quantity) || item.quantity <= 0 || (["Dilim", "Kap", "Adet"].includes(source.unitPricing.unit) && !Number.isInteger(item.quantity)); }))) return setError("Her ürün için geçerli birim fiyatı, gramaj ve miktar girin.");
     if (step === 2 && !calculated) return setError(calculationError);
     if (step === 2) update({ items, sourceProductId: items[0].productId, quantity: items[0].quantity, consumables: v.consumables || [], images: v.images || [], informationOverrides: overrides });
     setStep(n => Math.min(n + 1, steps.length - 1));
   }
   return <fieldset disabled={disabled} className="variant-composition-fields">
-    <nav className="variant-wizard-steps" aria-label="Varyant oluşturma adımları">{steps.map((name, n) => <span key={name} aria-current={n === step ? "step" : undefined}><b>{n + 1}</b> {name}</span>)}</nav>
+    <nav className="variant-wizard-steps" aria-label={v.id ? "Varyant düzenleme bölümleri" : "Varyant oluşturma adımları"}>{steps.map((name, n) => v.id ? <button key={name} type="button" aria-current={n === step ? "step" : undefined} onClick={() => { setError(""); setStep(n); }}><b>{n + 1}</b> {name}</button> : <span key={name} aria-current={n === step ? "step" : undefined}><b>{n + 1}</b> {name}</span>)}</nav>
     {error && <p className="variant-wizard-error" role="alert">{error}</p>}
     {step === 0 && <section className="variant-wizard-section"><h3>Varyant türü ve adı</h3><p>Örneğin porsiyon veya kutu seçin ve varyanta bir ad verin.</p><div className="variant-basic-grid">
-      <Select label="Varyant türü" value={v.typeId || ""} onChange={e => update({typeId:e.target.value})}><option value="">Tür seçin</option>{variantTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
+      <Select label="Varyant türü" value={v.typeId || ""} onChange={e => update({typeId:e.target.value, packagingId: ""})}><option value="">Tür seçin</option>{variantTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
       <Input label="Varyant adı" maxLength={30} required value={v.size} onChange={e => update({size:e.target.value})} />
+      {isBox && <Select label="Kutu tipi" value={v.packagingId || ""} onChange={e => { const box = packagingItems.find(item => item.id === e.target.value); update({packagingId:e.target.value, ...(box ? {packaging:box.material === "Karton" ? "Karton kutu" : "Metal kutu"} : {})}); }}><option value="">Kutu tipi seçin</option>{packagingItems.filter(item => item.active || item.id === v.packagingId).map(item => <option key={item.id} value={item.id}>{item.name}{item.active ? "" : " (Pasif)"}</option>)}</Select>}
     </div></section>}
     {step === 1 && <section className="variant-wizard-section"><h3>Varyantın içindeki ürünler</h3><p>Her ürünün varyanttaki miktarını birimi üzerinden belirleyin.</p>
-      {items.map((item, n) => { const source = products.find(p => p.id === item.productId); return <div className="variant-wizard-item" key={item.productId}><div><strong>{source?.name || "Ürün bulunamadı"}</strong><small>{source?.unitPricing ? `${money(source.unitPricing.price)} / ${source.unitPricing.unit} · ${source.unitPricing.weight} g` : "Birim fiyatı veya gramajı eksik"}</small></div><Input label={`Miktar (${source?.unitPricing?.unit || "birim"})`} aria-label={`${source?.name || "Ürün"} miktarı`} type="number" min={0.001} step="any" value={item.quantity} onChange={e => updateItems(items.map((x,j) => j === n ? {...x,quantity:Number(e.target.value)} : x))} />{n > 0 && <Button type="button" aria-label={`${source?.name || "Ürün"} kaldır`} onClick={() => updateItems(items.filter((_,j) => j !== n))}>Kaldır</Button>}</div>; })}
+      {items.map((item, n) => { const source = products.find(p => p.id === item.productId); return <div className="variant-wizard-item variant-selected-product" key={item.productId}><div><strong>{source?.name || "Ürün bulunamadı"}</strong><small>{source?.unitPricing ? `${money(source.unitPricing.price)} / ${source.unitPricing.unit} · ${source.unitPricing.weight} g` : "Birim fiyatı veya gramajı eksik"}</small></div><Input label={`Miktar (${source?.unitPricing?.unit || "birim"})`} aria-label={`${source?.name || "Ürün"} miktarı`} type="number" min={0.001} step="any" value={item.quantity} onChange={e => updateItems(items.map((x,j) => j === n ? {...x,quantity:Number(e.target.value)} : x))} />{n > 0 && <Button type="button" aria-label={`${source?.name || "Ürün"} kaldır`} onClick={() => updateItems(items.filter((_,j) => j !== n))}>Kaldır</Button>}</div>; })}
       <VariantProductPicker products={products} categories={categories} exclude={items.map(item => item.productId)} disabled={items.length >= 50} onSelect={selected => updateItems([...items, {productId:selected.id, quantity:1}])} />
     </section>}
-    {step === 2 && <section className="variant-wizard-section"><h3>Fiyat ve ambalaj</h3><p>Fiyat ve gramaj seçilen ürünlere göre hesaplanır.</p><div className="variant-basic-grid"><Select label="Ambalaj / servis şekli" value={v.packaging || ""} onChange={e => update({packaging:e.target.value})}><option value="">Seçin</option>{packagingOptions.map(p => <option key={p}>{p}</option>)}</Select><Input label="Satış fiyatı düzeltmesi (isteğe bağlı)" type="number" min={0.01} step={0.01} value={v.priceOverride ?? ""} onChange={e => update({priceOverride:e.target.value === "" ? null : Number(e.target.value)})} /></div>
+    {step === 2 && <section className="variant-wizard-section"><h3>Fiyat ve ambalaj</h3><p>Fiyat ve gramaj seçilen ürünlere göre hesaplanır.</p><div className="variant-basic-grid"><Select label="Ambalaj / servis şekli" value={v.packaging || ""} onChange={e => update({items, sourceProductId: items[0]?.productId, quantity: items[0]?.quantity, consumables: v.consumables || [], images: v.images || [], packaging:e.target.value})}><option value="">Seçin</option>{packagingOptions.map(p => <option key={p}>{p}</option>)}</Select><Input label="Satış fiyatı düzeltmesi (isteğe bağlı)" type="number" min={0.01} step={0.01} value={v.priceOverride ?? ""} onChange={e => update({items, sourceProductId: items[0]?.productId, quantity: items[0]?.quantity, consumables: v.consumables || [], images: v.images || [], priceOverride:e.target.value === "" ? null : Number(e.target.value)})} /></div>
       {calculated ? <div className="variant-calculation"><div><small>Hesaplanan fiyat</small><strong>{money(calculated.calculatedPrice)}</strong></div><div><small>Net gramaj</small><strong>{calculated.weight} g</strong></div><div><small>Satış fiyatı</small><strong>{money(calculated.price)}</strong></div></div> : <p role="status">{calculationError}</p>}
       <small>Fiyat düzeltmesi boşsa hesaplanan fiyat kullanılır. Net gramaja ambalaj ve sarf malzemeler dahil değildir.</small>
     </section>}

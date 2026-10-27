@@ -6,6 +6,7 @@ import { variantTypeName } from "../../variant-types.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import Card from "../../components/ui/Card.jsx";
+import ProductImage from "../../components/ui/ProductImage.jsx";
 import { salesChannels, effectiveSales } from "../../sales-availability.js";
 import {
   Button,
@@ -289,9 +290,7 @@ export default function VariantManager({
               <Table aria-label="Varyantlar">
                 <TableHead>
                   <TableRow>
-                    <TableHeading>İÇERİKTEKİ ÜRÜNLER</TableHeading>
-                    <TableHeading>VARYANT / SKU</TableHeading>
-                    <TableHeading>VARYANT TİPİ</TableHeading>
+                    <TableHeading>VARYANT</TableHeading>
                     <TableHeading>GRAMAJ / DİLİM</TableHeading>
                     <TableHeading>MİKTAR / SERVİS</TableHeading>
                     <TableHeading>SATIŞ FİYATI</TableHeading>
@@ -303,23 +302,22 @@ export default function VariantManager({
                   {shown.map(({ p, v, members }) => (
                     <TableRow key={v.id}>
                       <TableCell>
-                        <div className="variant-cell-main"><strong>{members.map((item) => item.name).join(" · ") || "Ürün bulunamadı"}</strong><small>{members.length} ürün</small></div>
+                        <Button type="button" className="product-cell variant-identity" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
+                          <ProductImage product={{ name: v.size, customImage: v.images?.[0]?.url || "" }} />
+                          <div className="variant-cell-main"><strong>{v.size}</strong><small>{v.sku || "—"} · {variantTypeName(v, variantTypes)}</small></div>
+                        </Button>
                       </TableCell>
-                      <TableCell>
-                        <div className="variant-cell-main"><strong>{v.size}</strong><SlTag size="small">{v.sku || "—"}</SlTag></div>
-                      </TableCell>
-                      <TableCell>{variantTypeName(v, variantTypes)}</TableCell>
                       <TableCell>
                         {v.weight} g{v.slices > 0 ? ` / ${v.slices} dilim` : ""}
                       </TableCell>
                       <TableCell>
-                        {v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}
-                        {v.items?.length > 1 && <small className="user-email">{v.items.map(item => { const source = products.find(product => product.id === item.productId); return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`; }).join(" · ")}</small>}
-                        <small className="user-email">
-                          {v.packaging || "Ambalaj belirtilmedi"}
-                        </small>
+                        <div className="variant-serving-cell">
+                          <span>{v.packagingName || v.packaging || "Ambalaj belirtilmedi"}</span>
+                          <SlTag size="small">{v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}</SlTag>
+                          {v.items?.length > 1 && v.slices > 0 && <SlTag size="small">{v.slices} dilim</SlTag>}
+                        </div>
                       </TableCell>
-                      <TableCell>{money(v.price)}</TableCell>
+                      <TableCell><div className="variant-price-cell"><strong>{money(v.price)}</strong><small>Hesaplanan: {Number.isFinite(v.calculatedPrice) ? money(v.calculatedPrice) : "—"}</small></div></TableCell>
                       <TableCell>
                         <SlBadge
                           variant={v.active !== false ? "success" : "neutral"}
@@ -379,7 +377,7 @@ export default function VariantManager({
                     </div>
                     <div>
                       <dt>Ambalaj / servis</dt>
-                      <dd>{v.packaging || "—"}</dd>
+                      <dd>{v.packagingName || v.packaging || "—"}</dd>
                     </div>
                   </dl>
                   <div className="variant-card-actions">

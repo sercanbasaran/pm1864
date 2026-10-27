@@ -74,3 +74,14 @@
 .variant-product-picker-row > div { display:flex; flex-direction:column; gap:.2rem; min-width:0; }
 .variant-product-picker-row small { color:var(--sl-color-neutral-600); overflow-wrap:anywhere; }
 @media(max-width:640px) { .variant-product-picker-filters { grid-template-columns:1fr; } .variant-product-picker-row { align-items:stretch; flex-direction:column; } .variant-product-picker-row sl-button { width:100%; } }
+
+.variant-composition-fields .variant-selected-product {
+  background: var(--sl-color-neutral-50);
+  background: color-mix(in srgb, var(--sl-color-neutral-0) 92%, var(--sl-color-primary-600) 8%);
+  border-color: var(--sl-color-primary-300);
+}
+
+.variant-wizard-steps button { display:flex; align-items:center; gap:.4rem; padding:.4rem .65rem; border:0; border-radius:1.5rem; background:transparent; font:inherit; font-size:.875rem; color:var(--sl-color-neutral-600); cursor:pointer; }
+.variant-wizard-steps button:hover { background:var(--sl-color-neutral-100); }
+.variant-wizard-steps button[aria-current="step"] { color:var(--sl-color-primary-700); background:var(--sl-color-primary-50); font-weight:600; }
+.variant-wizard-steps button:focus-visible { outline:2px solid var(--sl-color-primary-600); outline-offset:2px; }

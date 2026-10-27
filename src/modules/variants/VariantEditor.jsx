@@ -52,7 +52,7 @@ export default function VariantEditor({ product, focusVariantId = "", readOnly =
         <div className="variant-editor-save"><Button type="button" disabled={busy} onClick={cancel}>Vazgeç</Button><Button type="button" variant="primary" disabled={busy || !wizardReady} onClick={save}>Varyantı kaydet</Button></div>
       </> : selected ? <section className="variant-selected-summary">
         <div className="variant-selected-heading"><div><h3>{selected.size}</h3><small>{variantTypeName(selected, variantTypes)} · {selected.sku || "—"}</small></div><SlBadge variant={selected.active !== false ? "success" : "neutral"}>{selected.active !== false ? "Aktif" : "Pasif"}</SlBadge></div>
-        <dl className="variant-selected-stats"><div><dt>Satış fiyatı</dt><dd>{money(selected.price)}</dd></div><div><dt>Net gramaj</dt><dd>{selected.weight} g</dd></div><div><dt>Ambalaj / servis</dt><dd>{selected.packaging || "—"}</dd></div></dl>
+        <dl className="variant-selected-stats"><div><dt>Satış fiyatı</dt><dd>{money(selected.price)}</dd></div><div><dt>Net gramaj</dt><dd>{selected.weight} g</dd></div><div><dt>Ambalaj / servis</dt><dd>{selected.packagingName || selected.packaging || "—"}</dd></div></dl>
         <div className="variant-selected-actions">{!readOnly && <Button type="button" variant="primary" onClick={() => { setDraft(structuredClone(current)); setEditing(true); }}><PencilSimple size={16} /> Varyantı düzenle</Button>}<Button type="button" onClick={() => setFocus("")}>Diğer varyantları göster</Button></div>
       </section> : <section className="variant-choice-list" aria-label="Ürünün varyantları">
         <div><h3>Varyantlar</h3><p>İşlem yapmak istediğiniz varyantı seçin.</p></div>
