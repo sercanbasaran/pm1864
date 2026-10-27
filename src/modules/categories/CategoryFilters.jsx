@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
 import { Button, Select } from "../../components/ui/Controls.jsx";
 import { categoryRows } from "./category-list.js";
@@ -6,6 +6,7 @@ import { salesChannels } from "../../sales-availability.js";
 import { emptyCategoryFilters } from "./category-list.js";
 
 export default function CategoryFilters({ categories, filters, onChange }) {
+  const [open, setOpen] = useState(false);
   const field = (key, label, options, multiple = true) => (
     <Select
       label={label}
@@ -25,7 +26,7 @@ export default function CategoryFilters({ categories, filters, onChange }) {
     </Select>
   );
   return (
-    <SlDetails summary="Filtrele" className="category-filter-accordion">
+    <SlDetails summary={open ? "Filtreleri Kapat" : "Filtreleri Aç"} onSlShow={() => setOpen(true)} onSlHide={() => setOpen(false)} className="category-filter-accordion">
       <div className="category-filters">
         {field("type", "Kategori türü", [
           ["", "Tüm türler"],

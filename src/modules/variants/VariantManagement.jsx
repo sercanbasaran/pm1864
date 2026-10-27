@@ -32,6 +32,8 @@ import {
   Stack,
   MagnifyingGlass,
   PencilSimple,
+  List,
+  GridFour,
 } from "@phosphor-icons/react";
 import { roots, categoryOf, rootOf, categoryPath } from "../../hierarchy.js";
 import { money, downloadCSV } from "../../catalog-tools.js";
@@ -45,7 +47,10 @@ export default function VariantManager({
   const [typeId, setTypeId] = useState("");
   const [creating, setCreating] = useState(false),
     [createId, setCreateId] = useState(""),
-    [page, setPage] = useState(1);
+    [page, setPage] = useState(1),
+    [pageSize, setPageSize] = useState(10),
+    [filtersOpen, setFiltersOpen] = useState(false),
+    [view, setView] = useState(() => { try { return sessionStorage.getItem("variant-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } });
   const eligible = products.filter(
     (p) =>
       p.status === "Aktif" &&
@@ -82,9 +87,9 @@ export default function VariantManager({
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
     );
-  const pages = Math.max(1, Math.ceil(rows.length / 8)),
+  const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     current = Math.min(page, pages),
-    shown = rows.slice((current - 1) * 8, current * 8);
+    shown = rows.slice((current - 1) * pageSize, current * pageSize);
   const addAction = canWrite ? (
     <Button
       type="button"
@@ -208,7 +213,11 @@ export default function VariantManager({
                 />
               </div>
             </div>
-            <SlDetails summary="Filtrele" className="variant-filters">
+            <div className="variant-view-actions">
+              <Button type="button" className="icon-btn" aria-label="Liste görünümü" aria-pressed={view === "list"} onClick={() => { setView("list"); try { sessionStorage.setItem("variant-list-view", "list"); } catch {} }}><List size={18} /></Button>
+              <Button type="button" className="icon-btn" aria-label="Kart görünümü" aria-pressed={view === "grid"} onClick={() => { setView("grid"); try { sessionStorage.setItem("variant-list-view", "grid"); } catch {} }}><GridFour size={18} /></Button>
+            </div>
+            <SlDetails summary={filtersOpen ? "Filtreleri Kapat" : "Filtreleri Aç"} onSlShow={() => setFiltersOpen(true)} onSlHide={() => setFiltersOpen(false)} className="variant-filters">
               <div className="variant-filter-grid">
                 <Select
                   label="Ana kategori"
@@ -310,7 +319,7 @@ export default function VariantManager({
               varyant
             </p>
             <div
-              className="table-scroll variant-desktop-table"
+              className={"table-scroll variant-desktop-table " + (view === "grid" ? "variant-view-hidden" : "")}
               hidden={!rows.length}
               tabIndex={0}
               role="region"
@@ -389,7 +398,7 @@ export default function VariantManager({
                 <p>Filtreleri değiştirin veya bir ürüne varyant ekleyin.</p>
               </div>
             )}
-            <div className="variant-mobile-cards">
+            <div className={"variant-mobile-cards " + (view === "grid" ? "variant-view-grid" : "")}>
               {shown.map(({ p, v, c }) => (
                 <article key={v.id}>
                   <div>
@@ -430,13 +439,12 @@ export default function VariantManager({
                 </article>
               ))}
             </div>
-            {rows.length > 8 && (
-              <Pagination
-                total={rows.length}
-                page={current}
-                onChange={setPage}
-              />
-            )}
+            <div className="variant-list-footer">
+              <Select aria-label="Sayfa başına varyant" value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                {[10, 25, 50, 100].map(size => <option key={size} value={String(size)}>{size}</option>)}
+              </Select>
+              <Pagination total={rows.length} page={current} pageSize={pageSize} onChange={setPage} />
+            </div>
             {creating && (
               <Modal title="Yeni varyant" onClose={() => setCreating(false)}>
                 <p>Önce birim fiyatı ve gramajı tamamlanmış bir ürün seçin.</p>

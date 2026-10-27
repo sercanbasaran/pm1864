@@ -570,7 +570,6 @@ export default function CategoryManager({
               </Table>
             </div>
           </Card>
-          {!readOnly && <ActionBar position="bottom">{addAction}</ActionBar>}
         </section>
       )}
       {draft && (
