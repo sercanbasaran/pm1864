@@ -1,9 +1,10 @@
+import { ApiError } from "./errors.js";
+import { readJsonBody } from "./http/json-body.js";
 import { createMediaService } from "./media-service.js";
 import { openDatabase, migrate } from "./db.js";
 import {
   createCatalogService,
   seedCatalog,
-  ApiError,
 } from "./catalog-service.js";
 import {
   checkPassword,
@@ -34,7 +35,7 @@ export async function createApp({ env = process.env, database } = {}) {
   await users.initialize();
   async function session(request) {
     const token = readCookie(request);
-    if (!token) return null;
+    if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
     const row = (
       await db.query(
         "SELECT email, expires_at FROM app_sessions WHERE token_hash=?",
@@ -154,25 +155,11 @@ export async function createApp({ env = process.env, database } = {}) {
         );
       let body = {};
       if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-        if (!request.headers.get("content-type")?.includes("application/json"))
-          throw new ApiError(415, "JSON içerik gerekli.");
-        const raw = await request.text();
-        if (
-          Buffer.byteLength(raw) >
-          ((route === "/api/media" && method === "POST") ||
-          (route === "/api/profile/avatar" && method === "PUT")
-            ? 2900000
-            : 262144)
-        )
-          throw new ApiError(413, "İstek boyutu sınırı aşıldı.");
-        try {
-          body = JSON.parse(raw);
-        } catch {
-          throw new ApiError(400, "Geçersiz JSON.");
-        }
-        if (!body || Array.isArray(body) || typeof body !== "object")
-          throw new ApiError(400, "JSON nesnesi gerekli.");
+        const limit = ((route === "/api/media" && method === "POST") ||
+          (route === "/api/profile/avatar" && method === "PUT")) ? 2900000 : 262144;
+        body = await readJsonBody(request, limit);
       }
+
       const secure = url.protocol === "https:";
       if (route === "/api/login" && method === "POST") {
         const row = await users.findEmail(body.email),

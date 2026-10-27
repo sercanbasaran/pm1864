@@ -2,7 +2,8 @@ import { decodeImageUpload } from "./media-service.js";
 import { randomUUID } from "node:crypto";
 import { roles, roleFor, can } from "../src/permissions.js";
 import { hashPassword, checkPassword } from "./security.js";
-import { ApiError, audit } from "./catalog-service.js";
+import { audit } from "./audit.js";
+import { ApiError } from "./errors.js";
 export const publicUser = (row) => ({
   id: row.id,
   email: row.email,

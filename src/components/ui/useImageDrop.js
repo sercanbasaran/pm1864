@@ -1,3 +1,4 @@
+import "./image-drop.css";
 import { useState } from "react";
 
 export default function useImageDrop(onFiles, disabled = false) {

@@ -1,3 +1,5 @@
+import VariantQualitySummary from "./VariantQualitySummary.jsx";
+import { missingVariantInformation } from "./variant-quality.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import "./variant-management.css";
 import Pagination from "../../components/ui/Pagination.jsx";
@@ -44,6 +46,7 @@ export default function VariantManager({
   onDuplicate,
   onCard,
   onCreate,
+  relatedProducts,
 }) {
   const { variantTypes = [], mutate, notify, busy } = useCatalog();
   const [deleteTarget, setDeleteTarget] = useState(null), [deleteError, setDeleteError] = useState("");
@@ -54,6 +57,9 @@ export default function VariantManager({
   }
   function confirmDelete(v) { setDeleteError(""); setDeleteTarget(v); }
   const [typeId, setTypeId] = useState("");
+  const [quality, setQuality] = useState("");
+  const sources = relatedProducts || products;
+  const qualityRows = products.flatMap(p => p.variants.map(v => ({p, v})));
   const [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
     [filtersOpen, setFiltersOpen] = useState(false),
@@ -66,6 +72,7 @@ export default function VariantManager({
     setProductId("");
     setStatus("");
     setTypeId("");
+    setQuality("");
     setPage(1);
   }
 
@@ -78,7 +85,7 @@ export default function VariantManager({
     const ids = Array.isArray(variant.items) && variant.items.length
       ? variant.items.map((item) => item.productId)
       : [variant.sourceProductId ?? owner.id];
-    return ids.map((id) => products.find((product) => product.id === id)).filter(Boolean);
+    return ids.map((id) => sources.find((product) => product.id === id)).filter(Boolean);
   };
   const includedProducts = new Set(products.flatMap((owner) => owner.variants.flatMap((variant) => itemProducts(owner, variant).map((item) => item.id))));
   const rows = products
@@ -87,6 +94,7 @@ export default function VariantManager({
     )
     .filter(
       ({ p, v, members }) =>
+        (!quality || missingVariantInformation(v, quality, sources, variantTypes, p)) &&
         (!typeId || v.typeId === typeId) &&
         (!(root || sub || productId) || members.some((item) => {
           const c = categoryOf(item, categories);
@@ -98,7 +106,7 @@ export default function VariantManager({
           .includes(query.toLocaleLowerCase("tr")),
     )
     .sort((a, b) => sort === "name" ? String(a.v.size).localeCompare(String(b.v.size), "tr") : sort === "price-asc" ? a.v.price - b.v.price : sort === "price-desc" ? b.v.price - a.v.price : (new Date(b.v.updated || b.p.updated || 0) - new Date(a.v.updated || a.p.updated || 0)));
-  const hasFilters = !!(query || root || sub || productId || status || typeId);
+  const hasFilters = !!(query || root || sub || productId || status || typeId || quality);
   const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     current = Math.min(page, pages),
     shown = rows.slice((current - 1) * pageSize, current * pageSize);
@@ -138,6 +146,7 @@ export default function VariantManager({
         ]}
       />
 
+      <VariantQualitySummary rows={qualityRows} products={sources} types={variantTypes} selected={quality} onSelect={value => {setQuality(value); setPage(1);}} />
           <Card className="panel variant-manager">
             <div className="panel-title">
               <div>
@@ -370,7 +379,7 @@ export default function VariantManager({
                   <p className="variant-card-product">{members.map((item) => item.name).join(" · ") || "Ürün bulunamadı"}</p>
                   <small className="variant-card-meta">{v.sku || "—"}</small>
                   <small className="variant-card-type">{variantTypeName(v, variantTypes)}</small>
-                  {v.items?.length > 1 && <small className="variant-card-meta">{v.items.map(item => { const source = products.find(product => product.id === item.productId); return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`; }).join(" · ")}</small>}
+                  {v.items?.length > 1 && <small className="variant-card-meta">{v.items.map(item => { const source = sources.find(product => product.id === item.productId); return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`; }).join(" · ")}</small>}
                   <dl>
                     <div>
                       <dt>Miktar</dt>

@@ -1,0 +1,10 @@
+.image-drop-target.is-dragging {
+  outline: 2px dashed var(--sl-color-primary-600);
+  outline-offset: 3px;
+  background-color: var(--sl-color-primary-50);
+}
+.image-drop-help {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--sl-color-neutral-600);
+}

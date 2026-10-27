@@ -5,6 +5,7 @@ export function createHandler({env=process.env,connect=postgres}={}){
  const respond=(body,status=200,extra={})=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...extra}});
  return async function(request){
   if(request.method!=='GET')return respond({success:false,error:'Bu endpoint yalnızca GET isteklerini destekler.'},405,{Allow:'GET'});
+  if((env.NETLIFY==='true'||env.NODE_ENV==='production')&&env.ENABLE_DB_DIAGNOSTICS!=='true')return respond({success:false,error:'Bulunamadı.'},404);
   if(!env.DATABASE_URL?.trim())return respond({success:false,error:'DATABASE_URL ortam değişkeni tanımlanmadı.'},503);
   try{
    // Reuse one small pool per warm serverless instance. Do not log the URL.

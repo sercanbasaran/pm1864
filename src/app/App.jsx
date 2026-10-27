@@ -393,9 +393,9 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     const variantCardProduct = page === "variants" && action === "card" ? products.find((p) => String(p.id) === record) : null;
     const cardVariant = variantCardProduct?.variants.find((v) => String(v.id) === params.get("variant"));
     pageContent = page === "variants" && record === "new" && can(user, "products.write") ? (
-      <VariantCreatePage initialProduct={products.find(p => String(p.id) === params.get("product"))} onClose={closeEditor} />
+      <VariantCreatePage initialProduct={products.find(p => String(p.id) === params.get("product"))} onClose={closeEditor} onSaved={p => navigate(`variants/${p.id}/edit`, {replace:true})} onDuplicate={duplicateVariantForProduct} onCard={(p,v) => navigate(`variants/${p.id}/card?variant=${encodeURIComponent(v.id)}&siblings=1`)} onCreate={() => navigate("variants/new")} />
     ) : variantCardProduct && cardVariant ? (
-      <VariantCardManagement key={cardVariant.id} product={variantCardProduct} variant={cardVariant} user={user} onClose={closeEditor} />
+      <VariantCardManagement key={cardVariant.id} product={variantCardProduct} variant={cardVariant} user={user} onClose={params.get("siblings") === "1" ? () => navigate(`variants/${variantCardProduct.id}/edit`, {replace:true}) : closeEditor} />
     ) : cardProduct ? (
       <ProductCardManagement
         key={cardProduct.id}
@@ -408,6 +408,10 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         <VariantEditor
           key={route}
           product={editing.product}
+          onSaved={p => navigate(`variants/${p.id}/edit`, {replace:true})}
+          onDuplicate={duplicateVariantForProduct}
+          onCard={(p,v) => navigate(`variants/${p.id}/card?variant=${encodeURIComponent(v.id)}&siblings=1`)}
+          onCreate={() => navigate(`variants/new?product=${editing.product.id}`)}
           focusVariantId={params.get("variant") || ""}
           readOnly={!can(user, "products.write")}
           onClose={closeEditor}

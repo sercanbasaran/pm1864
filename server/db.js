@@ -54,7 +54,7 @@ export async function openDatabase(env = process.env) {
   const file = env.SQLITE_PATH || resolve("data/pm1864.sqlite");
   if (file !== ":memory:") await mkdir(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
-  db.exec("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;");
+  db.exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;");
   const tx = {
     dialect: "sqlite",
     query: async (sql, args = []) => {
@@ -102,6 +102,8 @@ export async function migrate(db, seed) {
     await tx.query(
       "CREATE TABLE IF NOT EXISTS app_sessions (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at BIGINT NOT NULL)",
     );
+    await tx.query("CREATE INDEX IF NOT EXISTS app_sessions_email_idx ON app_sessions(email)");
+    await tx.query("CREATE INDEX IF NOT EXISTS app_sessions_expiry_idx ON app_sessions(expires_at)");
     await tx.query(
       "CREATE TABLE IF NOT EXISTS app_media (id TEXT PRIMARY KEY,name TEXT NOT NULL,mime_type TEXT NOT NULL,size INTEGER NOT NULL,data TEXT NOT NULL,version INTEGER NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)",
     );

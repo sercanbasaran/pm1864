@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { ApiError, audit } from "./catalog-service.js";
+import { audit } from "./audit.js";
+import { ApiError } from "./errors.js";
 const MAX_BYTES = 2 * 1024 * 1024;
 const nameOf = (value) => (typeof value === "string" ? value.trim() : "");
 export const mediaUrl = (id) => "/api/media/" + id + "/content";

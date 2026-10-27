@@ -721,5 +721,3 @@ sl-textarea::part(textarea) {
 }
 .unit-pricing-fields { display: grid; gap: 1rem; min-width: 0; max-width: 32rem; }
 .unit-pricing-summary { display: grid; gap: .35rem; }
-.image-drop-target.is-dragging { outline: 2px dashed var(--sl-color-primary-600); outline-offset: 3px; background-color: var(--sl-color-primary-50); }
-.image-drop-help { display:block; margin-top:.5rem; color:var(--sl-color-neutral-600); }

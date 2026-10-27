@@ -92,3 +92,12 @@
 .variant-product-selected .variant-wizard-item { grid-template-columns:minmax(0,1fr) minmax(90px,140px) auto; }
 @media(max-width:900px) { .variant-product-transfer { grid-template-columns:1fr; } }
 @media(max-width:1100px) { .variant-product-selected .variant-wizard-item { grid-template-columns:1fr; } }
+.variant-product-picker-row > .variant-picker-identity,
+.variant-wizard-item > .variant-selected-identity { display:flex; flex-direction:row; align-items:center; gap:.75rem; min-width:0; }
+.variant-picker-identity > div:not(.product-image),
+.variant-selected-identity > div:not(.product-image) { display:flex; flex-direction:column; gap:.25rem; min-width:0; overflow-wrap:anywhere; }
+.variant-picker-identity .product-image,
+.variant-selected-identity .product-image { width:64px; height:64px; aspect-ratio:1; flex:0 0 64px; border-radius:.375rem; overflow:hidden; }
+.variant-picker-identity .product-image img,
+.variant-selected-identity .product-image img { width:100%; height:100%; object-fit:contain; }
+.variant-product-transfer .image-placeholder small { display:none; }

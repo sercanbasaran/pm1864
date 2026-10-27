@@ -1,3 +1,5 @@
+import { audit } from "./audit.js";
+export { audit } from "./audit.js";
 import { defaultPackagingItems, isBoxVariant } from "../src/modules/packaging/packaging-data.js";
 import {
   calculateVariant,
@@ -57,13 +59,8 @@ import {
   validateCategory,
   validateProduct,
 } from "../src/catalog.js";
-export class ApiError extends Error {
-  constructor(status, message, code = "REQUEST_ERROR") {
-    super(message);
-    this.status = status;
-    this.code = code;
-  }
-}
+import { ApiError } from "./errors.js";
+export { ApiError } from "./errors.js";
 export const seedCatalog = () => ({
   categories: [
     ["Baklavalar", "100"],
@@ -133,17 +130,6 @@ export function publicCatalog(doc, revision) {
     logs: doc.logs,
     settings: { skuPrefix: doc.settings.skuPrefix },
   };
-}
-export function audit(doc, title, detail, actor) {
-  doc.logs.unshift({
-    id: randomUUID(),
-    title,
-    detail,
-    actor,
-    time: new Date().toISOString(),
-    type: "info",
-  });
-  doc.logs = doc.logs.slice(0, 1000);
 }
 export function createCatalogService(db) {
   async function read() {
