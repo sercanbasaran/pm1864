@@ -1,3 +1,4 @@
+import ProductImport from "./ProductImport.jsx";
 import "./product-management.css";
 import ProductQualitySummary from "./ProductQualitySummary.jsx";
 import {
@@ -67,6 +68,7 @@ export default function ProductManagement({
     [pageSize, setPageSize] = useState(10),
     [selected, setSelected] = useState([]),
     [filters, setFilters] = useState(false),
+    [importOpen, setImportOpen] = useState(false),
     search = useRef(null);
   useEffect(() => { try { sessionStorage.setItem("product-list-view", view); } catch {} }, [view]);
   const write = can(user, "products.write"),
@@ -248,6 +250,7 @@ export default function ProductManagement({
               ürün
             </p>
           </div>
+          {write && <Button type="button" onClick={() => setImportOpen(true)}>Excel içe aktar</Button>}
           <Button type="button" onClick={exportRows}>
             <DownloadSimple size={16} />
             Dışa aktar
@@ -566,6 +569,7 @@ export default function ProductManagement({
           <Pagination total={visible.length} page={current} pageSize={pageSize} onChange={setPage} />
         </div>
       </Card>
+      {importOpen && <ProductImport onClose={() => setImportOpen(false)} />}
     </section>
   );
 }
