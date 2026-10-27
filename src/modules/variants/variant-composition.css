@@ -54,3 +54,15 @@
 .variant-wizard-navigation { display:flex; justify-content:flex-end; gap:.75rem; padding-top:1rem; border-top:1px solid var(--sl-color-neutral-200); }
 .variant-wizard-error { color:var(--sl-color-danger-700); margin:0; }
 @media(max-width:640px) { .variant-wizard-item, .variant-wizard-add { grid-template-columns:1fr; } .variant-wizard-navigation sl-button { flex:1; } }
+.variant-editor-layout { display:grid; gap:1rem; min-width:0; }
+.variant-editor-intro { display:flex; align-items:baseline; flex-wrap:wrap; gap:.5rem; padding:.75rem 1rem; border-radius:.5rem; background:var(--sl-color-neutral-50); }
+.variant-editor-intro span,.variant-editor-intro small { color:var(--sl-color-neutral-600); font-size:.875rem; }
+.variant-editor-hint { margin:0; }
+.variant-editor-save,.variant-selected-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.75rem; padding-top:1rem; border-top:1px solid var(--sl-color-neutral-200); }
+.variant-choice-list,.variant-selected-summary { display:grid; gap:1rem; min-width:0; }
+.variant-choice-list h3,.variant-selected-summary h3 { margin:0; }.variant-choice-list p { margin:.25rem 0 0; color:var(--sl-color-neutral-600); }
+.variant-choice-row { display:grid; grid-template-columns:minmax(180px,1fr) auto auto auto auto; gap:1rem; align-items:center; border:1px solid var(--sl-color-neutral-200); border-radius:.5rem; padding:.75rem 1rem; }
+.variant-choice-identity { display:flex; flex-direction:column; min-width:0; gap:.2rem; }.variant-choice-identity small,.variant-selected-heading small { color:var(--sl-color-neutral-600); }
+.variant-selected-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+.variant-selected-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:0; }.variant-selected-stats div { padding:.75rem; background:var(--sl-color-neutral-50); border-radius:.5rem; }.variant-selected-stats dt { font-size:.875rem; color:var(--sl-color-neutral-600); }.variant-selected-stats dd { margin:.3rem 0 0; font-weight:600; }
+@media(max-width:700px) { .variant-choice-row { grid-template-columns:repeat(2,minmax(0,1fr)); }.variant-choice-identity { grid-column:1/-1; }.variant-choice-row sl-button { grid-column:1/-1; width:100%; }.variant-selected-stats { grid-template-columns:1fr; }.variant-editor-save sl-button,.variant-selected-actions sl-button { flex:1; } }

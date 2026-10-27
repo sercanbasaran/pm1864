@@ -22,10 +22,19 @@ test("seçili varyant düzenlenir, diğer varyant değişmeden korunur", async (
  }
  const optional = [...document.querySelectorAll('sl-details.variant-optional-section')];
  expect(optional).toHaveLength(2); expect(optional.every(x => !x.open)).toBe(true);
- const save = [...document.querySelectorAll('sl-button')].find(x => x.textContent.trim() === 'Kaydet'); fireEvent.click(save); await settle();
+ const save = [...document.querySelectorAll('sl-button')].find(x => x.textContent.trim() === 'Varyantı kaydet'); fireEvent.click(save); await settle();
  expect(fetch).toHaveBeenCalled();
  const call = fetch.mock.calls.find(([url]) => String(url).includes("/api/products/1"));
  if (!call) throw new Error(document.querySelector("sl-alert")?.textContent || "İstek yapılmadı");
  const body = JSON.parse(call[1].body);
  expect(body.product.variants[1]).toEqual(base.variants[1]);
+});
+
+test("çok varyantlı ürün kompakt seçim listesiyle açılır", async () => {
+ render(<CatalogProvider snapshot={catalog} notify={vi.fn()}><VariantEditor product={base} onClose={vi.fn()} /></CatalogProvider>); await settle();
+ expect(document.querySelectorAll('.variant-choice-row')).toHaveLength(2);
+ expect(document.querySelector('.category-gallery')).toBeNull();
+ fireEvent.click(document.querySelector('sl-button[aria-label="Kutu düzenle"]')); await settle();
+ const names = [...document.querySelectorAll('sl-input')].filter(input => input.label === 'Varyant adı');
+ expect(names).toHaveLength(1); expect(names[0].value).toBe('Kutu');
 });
