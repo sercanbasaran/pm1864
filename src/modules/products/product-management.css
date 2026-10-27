@@ -156,3 +156,8 @@
 .product-module .product-summary-image-link:focus-visible { outline: 2px solid var(--sl-color-primary-600); outline-offset: 3px; }
 .product-module .product-summary-actions { display: flex; flex-direction: column; width: 100%; }
 .product-module .product-summary-actions > sl-button, .product-module .product-summary-actions > sl-button::part(base) { width: 100%; }
+
+.product-module .product-summary-card h3 { margin: .5rem 0 .15rem; }
+.product-module .product-summary-category { margin: .35rem 0 0; }
+.product-module .product-summary-meta { display: flex; align-items: center; gap: .5rem; margin: 0; }
+.product-module .product-summary-card .unit-pricing-summary { margin: .4rem 0 0; }

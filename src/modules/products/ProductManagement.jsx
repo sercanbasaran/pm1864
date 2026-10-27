@@ -293,7 +293,7 @@ export default function ProductManagement({
               aria-controls="product-filter-panel"
               onClick={() => setFilters(!filters)}
             >
-              Filtrele
+              {filters ? "Filtreleri Kapat" : "Filtreleri Aç"}
             </Button>
             <Button
               className="icon-btn"
@@ -509,11 +509,9 @@ export default function ProductManagement({
                   <ProductImage product={p} />
                 </button>
                 <StatusBadge status={p.status} />
+                <div className="product-summary-category"><SlTag size="small">{categoryPath(categoryOf(p, categories), categories)}</SlTag></div>
                 <h3 title={p.name}>{p.name}</h3>
-                <small>{p.productCode}</small>
-                <p className="product-summary-category">
-                  {categoryPath(categoryOf(p, categories), categories)}
-                </p>
+                <div className="product-summary-meta"><SlTag size="small">{p.productCode}</SlTag><small>{p.variants.length} varyant</small></div>
                 <UnitPricing value={p.unitPricing} compact />
                 <div className="product-summary-actions">
                   {write && (
