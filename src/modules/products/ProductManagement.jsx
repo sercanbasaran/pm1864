@@ -552,9 +552,7 @@ export default function ProductManagement({
         )}
         <div className="product-list-footer">
           <div className="product-page-size">
-          <span id="product-page-size-label">Sayfa başına ürün</span>
           <Select
-            aria-labelledby="product-page-size-label"
             aria-label="Sayfa başına ürün"
             value={String(pageSize)}
             onChange={(e) => filter(setPageSize, Number(e.target.value))}
