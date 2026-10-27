@@ -48,6 +48,7 @@ export default function VariantManager({
   const [typeId, setTypeId] = useState("");
   const [creating, setCreating] = useState(false),
     [createId, setCreateId] = useState(""),
+    [createTypeId, setCreateTypeId] = useState(""),
     [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
     [filtersOpen, setFiltersOpen] = useState(false),
@@ -100,6 +101,7 @@ export default function VariantManager({
       variant="primary"
       onClick={() => {
         setCreateId("");
+        setCreateTypeId("");
         setCreating(true);
       }}
     >
@@ -336,7 +338,8 @@ export default function VariantManager({
                         {v.weight} g{v.slices > 0 ? ` / ${v.slices} dilim` : ""}
                       </TableCell>
                       <TableCell>
-                        {v.quantity ?? "—"} {v.unit || "Adet"}
+                        {v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}
+                        {v.items?.length > 1 && <small className="user-email">{v.items.map(item => { const source = products.find(product => product.id === item.productId); return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`; }).join(" · ")}</small>}
                         <small className="user-email">
                           {v.packaging || "Ambalaj belirtilmedi"}
                         </small>
@@ -361,7 +364,7 @@ export default function VariantManager({
                         {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title={p.variants.length >= 50 ? "Bir üründe en fazla 50 varyant olabilir" : "Varyantı çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /></Button>}
                         <Button
                           className="btn"
-                          onClick={() => onEdit(p, false)}
+                          onClick={() => onEdit(p, false, v.id)}
                         >
                           <PencilSimple size={15} />
                           {canWrite ? "Yönet" : "Görüntüle"}
@@ -395,11 +398,12 @@ export default function VariantManager({
                   <p className="variant-card-product">{p.name}</p>
                   <small className="variant-card-meta">{categoryPath(c, categories)} · {v.sku || "—"}</small>
                   <small className="variant-card-type">{variantTypeName(v, variantTypes)}</small>
+                  {v.items?.length > 1 && <small className="variant-card-meta">{v.items.map(item => { const source = products.find(product => product.id === item.productId); return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`; }).join(" · ")}</small>}
                   <dl>
                     <div>
                       <dt>Miktar</dt>
                       <dd>
-                        {v.quantity ?? "—"} {v.unit}
+                        {v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}
                       </dd>
                     </div>
                     <div>
@@ -417,7 +421,7 @@ export default function VariantManager({
                   </dl>
                   <div className="variant-card-actions">
                   {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /> Varyantı çoğalt</Button>}
-                  <Button type="button" onClick={() => onEdit(p, false)}>
+                  <Button type="button" onClick={() => onEdit(p, false, v.id)}>
                     {canWrite ? "Yönet" : "Görüntüle"}
                   </Button>
                   </div>
@@ -432,8 +436,12 @@ export default function VariantManager({
             </div>
             {creating && (
               <Modal title="Yeni varyant" onClose={() => setCreating(false)}>
-                <p>Önce birim fiyatı ve gramajı tamamlanmış bir ürün seçin.</p>
-                <Select
+                <p>Önce varyant türünü, ardından ilk ürünü seçin. Sonraki adımda başka ürünler ekleyebilirsiniz.</p>
+                <Select label="Varyant türü" value={createTypeId} onChange={(e) => { setCreateTypeId(e.target.value); setCreateId(""); }}>
+                  <option value="">Tür seçin</option>
+                  {variantTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+                </Select>
+                {createTypeId && <Select
                   label="Varyant oluşturulacak ürün"
                   value={createId}
                   onChange={(e) => setCreateId(e.target.value)}
@@ -444,8 +452,8 @@ export default function VariantManager({
                       {p.name}
                     </option>
                   ))}
-                </Select>
-                {!eligible.length && (
+                </Select>}
+                {createTypeId && !eligible.length && (
                   <p>
                     Uygun ürün bulunamadı. Ürünler bölümünden birim fiyat ve
                     gramaj bilgilerini tamamlayın.
@@ -458,12 +466,14 @@ export default function VariantManager({
                   <Button
                     type="button"
                     variant="primary"
-                    disabled={!eligible.some((p) => String(p.id) === createId)}
+                    disabled={!createTypeId || !eligible.some((p) => String(p.id) === createId)}
                     onClick={() => {
                       setCreating(false);
                       onEdit(
                         eligible.find((p) => String(p.id) === createId),
                         true,
+                        "",
+                        createTypeId,
                       );
                     }}
                   >

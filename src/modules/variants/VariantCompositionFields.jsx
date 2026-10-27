@@ -1,284 +1,64 @@
 import "./variant-composition.css";
-import React from "react";
-import { Button, Input, Select } from "../../components/ui/Controls.jsx";
+import React, { useEffect, useState } from "react";
+import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
+import { Button, Input, Select, Textarea } from "../../components/ui/Controls.jsx";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
-import { newVariant } from "./VariantFields.jsx";
-import {
-  calculateVariant,
-  defaultConsumables,
-  packagingOptions,
-} from "../../variant-composition.js";
+import ProductSatiety from "../products/ProductSatiety.jsx";
+import { productInformationFields } from "../../product-information.js";
+import { calculateVariant, defaultConsumables, deriveVariantInformation, packagingOptions } from "../../variant-composition.js";
+import { hasUnitPricing } from "../../unit-pricing.js";
 import { money } from "../../catalog-tools.js";
-export default function VariantCompositionFields({
-  product,
-  onChange,
-  disabled,
-}) {
-  const {
-    products,
-    variantTypes,
-    consumables = defaultConsumables(),
-    refresh,
-  } = useCatalog();
-  const update = (i, patch) =>
-    onChange({
-      ...product,
-      variants: product.variants.map((v, n) =>
-        n === i ? { ...v, ...patch } : v,
-      ),
-    });
-  const add = () =>
-    onChange({
-      ...product,
-      variants: [
-        ...product.variants,
-        {
-          ...newVariant(),
-          sourceProductId: product.id,
-          quantity: 1,
-          priceOverride: null,
-          consumables: [],
-          images: [],
-          packaging: "",
-          typeId: variantTypes[0]?.id || "",
-        },
-      ],
-    });
-  return (
-    <fieldset disabled={disabled} className="variant-composition-fields">
-      <Button
-        type="button"
-        onClick={add}
-        disabled={disabled || product.variants.length >= 50}
-      >
-        Varyant ekle
-      </Button>
-      {product.variants.map((v, i) => {
-        let calculated, error;
-        try {
-          calculated = calculateVariant(v, products, consumables);
-        } catch (e) {
-          error = e.message;
-        }
-        const source = products.find(
-          (p) => p.id === (v.sourceProductId ?? product.id),
-        );
-        return (
-          <section className="category-field-card" key={v.id || i}>
-            <div className="variant-composition-row">
-              <Input
-                label="Varyant adı"
-                maxLength={30}
-                required
-                value={v.size}
-                onChange={(e) => update(i, { size: e.target.value })}
-              />
-              <Select
-                label="Ürün"
-                value={String(v.sourceProductId ?? product.id)}
-                onChange={(e) =>
-                  update(i, {
-                    sourceProductId: Number(e.target.value),
-                    quantity: 1,
-                    images: [],
-                    consumables: v.consumables ?? [],
-                    priceOverride: null,
-                  })
-                }
-              >
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Varyant tipi"
-                value={v.typeId || ""}
-                onChange={(e) => update(i, { typeId: e.target.value })}
-              >
-                <option value="">Tip seçin</option>
-                {variantTypes.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </Select>
-              <Input
-                label={
-                  "Ürün miktarı (" +
-                  (source?.unitPricing?.unit || "birim") +
-                  ")"
-                }
-                type="number"
-                min={0.001}
-                step="any"
-                required
-                value={v.quantity ?? 1}
-                onChange={(e) =>
-                  update(i, {
-                    sourceProductId: source.id,
-                    quantity: Number(e.target.value),
-                  })
-                }
-              />
-              <Select
-                label="Ambalaj / servis şekli"
-                value={v.packaging || ""}
-                onChange={(e) =>
-                  update(i, {
-                    sourceProductId: source.id,
-                    packaging: e.target.value,
-                    quantity: v.quantity ?? 1,
-                    consumables: v.consumables ?? [],
-                  })
-                }
-              >
-                <option value="">Seçin</option>
-                {packagingOptions.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </Select>
-              <p>
-                {v.packaging === "Tabakta servis"
-                  ? "Servis şekli: Tabakta servis"
-                  : "Ambalaj: " + (v.packaging || "Seçilmedi")}
-              </p>
-              {calculated ? (
-                <p>
-                  Hesaplanan fiyat:{" "}
-                  <strong>{money(calculated.calculatedPrice)}</strong> · Net
-                  ürün gramajı: <strong>{calculated.weight} g</strong> · Satış
-                  fiyatı: <strong>{money(calculated.price)}</strong>
-                </p>
-              ) : (
-                <p role="status">{error}</p>
-              )}
-              <Input
-                label="Satış fiyatı (isteğe bağlı düzeltme)"
-                type="number"
-                min={0.01}
-                step={0.01}
-                value={v.priceOverride ?? ""}
-                onChange={(e) =>
-                  update(i, {
-                    priceOverride:
-                      e.target.value === "" ? null : Number(e.target.value),
-                  })
-                }
-              />
-              <p>
-                Boş bırakıldığında hesaplanan fiyat kullanılır. Gramaj yalnızca
-                ürünün net ağırlığıdır; ambalaj ve sarf malzemeler dahil
-                değildir.
-              </p>
-              <h3>Varyant görselleri</h3>
-              <div className="variant-photo-options">
-                {(source?.images || []).map((image) => (
-                  <label key={image.id}>
-                    <img src={image.url} alt={source.name} />
-                    <input
-                      type="checkbox"
-                      checked={(v.images || []).some((x) => x.id === image.id)}
-                      onChange={(e) =>
-                        update(i, {
-                          images: e.target.checked
-                            ? [...(v.images || []), image]
-                            : (v.images || []).filter((x) => x.id !== image.id),
-                        })
-                      }
-                    />{" "}
-                    Seç
-                  </label>
-                ))}
-              </div>
-              <MediaGallery
-                label="Varyant"
-                images={v.images || []}
-                disabled={disabled}
-                onRefresh={refresh}
-                onChange={(images) => {
-                  update(i, { images });
-                  return true;
-                }}
-              />
-              <h3>Sarf malzemeler</h3>
-              {(v.consumables || []).map((item, n) => (
-                <div key={item.id}>
-                  <strong>
-                    {consumables.find((c) => c.id === item.id)?.name ||
-                      "Sarf malzeme"}
-                  </strong>
-                  <Input
-                    label="Sarf malzeme adedi"
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      update(i, {
-                        consumables: v.consumables.map((c, k) =>
-                          k === n
-                            ? { ...c, quantity: Number(e.target.value) }
-                            : c,
-                        ),
-                      })
-                    }
-                  />
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      update(i, {
-                        consumables: v.consumables.filter((_, k) => k !== n),
-                      })
-                    }
-                  >
-                    Sarf malzemeyi kaldır
-                  </Button>
-                </div>
-              ))}
-              <Select
-                label="Sarf malzeme ekle"
-                value=""
-                onChange={(e) => {
-                  if (e.target.value)
-                    update(i, {
-                      consumables: [
-                        ...(v.consumables || []),
-                        { id: e.target.value, quantity: 1 },
-                      ],
-                    });
-                }}
-              >
-                <option value="">Sarf malzeme seçin</option>
-                {consumables
-                  .filter(
-                    (c) =>
-                      c.active &&
-                      !(v.consumables || []).some((item) => item.id === c.id),
-                  )
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-              </Select>
-              <Button
-                type="button"
-                onClick={() =>
-                  onChange({
-                    ...product,
-                    variants: product.variants.filter((_, n) => n !== i),
-                  })
-                }
-              >
-                Varyantı kaldır
-              </Button>
-            </div>
-          </section>
-        );
-      })}
-    </fieldset>
-  );
+
+const steps = ["Varyant türü", "Ürünler", "Fiyat ve ambalaj", "Ürün bilgileri"];
+export default function VariantCompositionFields({ product, onChange, disabled, focusVariantId = "", onReady }) {
+  const { products, variantTypes, satietyProducts, consumables = defaultConsumables(), refresh } = useCatalog();
+  const [step, setStep] = useState(0), [choice, setChoice] = useState(""), [error, setError] = useState("");
+  const index = focusVariantId ? product.variants.findIndex(v => String(v.id) === focusVariantId) : product.variants.findIndex(v => !v.id);
+  const i = index < 0 ? 0 : index, v = product.variants[i];
+  useEffect(() => { onReady?.(step === steps.length - 1); }, [step, onReady]);
+  if (!v) return <p>Varyant bulunamadı.</p>;
+  const items = Array.isArray(v.items) ? v.items : [{ productId: v.sourceProductId ?? product.id, quantity: v.quantity ?? (v.slices || 1) }];
+  const update = patch => onChange({ ...product, variants: product.variants.map((item, n) => n === i ? { ...item, ...patch } : item) });
+  const updateItems = next => update({ items: next, sourceProductId: next[0]?.productId, quantity: next[0]?.quantity });
+  const derived = deriveVariantInformation({ ...v, items }, products);
+  const overrides = v.informationOverrides ?? v.information ?? {};
+  const information = { ...derived, ...overrides };
+  const updateInfo = (key, value) => update({ items, sourceProductId: items[0].productId, quantity: items[0].quantity, informationOverrides: { ...overrides, [key]: value } });
+  let calculated, calculationError;
+  try { calculated = calculateVariant({ ...v, items, consumables: v.consumables || [] }, products, consumables); } catch (e) { calculationError = e.message; }
+  function next() {
+    setError("");
+    if (step === 0 && (!v.typeId || !v.size.trim())) return setError("Varyant türünü ve adını girin.");
+    if (step === 1 && (!items.length || items.some(item => { const source = products.find(p => p.id === item.productId); return !source || !hasUnitPricing(source.unitPricing) || !Number.isFinite(item.quantity) || item.quantity <= 0 || (["Dilim", "Kap", "Adet"].includes(source.unitPricing.unit) && !Number.isInteger(item.quantity)); }))) return setError("Her ürün için geçerli birim fiyatı, gramaj ve miktar girin.");
+    if (step === 2 && !calculated) return setError(calculationError);
+    if (step === 2) update({ items, sourceProductId: items[0].productId, quantity: items[0].quantity, consumables: v.consumables || [], images: v.images || [], informationOverrides: overrides });
+    setStep(n => Math.min(n + 1, steps.length - 1));
+  }
+  return <fieldset disabled={disabled} className="variant-composition-fields">
+    <nav className="variant-wizard-steps" aria-label="Varyant oluşturma adımları">{steps.map((name, n) => <span key={name} aria-current={n === step ? "step" : undefined}><b>{n + 1}</b> {name}</span>)}</nav>
+    {error && <p className="variant-wizard-error" role="alert">{error}</p>}
+    {step === 0 && <section className="variant-wizard-section"><h3>Varyant türü ve adı</h3><p>Örneğin porsiyon veya kutu seçin ve varyanta bir ad verin.</p><div className="variant-basic-grid">
+      <Select label="Varyant türü" value={v.typeId || ""} onChange={e => update({typeId:e.target.value})}><option value="">Tür seçin</option>{variantTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
+      <Input label="Varyant adı" maxLength={30} required value={v.size} onChange={e => update({size:e.target.value})} />
+    </div></section>}
+    {step === 1 && <section className="variant-wizard-section"><h3>Varyantın içindeki ürünler</h3><p>Her ürünün varyanttaki miktarını birimi üzerinden belirleyin.</p>
+      {items.map((item, n) => { const source = products.find(p => p.id === item.productId); return <div className="variant-wizard-item" key={item.productId}><div><strong>{source?.name || "Ürün bulunamadı"}</strong><small>{source?.unitPricing ? `${money(source.unitPricing.price)} / ${source.unitPricing.unit} · ${source.unitPricing.weight} g` : "Birim fiyatı veya gramajı eksik"}</small></div><Input label={`Miktar (${source?.unitPricing?.unit || "birim"})`} aria-label={`${source?.name || "Ürün"} miktarı`} type="number" min={0.001} step="any" value={item.quantity} onChange={e => updateItems(items.map((x,j) => j === n ? {...x,quantity:Number(e.target.value)} : x))} />{n > 0 && <Button type="button" aria-label={`${source?.name || "Ürün"} kaldır`} onClick={() => updateItems(items.filter((_,j) => j !== n))}>Kaldır</Button>}</div>; })}
+      <div className="variant-wizard-add"><Select label="Ürün ekle" value={choice} onChange={e => setChoice(e.target.value)}><option value="">Ürün seçin</option>{products.filter(p => p.status === "Aktif" && hasUnitPricing(p.unitPricing) && !items.some(item => item.productId === p.id)).map(p => <option key={p.id} value={String(p.id)}>{p.name} · {p.productCode}</option>)}</Select><Button type="button" disabled={!choice || items.length >= 50} onClick={() => { if (choice) updateItems([...items, {productId:Number(choice),quantity:1}]); setChoice(""); }}>Ürünü ekle</Button></div>
+    </section>}
+    {step === 2 && <section className="variant-wizard-section"><h3>Fiyat ve ambalaj</h3><p>Fiyat ve gramaj seçilen ürünlere göre hesaplanır.</p><div className="variant-basic-grid"><Select label="Ambalaj / servis şekli" value={v.packaging || ""} onChange={e => update({packaging:e.target.value})}><option value="">Seçin</option>{packagingOptions.map(p => <option key={p}>{p}</option>)}</Select><Input label="Satış fiyatı düzeltmesi (isteğe bağlı)" type="number" min={0.01} step={0.01} value={v.priceOverride ?? ""} onChange={e => update({priceOverride:e.target.value === "" ? null : Number(e.target.value)})} /></div>
+      {calculated ? <div className="variant-calculation"><div><small>Hesaplanan fiyat</small><strong>{money(calculated.calculatedPrice)}</strong></div><div><small>Net gramaj</small><strong>{calculated.weight} g</strong></div><div><small>Satış fiyatı</small><strong>{money(calculated.price)}</strong></div></div> : <p role="status">{calculationError}</p>}
+      <small>Fiyat düzeltmesi boşsa hesaplanan fiyat kullanılır. Net gramaja ambalaj ve sarf malzemeler dahil değildir.</small>
+    </section>}
+    {step === 3 && <section className="variant-wizard-section"><h3>Ürün bilgileri</h3><p>Bilgiler seçilen ürünlerden alınır. Bir alanı düzenlediğinizde kendi girdiğiniz değer kullanılır.</p>
+      {!derived.nutritionComplete && <p role="status">Bazı ürünlerin besin değerleri eksik. 100 g için otomatik hesaplama yapılmadı; bilgileri tamamlayın veya elle girin.</p>}
+      {items.length > 1 && <p>Doygunlukta aynı içerik için en yüksek ürün seviyesi önerilir. Besin değerleri net gramaja göre ağırlıklı hesaplanır.</p>}
+      {productInformationFields.map(field => <Textarea key={field.key} label={field.label} rows={3} maxLength={field.maxLength} value={information[field.key] || ""} onChange={e => updateInfo(field.key,e.target.value)} />)}
+      <h4>Doygunluk bilgisi</h4><ProductSatiety editing value={information.satiety || []} definitions={satietyProducts} onChange={value => updateInfo("satiety",value)} />
+      <Button type="button" onClick={() => update({items, sourceProductId:items[0].productId, quantity:items[0].quantity, informationOverrides:{}})}>Bilgileri ürünlerden yeniden al</Button>
+      <SlDetails summary={`Varyant görselleri · ${(v.images || []).length} görsel`} className="variant-optional-section"><p>Seçilen ürünlerin görsellerinden seçin veya yeni görsel ekleyin.</p><div className="variant-photo-options">{items.flatMap(item => products.find(p=>p.id===item.productId)?.images || []).filter((image,n,list) => list.findIndex(x => x.id === image.id) === n).map(image => <label key={image.id}><img src={image.url} alt="Ürün görseli" /><input type="checkbox" checked={(v.images || []).some(x=>x.id===image.id)} onChange={e => update({images:e.target.checked ? [...(v.images || []),image] : (v.images || []).filter(x=>x.id!==image.id)})} /> Seç</label>)}</div><MediaGallery label="Varyant" images={v.images || []} disabled={disabled} onRefresh={refresh} onChange={images => { update({images}); return true; }} /></SlDetails>
+      <SlDetails summary={`Sarf malzemeler · ${(v.consumables || []).length} çeşit`} className="variant-optional-section">{(v.consumables || []).map((item,n) => <div className="variant-wizard-item" key={item.id}><strong>{consumables.find(c=>c.id===item.id)?.name || "Sarf malzeme"}</strong><Input label="Adet" type="number" min={1} step={1} value={item.quantity} onChange={e=>update({consumables:v.consumables.map((c,k)=>k===n?{...c,quantity:Number(e.target.value)}:c)})}/><Button type="button" onClick={()=>update({consumables:v.consumables.filter((_,k)=>k!==n)})}>Kaldır</Button></div>)}<Select label="Sarf malzeme ekle" value="" onChange={e=>{if(e.target.value)update({consumables:[...(v.consumables || []),{id:e.target.value,quantity:1}]});}}><option value="">Sarf malzeme seçin</option>{consumables.filter(c=>c.active && !(v.consumables || []).some(item=>item.id===c.id)).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</Select></SlDetails>
+    </section>}
+    <div className="variant-wizard-navigation">{step > 0 && <Button type="button" onClick={() => {setError("");setStep(n=>n-1);}}>Geri</Button>}{step < steps.length - 1 && <Button type="button" variant="primary" onClick={next}>Devam et</Button>}</div>
+  </fieldset>;
 }

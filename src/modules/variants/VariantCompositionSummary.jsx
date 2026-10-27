@@ -14,8 +14,13 @@ export default function VariantCompositionSummary({ variants }) {
             <div>
               <h3>{v.size}</h3>
               <p>
-                {products.find((p) => p.id === v.sourceProductId)?.name} ·{" "}
-                {v.quantity} {v.unit} · {v.weight} g
+                {Array.isArray(v.items) && v.items.length > 1
+                  ? v.items.map((item) => {
+                      const source = products.find((p) => p.id === item.productId);
+                      return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`;
+                    }).join(" · ")
+                  : `${products.find((p) => p.id === v.sourceProductId)?.name || "Ürün"} · ${v.quantity} ${v.unit}`}
+                {" · "}{v.weight} g
               </p>
               <p>
                 Hesaplanan fiyat: {money(v.calculatedPrice)} · Satış fiyatı:{" "}

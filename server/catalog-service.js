@@ -473,6 +473,9 @@ export function createCatalogService(db) {
                   ? {
                       sourceProductId: v.sourceProductId,
                       quantity: v.quantity,
+                      ...(v.items !== undefined ? { items: v.items } : {}),
+                      ...(v.information !== undefined ? { information: v.information } : {}),
+                      ...(v.informationOverrides !== undefined ? { informationOverrides: v.informationOverrides } : {}),
                       priceOverride: v.priceOverride ?? null,
                       consumables: v.consumables ?? [],
                       images: v.images ?? [],
@@ -500,6 +503,14 @@ export function createCatalogService(db) {
       for (let i = 0; i < p.variants.length; i++) {
         const v = p.variants[i];
         if (v.sourceProductId !== undefined) {
+          if (v.items !== undefined && (!Array.isArray(v.items) || v.items.some(item => !item || typeof item !== "object" || Object.keys(item).some(key => !["productId", "quantity"].includes(key)))))
+            throw new ApiError(422, "Varyant ürünleri geçersiz.");
+          for (const information of [v.information, v.informationOverrides]) {
+            if (information === undefined) continue;
+            if (!information || typeof information !== "object" || Array.isArray(information) || Object.keys(information).some(key => ![...productInformationFields.map(field => field.key), "satiety"].includes(key))) throw new ApiError(422, "Varyant bilgileri geçersiz.");
+            const issue = validateProductInformation(information) || validateSatiety(information.satiety, doc.satietyProducts);
+            if (issue) throw new ApiError(422, issue);
+          }
           try {
             p.variants[i] = calculateVariant(
               v,
@@ -508,6 +519,11 @@ export function createCatalogService(db) {
             );
           } catch (e) {
             throw new ApiError(422, e.message);
+          }
+          const calculatedInformation = p.variants[i].information;
+          if (calculatedInformation) {
+            const issue = validateProductInformation(calculatedInformation) || validateSatiety(calculatedInformation.satiety, doc.satietyProducts);
+            if (issue) throw new ApiError(422, issue);
           }
           if (!Array.isArray(v.images) || v.images.length > 30)
             throw new ApiError(422, "En fazla 30 varyant görseli eklenebilir.");

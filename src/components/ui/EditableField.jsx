@@ -9,6 +9,7 @@ export default function EditableField({
   enabled,
   editing,
   busy,
+  saveDisabled = false,
   onEdit,
   onSave,
   onCancel,
@@ -40,7 +41,7 @@ export default function EditableField({
                   type="button"
                   size="small"
                   variant="primary"
-                  disabled={busy}
+                  disabled={busy || saveDisabled}
                   onClick={onSave}
                 >
                   Kaydet

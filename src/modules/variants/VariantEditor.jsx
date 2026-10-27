@@ -14,7 +14,7 @@ import ProductVariantsTable from "../products/ProductVariantsTable.jsx";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { validateProduct } from "../../catalog.js";
 
-export default function VariantEditor({ product, readOnly = false, onClose }) {
+export default function VariantEditor({ product, focusVariantId = "", readOnly = false, onClose }) {
   const {
     products = [],
     categories,
@@ -27,9 +27,10 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
   const current = products.find((p) => p.id === product.id) || product;
   const [draft, setDraft] = useState(() => structuredClone(product));
   const [editing, setEditing] = useState(() =>
-    product.variants.some((v) => !v.id),
+    !readOnly && (!!focusVariantId || product.variants.some((v) => !v.id)),
   );
   const [error, setError] = useState("");
+  const [wizardReady, setWizardReady] = useState(false);
   function cancel() {
     setDraft(structuredClone(current));
     setEditing(false);
@@ -42,7 +43,7 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
       next = {
         ...current,
         variants: draft.variants.map((v) =>
-          v.sourceProductId !== undefined
+          v.sourceProductId !== undefined && (focusVariantId ? String(v.id) === focusVariantId : draft.variants.some((item) => !item.id) ? !v.id : true)
             ? calculateVariant(v, products, consumables)
             : v,
         ),
@@ -67,7 +68,8 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
   }
   return (
     <EditorPage title="Varyant düzenle" busy={busy} onClose={onClose}>
-      <p>{current.name}</p>
+      <p className="variant-editor-context">Ürün: <strong>{current.name}</strong></p>
+      {editing && <p className="variant-editor-hint">Önce temel bilgileri girin. Fiyat ve net gramaj ürün miktarına göre hesaplanır; görseller ve sarf malzemeler isteğe bağlıdır.</p>}
       {error && (
         <SlAlert open variant="danger">
           {error}
@@ -78,10 +80,10 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
         value={
           <div>
             <ProductVariantsTable
-              product={current}
+              product={focusVariantId ? { ...current, variants: current.variants.filter((v) => String(v.id) === focusVariantId) } : current}
               variantTypes={variantTypes}
             />
-            <VariantCompositionSummary variants={current.variants} />
+            <VariantCompositionSummary variants={focusVariantId ? current.variants.filter((v) => String(v.id) === focusVariantId) : current.variants} />
           </div>
         }
         empty={!current.variants.length}
@@ -95,9 +97,12 @@ export default function VariantEditor({ product, readOnly = false, onClose }) {
         }}
         onCancel={cancel}
         onSave={save}
+        saveDisabled={!wizardReady}
       >
         <VariantCompositionFields
           product={draft}
+          focusVariantId={focusVariantId}
+          onReady={setWizardReady}
           disabled={busy || readOnly}
           onChange={setDraft}
         />

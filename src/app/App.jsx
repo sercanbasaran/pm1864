@@ -141,13 +141,13 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     setFocus({ ...filters });
     navigate("products");
   }
-  function open(product, variants = false, append = false) {
+  function open(product, variants = false, append = false, variantId = "", typeId = "") {
     navigate(
       (variants ? "variants" : "products") +
         "/" +
         product.id +
         "/edit" +
-        (variants ? "?tab=variants" + (append ? "&append=1" : "") : ""),
+        (variants ? "?tab=variants" + (append ? "&append=1" + (typeId ? "&type=" + encodeURIComponent(typeId) : "") : "") + (variantId ? "&variant=" + encodeURIComponent(variantId) : "") : ""),
     );
   }
   function duplicateVariantForProduct(product, variant) {
@@ -223,7 +223,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
                 ...structuredClone(product),
                 variants: [
                   ...structuredClone(product.variants),
-                  { ...newVariant(), sourceProductId: product.id },
+                  { ...newVariant(), sourceProductId: product.id, typeId: params.get("type") || "", items: [{ productId: product.id, quantity: 1 }] },
                 ],
               }
             : product,
@@ -298,7 +298,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         products={products}
         categories={categories}
         canWrite={can(user, "products.write")}
-        onEdit={(p, append) => open(p, true, append)}
+        onEdit={(p, append, variantId, typeId) => open(p, true, append, variantId, typeId)}
         onDuplicate={duplicateVariantForProduct}
       />
     ),
@@ -393,6 +393,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         <VariantEditor
           key={route}
           product={editing.product}
+          focusVariantId={params.get("variant") || ""}
           readOnly={!can(user, "products.write")}
           onClose={closeEditor}
         />
