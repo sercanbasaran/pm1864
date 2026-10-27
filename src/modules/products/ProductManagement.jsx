@@ -9,7 +9,6 @@ import { variantTypeName } from "../../variant-types.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import Card from "../../components/ui/Card.jsx";
-import ActionBar from "../../components/ui/ActionBar.jsx";
 import { salesChannels, effectiveSales } from "../../sales-availability.js";
 import {
   Button,
@@ -551,9 +550,11 @@ export default function ProductManagement({
             </Button>
           </EmptyState>
         )}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "1rem" }}>
+        <div className="product-list-footer">
+          <div className="product-page-size">
+          <span id="product-page-size-label">Sayfa başına ürün</span>
           <Select
-            label="Sayfa başına ürün"
+            aria-labelledby="product-page-size-label"
             aria-label="Sayfa başına ürün"
             value={String(pageSize)}
             onChange={(e) => filter(setPageSize, Number(e.target.value))}
@@ -562,10 +563,10 @@ export default function ProductManagement({
               <option key={size} value={String(size)}>{size}</option>
             ))}
           </Select>
+          </div>
           <Pagination total={visible.length} page={current} pageSize={pageSize} onChange={setPage} />
         </div>
       </Card>
-      {write && <ActionBar position="bottom">{addAction}</ActionBar>}
     </section>
   );
 }
