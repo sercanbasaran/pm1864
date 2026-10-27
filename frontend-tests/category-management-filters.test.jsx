@@ -152,3 +152,32 @@ test("category filters support multiple selections and show hierarchical categor
   await choose("Tamamlanacak kayıtlar", ["description", "empty"]);
   expect(rows()).toHaveLength(1);
 });
+test("tamamlanacak kayıtlar özete bağlı olmayan kapalı bir akordiyondur", async () => {
+  await setup();
+  const summary = document.querySelector(".category-summary-accordion");
+  const quality = document.querySelector(".category-summary-quality");
+  expect(summary.contains(quality)).toBe(false);
+  expect(quality.open).toBe(false);
+  expect(quality.summary).toBe("Tamamlanacak kategori kayıtları · 2 kategori");
+  quality.shadowRoot.querySelector(".details__header").click();
+  await settle();
+  expect(quality.open).toBe(true);
+  expect(summary.open).toBe(false);
+  fireEvent.click(button("Açıklaması olmayan kategoriler"));
+  await settle();
+  expect(rows()).toHaveLength(2);
+  expect(document.querySelector("#category-filter-panel").hidden).toBe(false);
+});
+test("aktif kategori sayıları ürün özetindeki gibi ayrı büyük kartlarda gösterilir", async () => {
+  await setup();
+  const stats = [...document.querySelectorAll('.management-summary-stat')];
+  expect(stats.map((stat) => stat.querySelector('span').textContent)).toEqual(['Aktif ana kategori', 'Aktif alt kategori']);
+  expect(stats.map((stat) => stat.querySelector('strong').textContent)).toEqual(['1', '1']);
+  expect(document.querySelectorAll('.category-channel-summary')).toHaveLength(3);
+});
+test("kategori oluşturma işlemi özet kartında gösterilir", async () => {
+  render(<CategoryManagement categories={categories} products={[]} onNavigate={vi.fn()} />);
+  await settle();
+  expect(document.querySelector('.management-summary-create').textContent).toContain('Yeni kategori ekle');
+  expect(document.querySelectorAll('sl-button').length).toBeGreaterThan(0);
+});

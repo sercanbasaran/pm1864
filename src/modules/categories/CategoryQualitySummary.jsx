@@ -1,4 +1,6 @@
 import React from "react";
+import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
+import { categoryQuality } from "./category-list.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
 import { Button } from "../../components/ui/Controls.jsx";
 
@@ -7,13 +9,15 @@ const checks = [
   ["identity", "Adı, kodu veya bağlantı bilgisi eksik kategoriler"],
   ["empty", "Ürün bağlanmamış kategoriler"],
 ];
-export default function CategoryQualitySummary({ quality, onQuality }) {
+export default function CategoryQualitySummary({ categories, products, onQuality }) {
+  const issues = categories.map((category) => categoryQuality(category, categories, products));
+  const quality = Object.fromEntries(checks.map(([key]) => [key, issues.filter((issue) => issue[key]).length]));
+  const total = issues.filter((issue) => Object.values(issue).some(Boolean)).length;
   return (
-    <section
+    <SlDetails
+      summary={`Tamamlanacak kategori kayıtları · ${total} kategori`}
       className="category-summary-quality"
-      aria-label="Tamamlanacak kategori kayıtları"
     >
-      <h3>Tamamlanacak kayıtlar</h3>
       <div className="category-quality-actions">
         {checks.map(([key, label]) => (
           <Button
@@ -29,6 +33,6 @@ export default function CategoryQualitySummary({ quality, onQuality }) {
           </Button>
         ))}
       </div>
-    </section>
+    </SlDetails>
   );
 }

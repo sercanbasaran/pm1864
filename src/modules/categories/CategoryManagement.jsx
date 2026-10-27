@@ -14,6 +14,8 @@ import {
   salesAvailability,
 } from "../../sales-availability.js";
 import CategorySummary from "./CategorySummary.jsx";
+import CategoryTotals from "./CategoryTotals.jsx";
+import CategoryQualitySummary from "./CategoryQualitySummary.jsx";
 import CategoryFilters from "./CategoryFilters.jsx";
 import {
   categoryRows,
@@ -338,11 +340,12 @@ export default function CategoryManager({
     <>
       {!route.split("?")[0].includes("/") && (
         <section className="category-module">
-          <div className="category-module-heading">
-            <h2>Kategori yönetimi</h2>
-            {addAction}
-          </div>
+          <CategoryTotals categories={categories} action={addAction} />
           <CategorySummary
+            categories={categories}
+            products={products}
+          />
+          <CategoryQualitySummary
             categories={categories}
             products={products}
             onQuality={(quality) => { setFilters({ ...emptyCategoryFilters, quality: [quality] }); setFiltersOpen(true); }}

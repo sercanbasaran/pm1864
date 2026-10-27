@@ -51,8 +51,10 @@
 }
 .category-summary-quality {
   min-width: 0;
-  padding-top: var(--sl-spacing-small);
-  border-top: 1px solid var(--sl-color-neutral-200);
+  margin: 0;
+}
+.category-summary-quality::part(content) {
+  padding: var(--sl-spacing-medium);
 }
 .category-summary-quality .category-quality-actions {
   display: flex;

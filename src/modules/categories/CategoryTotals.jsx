@@ -1,21 +1,19 @@
 import React from "react";
-import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
+import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import { categoryActive } from "./category-list.js";
 
-export default function CategoryTotals({ categories }) {
-  const active = categories.filter((c) => categoryActive(c, categories));
+export default function CategoryTotals({ categories, action }) {
+  const active = categories.filter((category) => categoryActive(category, categories));
   return (
-    <div
-      className="category-summary-totals"
-      role="group"
-      aria-label="Aktif kategori sayıları"
-    >
-      <SlTag size="large">
-        Ana kategori: {active.filter((c) => !c.parentId).length}
-      </SlTag>
-      <SlTag size="large">
-        Alt kategori: {active.filter((c) => c.parentId).length}
-      </SlTag>
-    </div>
+    <ManagementSummary
+      label="Kategori özeti"
+      title="Kategorilerinizi yönetin"
+      description="Ana ve alt kategorileri oluşturun ve düzenleyin."
+      action={action}
+      items={[
+        { label: "Aktif ana kategori", value: active.filter((category) => !category.parentId).length, detail: "Aktif ana kategoriler" },
+        { label: "Aktif alt kategori", value: active.filter((category) => category.parentId).length, detail: "Aktif alt kategoriler" },
+      ]}
+    />
   );
 }
