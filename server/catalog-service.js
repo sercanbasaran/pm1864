@@ -1006,7 +1006,7 @@ export function createCatalogService(db) {
     const catalog = await read();
     const product = catalog.products.find((p) => p.variants.some((v) => String(v.id) === id));
     const variant = product?.variants.find((v) => String(v.id) === id);
-    if (!product || !variantCardEligible(product, variant, catalog.categories)) throw new ApiError(404, "Varyant kartı bulunamadı.", "NOT_FOUND");
+    if (!product || !variantCardEligible(product, variant, catalog.categories, catalog.products)) throw new ApiError(404, "Varyant kartı bulunamadı.", "NOT_FOUND");
     if (!variant.publicCardEnabled && !authenticated) throw new ApiError(401, "Bu varyant için giriş yapın.", "UNAUTHORIZED");
     const images = variant.images?.length ? variant.images : (product.images?.length ? product.images : product.mediaId ? [{id:product.mediaId}] : []);
     if (assetId) {
@@ -1022,7 +1022,7 @@ export function createCatalogService(db) {
       const variant = product?.variants.find((v) => String(v.id) === id);
       if (!product || !variant) throw new ApiError(404, "Varyant bulunamadı.");
       if (typeof body.enabled !== "boolean") throw new ApiError(422, "Kartın yayın durumunu belirtin.");
-      if (body.enabled && !variantCardEligible(product, variant, doc.categories)) throw new ApiError(422, "Varyant, ürün ve bağlı kategoriler aktif olmalıdır.");
+      if (body.enabled && !variantCardEligible(product, variant, doc.categories, doc.products)) throw new ApiError(422, "Varyant ve içerdiği tüm ürünler aktif olmalıdır.");
       if ((variant.publicCardEnabled === true) === body.enabled) return;
       variant.publicCardEnabled = body.enabled; product.version++; product.updated = new Date().toISOString();
       audit(doc, body.enabled ? "Varyant kartı yayınlandı" : "Varyant kartı yayından kaldırıldı", `${product.name} · ${variant.size}`, actor);

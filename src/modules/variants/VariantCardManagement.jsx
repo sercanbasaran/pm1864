@@ -17,7 +17,7 @@ export default function VariantCardManagement({ product, variant, user, onClose 
   const [error, setError] = useState(""), [downloading, setDownloading] = useState(false);
   const qr = useRef(null);
   const url = new URL("/v/" + encodeURIComponent(variant.id), window.location.origin).href;
-  const eligible = variantCardEligible(product, variant, categories), enabled = variant.publicCardEnabled === true, live = enabled && eligible;
+  const eligible = variantCardEligible(product, variant, categories, products), enabled = variant.publicCardEnabled === true, live = enabled && eligible;
   async function publish(event) {
     const next = event.target.checked; event.target.checked = enabled; setError("");
     try { await mutate(`/variants/${encodeURIComponent(variant.id)}/card`, {enabled:next}, "PATCH"); notify(next ? "Varyant kartı yayınlandı." : "Varyant kartı yayından kaldırıldı."); }
@@ -44,7 +44,7 @@ export default function VariantCardManagement({ product, variant, user, onClose 
       <h3>QR kod ve paylaşım</h3><SlTag variant={live ? "success" : "neutral"}>{live ? "Yayında" : enabled ? "Yayın durduruldu" : "Yayınlanmadı"}</SlTag>
       <p className="muted">Yayınlanan varyant kartı QR kod veya bağlantı üzerinden görüntülenir.</p>
       {can(user, "products.write") && <SlSwitch checked={enabled} disabled={busy || (!enabled && !eligible)} onSlChange={publish}>Varyant kartını yayınla</SlSwitch>}
-      {!eligible && <SlAlert open variant="neutral">Yayınlamak için varyant, ürün ve bağlı kategoriler aktif olmalıdır.</SlAlert>}
+      {!eligible && <SlAlert open variant="neutral">Yayınlamak için varyant ve içerdiği tüm ürünler aktif olmalıdır.</SlAlert>}
       {error && <SlAlert open variant="danger">{error}</SlAlert>}
       <div className="product-qr-frame"><SlQrCode ref={qr} value={url} label={variant.size + " varyant kartı QR kodu"} size={200} errorCorrection="H" fill="#000000" background="#ffffff" radius={0} /></div>
       <Input label="Varyant kartı bağlantısı" aria-label="Varyant kartı bağlantısı" value={url} readOnly />

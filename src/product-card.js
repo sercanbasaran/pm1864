@@ -66,8 +66,10 @@ export function productCardData(
   };
 }
 
-export function variantCardEligible(product, variant, categories) {
-  return !!variant && variant.active !== false && productCardEligible(product, categories);
+export function variantCardEligible(product, variant, categories, products = [product]) {
+  if (!variant || variant.active === false) return false;
+  const ids = Array.isArray(variant.items) && variant.items.length ? variant.items.map(item => item.productId) : [variant.sourceProductId ?? product.id];
+  return ids.every(id => products.some(item => item.id === id && item.status === "Aktif"));
 }
 export function variantCardData(product, variant, categories, products = [], satietyProducts = defaultSatietyProducts()) {
   const information = variant.information || product;
@@ -78,8 +80,8 @@ export function variantCardData(product, variant, categories, products = [], sat
   return {
     productCode: displaySku(variant.sku),
     name: variant.size,
-    category: categoryPath(categoryOf(product, categories), categories),
-    description: product.name,
+    category: "",
+    description: items.map((item) => item.name).join(" · "),
     variantPricing: { price: variant.price, weight: variant.weight, packaging: variant.packaging || "" },
     variantContents: items,
     salesAvailability: effectiveSales(product, variant, categories),

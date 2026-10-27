@@ -63,18 +63,26 @@ export default function VariantManager({
     [sub, setSub] = useState(""),
     [status, setStatus] = useState(""),
     [productId, setProductId] = useState("");
+  const itemProducts = (owner, variant) => {
+    const ids = Array.isArray(variant.items) && variant.items.length
+      ? variant.items.map((item) => item.productId)
+      : [variant.sourceProductId ?? owner.id];
+    return ids.map((id) => products.find((product) => product.id === id)).filter(Boolean);
+  };
+  const includedProducts = new Set(products.flatMap((owner) => owner.variants.flatMap((variant) => itemProducts(owner, variant).map((item) => item.id))));
   const rows = products
     .flatMap((p) =>
-      p.variants.map((v) => ({ p, v, c: categoryOf(p, categories) })),
+      p.variants.map((v) => ({ p, v, members: itemProducts(p, v) })),
     )
     .filter(
-      ({ p, v, c }) =>
+      ({ p, v, members }) =>
         (!typeId || v.typeId === typeId) &&
-        (!root || rootOf(c, categories)?.id === root) &&
-        (!sub || c?.id === sub) &&
-        (!productId || String(p.id) === productId) &&
+        (!(root || sub || productId) || members.some((item) => {
+          const c = categoryOf(item, categories);
+          return (!root || rootOf(c, categories)?.id === root) && (!sub || c?.id === sub) && (!productId || String(item.id) === productId);
+        })) &&
         (!status || (v.active !== false) === (status === "active")) &&
-        `${p.name} ${p.productCode || ""} ${p.sku || ""} ${v.size} ${v.sku || ""} ${variantTypeName(v, variantTypes)}`
+        `${members.map((item) => `${item.name} ${item.productCode || ""}`).join(" ")} ${v.size} ${v.sku || ""} ${variantTypeName(v, variantTypes)}`
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
     )
@@ -113,8 +121,8 @@ export default function VariantManager({
           },
           {
             label: "Varyantlı ürün",
-            value: products.filter((p) => p.variants.length > 0).length,
-            detail: "En az bir varyantı olan ürünler",
+            value: includedProducts.size,
+            detail: "Varyantların içeriğinde bulunan ürünler",
           },
         ]}
       />
@@ -138,9 +146,7 @@ export default function VariantManager({
                     downloadCSV(
                       [
                         [
-                          "Ana kategori / Alt kategori",
-                          "Ürün",
-                          "Ürün SKU",
+                          "İçerikteki ürünler",
                           "Varyant",
                           "Varyant SKU",
                           "Varyant tipi",
@@ -152,10 +158,8 @@ export default function VariantManager({
                           "Durum",
                           ...salesChannels.map((c) => c.label),
                         ],
-                        ...rows.map(({ p, v, c }) => [
-                          categoryPath(c, categories),
-                          p.name,
-                          p.sku,
+                        ...rows.map(({ p, v, members }) => [
+                          members.map((item) => item.name).join(" / "),
                           v.size,
                           v.sku,
                           variantTypeName(v, variantTypes),
@@ -191,8 +195,8 @@ export default function VariantManager({
             <div id="variant-filter-panel" className="variant-filters" hidden={!filtersOpen}>
               <div className="variant-filter-grid">
                 <Select
-                  label="Ana kategori"
-                  aria-label="Varyant ana kategorisi"
+                  label="İçerikteki ana kategori"
+                  aria-label="İçerikteki ana kategori"
                   value={root}
                   onChange={(e) => {
                     setRoot(e.target.value);
@@ -209,8 +213,8 @@ export default function VariantManager({
                   ))}
                 </Select>
                 <Select
-                  label="Alt kategori"
-                  aria-label="Varyant alt kategorisi"
+                  label="İçerikteki alt kategori"
+                  aria-label="İçerikteki alt kategori"
                   value={sub}
                   onChange={(e) => {
                     setSub(e.target.value);
@@ -228,7 +232,7 @@ export default function VariantManager({
                     ))}
                 </Select>
                 <Select
-                  label="Ürün"
+                  label="İçerikteki ürün"
                   aria-label="Varyant ürünü"
                   value={productId}
                   onChange={(e) => {
@@ -285,7 +289,7 @@ export default function VariantManager({
               <Table aria-label="Varyantlar">
                 <TableHead>
                   <TableRow>
-                    <TableHeading>ÜRÜN / KATEGORİ</TableHeading>
+                    <TableHeading>İÇERİKTEKİ ÜRÜNLER</TableHeading>
                     <TableHeading>VARYANT / SKU</TableHeading>
                     <TableHeading>VARYANT TİPİ</TableHeading>
                     <TableHeading>GRAMAJ / DİLİM</TableHeading>
@@ -296,10 +300,10 @@ export default function VariantManager({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {shown.map(({ p, v, c }) => (
+                  {shown.map(({ p, v, members }) => (
                     <TableRow key={v.id}>
                       <TableCell>
-                        <div className="variant-cell-main"><strong>{p.name}</strong><small>{categoryPath(c, categories)}</small></div>
+                        <div className="variant-cell-main"><strong>{members.map((item) => item.name).join(" · ") || "Ürün bulunamadı"}</strong><small>{members.length} ürün</small></div>
                       </TableCell>
                       <TableCell>
                         <div className="variant-cell-main"><strong>{v.size}</strong><SlTag size="small">{v.sku || "—"}</SlTag></div>
@@ -344,7 +348,7 @@ export default function VariantManager({
               </div>
             )}
             <div className={"variant-mobile-cards " + (view === "grid" ? "variant-view-grid" : "")}>
-              {shown.map(({ p, v, c }) => (
+              {shown.map(({ p, v, members }) => (
                 <article key={v.id}>
                   <div>
                     <strong>{v.size}</strong>
@@ -354,8 +358,8 @@ export default function VariantManager({
                       {v.active !== false ? "Aktif" : "Pasif"}
                     </SlBadge>
                   </div>
-                  <p className="variant-card-product">{p.name}</p>
-                  <small className="variant-card-meta">{categoryPath(c, categories)} · {v.sku || "—"}</small>
+                  <p className="variant-card-product">{members.map((item) => item.name).join(" · ") || "Ürün bulunamadı"}</p>
+                  <small className="variant-card-meta">{v.sku || "—"}</small>
                   <small className="variant-card-type">{variantTypeName(v, variantTypes)}</small>
                   {v.items?.length > 1 && <small className="variant-card-meta">{v.items.map(item => { const source = products.find(product => product.id === item.productId); return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`; }).join(" · ")}</small>}
                   <dl>
