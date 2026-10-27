@@ -158,7 +158,7 @@ export default function VariantFields({
                 <Input
                   label={label}
                   required
-                  maxLength={key === "size" ? 30 : undefined}
+                  maxLength={key === "size" ? 45 : undefined}
                   min={key === "slices" ? 0 : key === "price" ? 0.01 : 1}
                   step={key === "price" ? "0.01" : 1}
                   type={type}

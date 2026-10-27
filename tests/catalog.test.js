@@ -11,6 +11,6 @@ test('new products require active categories and valid values across all editor 
 test('variant names are normalized when checking duplicates; empty names are rejected',()=>{assert.match(validateProduct({...product,variants:[product.variants[0],{...product.variants[0],size:' xs ',typeId:'type-item'}]},categories).message,/farklı/);assert.match(validateProduct({...product,variants:[{...product.variants[0],size:' ',typeId:'type-item'}]},categories).message,/dolu/)});
 
 test('duplicate variants have unique names within length limit and never reuse identity',()=>{
- const original={id:'variant-id',sku:'HM-100-1-V0001',size:'A'.repeat(30),typeId:'type-item',price:100.25,weight:500,slices:12,active:false};const first=duplicateVariant(original,[original]);const second=duplicateVariant(original,[original,first]);
- assert.ok(first.size.length<=30);assert.ok(second.size.length<=30);assert.notEqual(first.size,original.size);assert.notEqual(first.size,second.size);assert.ok(!('id' in first));assert.ok(!('sku' in first));assert.equal(first.price,original.price);assert.equal(first.active,false);
+ const original={id:'variant-id',sku:'HM-100-1-V0001',size:'A'.repeat(45),typeId:'type-item',price:100.25,weight:500,slices:12,active:false};const first=duplicateVariant(original,[original]);const second=duplicateVariant(original,[original,first]);
+ assert.ok(first.size.length<=45);assert.ok(second.size.length<=45);assert.notEqual(first.size,original.size);assert.notEqual(first.size,second.size);assert.ok(!('id' in first));assert.ok(!('sku' in first));assert.equal(first.price,original.price);assert.equal(first.active,false);
 });

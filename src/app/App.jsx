@@ -295,6 +295,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         onDuplicate={duplicate}
         onBulk={onBulk}
         onCard={(p) => navigate("products/" + p.id + "/card")}
+        onCreateVariant={(p) => navigate(`variants/new?product=${p.id}`)}
       />
     ),
     variants: (
@@ -392,7 +393,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     const variantCardProduct = page === "variants" && action === "card" ? products.find((p) => String(p.id) === record) : null;
     const cardVariant = variantCardProduct?.variants.find((v) => String(v.id) === params.get("variant"));
     pageContent = page === "variants" && record === "new" && can(user, "products.write") ? (
-      <VariantCreatePage onClose={closeEditor} />
+      <VariantCreatePage initialProduct={products.find(p => String(p.id) === params.get("product"))} onClose={closeEditor} />
     ) : variantCardProduct && cardVariant ? (
       <VariantCardManagement key={cardVariant.id} product={variantCardProduct} variant={cardVariant} user={user} onClose={closeEditor} />
     ) : cardProduct ? (
@@ -415,6 +416,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         <ProductEditor
           key={route}
           product={editing.product}
+          onCreateVariant={(p) => navigate(`variants/new?product=${p.id}`)}
           readOnly={!can(user, "products.write")}
           onClose={closeEditor}
         />

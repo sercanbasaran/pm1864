@@ -44,7 +44,7 @@ export default function ProductVariantsTable({
       required={["size", "weight", "price"].includes(key)}
       min={key === "price" ? 0.01 : key === "weight" ? 1 : 0}
       step={key === "price" ? "0.01" : 1}
-      maxLength={key === "size" ? 30 : key === "packaging" ? 120 : undefined}
+      maxLength={key === "size" ? 45 : key === "packaging" ? 120 : undefined}
       disabled={disabled}
       onChange={(e) =>
         update(i, {

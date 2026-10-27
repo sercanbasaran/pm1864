@@ -33,7 +33,16 @@ export function deriveVariantInformation(v, products) {
   const sources = variantItems(v).map(item => ({ product: products.find(p => p.id === item.productId), quantity: item.quantity }));
   const fields = {};
   for (const key of variantInfoFields.filter(k => k !== "nutrition")) {
-    fields[key] = sources.filter(s => s.product?.[key]?.trim()).map(s => sources.length > 1 ? `${s.product.name}: ${s.product[key].trim()}` : s.product[key].trim()).join("\n");
+    const groups = new Map();
+    for (const source of sources) {
+      const value = source.product?.[key]?.trim();
+      if (!value) continue;
+      const normalized = value.normalize("NFC").replace(/\s+/g, " ").toLocaleLowerCase("tr-TR");
+      const group = groups.get(normalized);
+      if (group) group.names.push(source.product.name);
+      else groups.set(normalized, { value, names: [source.product.name] });
+    }
+    fields[key] = [...groups.values()].map(group => sources.length > 1 && groups.size > 1 ? `${group.names.join(" / ")}: ${group.value}` : group.value).join("\n");
   }
   const parsed = sources.map(s => ({ ...s, weight: s.product?.unitPricing?.weight * s.quantity, nutrition: parseNutrition(s.product?.nutrition || "").values }));
   const complete = parsed.length > 0 && parsed.every(s => Number.isFinite(s.weight) && s.weight > 0 && nutritionRows.every(r => s.nutrition[r.key] !== "" && Number.isFinite(Number(s.nutrition[r.key]))));

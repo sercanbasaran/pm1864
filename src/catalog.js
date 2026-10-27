@@ -128,6 +128,7 @@ export function validateProduct(
       tab: "Varyant & fiyat",
       message: "Bir üründe en fazla 50 varyant olabilir.",
     };
+  if (product.variants.some((v) => typeof v.size === "string" && v.size.trim().length > 45)) return { tab: "Varyant & fiyat", message: "Varyant adı en fazla 45 karakter olabilir." };
   const names = product.variants.map((v) => normalizeName(v.size));
   if (names.some((n) => !n) || new Set(names).size !== names.length)
     return {
@@ -194,7 +195,7 @@ export function duplicateVariant(variant, variants) {
   do {
     const suffix = count === 1 ? " Kopya" : ` Kopya ${count}`;
     size =
-      (variant.size.trim() || "Varyant").slice(0, 30 - suffix.length) + suffix;
+      (variant.size.trim() || "Varyant").slice(0, 45 - suffix.length) + suffix;
     count++;
   } while (names.has(normalizeName(size)));
   const { id, sku, ...fields } = variant;

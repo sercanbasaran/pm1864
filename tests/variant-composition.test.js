@@ -136,3 +136,11 @@ test("API karma ürünleri ve düzenlenmiş varyant bilgilerini saklar", async (
     assert.equal(result.status,200);const v=result.catalog.products.find(p=>p.id===p1.id).variants[0];assert.equal(v.items.length,2);assert.equal(v.calculatedPrice,280);assert.equal(v.price,275);assert.equal(v.weight,200);assert.equal(v.information.allergens,"Özel uyarı");assert.match(v.information.ingredients,/Cevizli/);
   } finally {await app.close();}
 });
+
+test('tekrarlanan ürün bilgileri tek kez gösterilir, farklı bilgiler ürünleriyle korunur', async () => {
+ const {deriveVariantInformation} = await import('../src/variant-composition.js');
+ const products=[{id:1,name:'A',allergens:'Fıstık içerir',storageConditions:'Serin yerde saklayın.'},{id:2,name:'B',allergens:'  FISTIK   İÇERİR ',storageConditions:'Serin yerde saklayın.'},{id:3,name:'C',allergens:'Ceviz içerir',storageConditions:'Serin yerde saklayın.'}];
+ const result=deriveVariantInformation({items:products.map(p=>({productId:p.id,quantity:1}))},products);
+ assert.equal(result.allergens,'A / B: Fıstık içerir\nC: Ceviz içerir');
+ assert.equal(result.storageConditions,'Serin yerde saklayın.');
+});

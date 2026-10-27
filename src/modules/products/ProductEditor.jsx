@@ -46,6 +46,7 @@ export default function ProductEditor({
   tab = "Genel bilgiler",
   readOnly = false,
   onClose,
+  onCreateVariant,
 }) {
   const catalog = useCatalog();
   const {
@@ -202,6 +203,7 @@ export default function ProductEditor({
       busy={busy}
       onClose={onClose}
     >
+      {!readOnly && !product.isNew && <Button type="button" disabled={busy || product.variants.length >= 50} onClick={() => onCreateVariant(product)}>Varyant oluştur</Button>}
       <div
         className="editor-tabs product-detail-steps"
         role="group"

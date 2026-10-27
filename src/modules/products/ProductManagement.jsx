@@ -57,6 +57,7 @@ export default function ProductManagement({
   onDuplicate,
   onBulk,
   onCard,
+  onCreateVariant,
 }) {
   const { products, categories, variantTypes, busy } = useCatalog(),
     [query, setQuery] = useState(""),
@@ -484,6 +485,7 @@ export default function ProductManagement({
                             <Copy size={18} />
                           </Button>
                         )}
+                        {write && <Button type="button" className="icon-btn" aria-label={p.name + " için varyant oluştur"} title="Varyant oluştur" disabled={busy || p.variants.length >= 50} onClick={() => onCreateVariant(p)}><Plus size={18} /></Button>}
                         <Button
                           type="button"
                           className="icon-btn"
@@ -532,6 +534,7 @@ export default function ProductManagement({
                       <Copy size={16} /> Ürün çoğalt
                     </Button>
                   )}
+                  {write && <Button type="button" disabled={busy || p.variants.length >= 50} onClick={() => onCreateVariant(p)}><Plus size={16} /> Varyant oluştur</Button>}
                   <Button type="button" onClick={() => onEdit(p)}>
                     <PencilSimple size={16} />
                     {write ? "Düzenle" : "Görüntüle"}

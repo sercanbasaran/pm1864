@@ -46,7 +46,7 @@ export default function VariantCompositionFields({ product, onChange, disabled, 
     {error && <p className="variant-wizard-error" role="alert">{error}</p>}
     {step === 0 && <section className="variant-wizard-section"><h3>Varyant türü ve adı</h3><p>Örneğin porsiyon veya kutu seçin ve varyanta bir ad verin.</p><div className="variant-basic-grid">
       <Select label="Varyant türü" value={v.typeId || ""} onChange={e => update({typeId:e.target.value, packagingId: "", packaging:isPortionVariant({typeId:e.target.value}, variantTypes) ? "Tabakta servis" : ""})}><option value="">Tür seçin</option>{variantTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
-      <Input label="Varyant adı" maxLength={30} required value={v.size} onChange={e => update({size:e.target.value})} />
+      <Input label="Varyant adı" maxLength={45} required value={v.size} onChange={e => update({size:e.target.value})} />
       {isPortion && <Input label="Servis şekli" value="Tabakta Servis" disabled />}
       {isBox && <Select label="Kutu tipi" value={v.packagingId || ""} onChange={e => { const box = packagingItems.find(item => item.id === e.target.value); update({packagingId:e.target.value, ...(box ? {packaging:box.material === "Karton" ? "Karton kutu" : "Metal kutu"} : {})}); }}><option value="">Kutu tipi seçin</option>{packagingItems.filter(item => item.active || item.id === v.packagingId).map(item => <option key={item.id} value={item.id}>{item.name}{item.active ? "" : " (Pasif)"}</option>)}</Select>}
     </div></section>}

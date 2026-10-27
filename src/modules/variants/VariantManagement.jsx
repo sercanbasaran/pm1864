@@ -5,6 +5,8 @@ import { useCatalog } from "../../app/CatalogContext.jsx";
 import { variantTypeName } from "../../variant-types.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
+import Modal from "../../components/ui/Modal.jsx";
+import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Card from "../../components/ui/Card.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
 import { salesChannels, effectiveSales } from "../../sales-availability.js";
@@ -26,6 +28,7 @@ import {
   MagnifyingGlass,
   PencilSimple,
   Copy,
+  Trash,
   QrCode,
   DownloadSimple,
   List,
@@ -42,7 +45,14 @@ export default function VariantManager({
   onCard,
   onCreate,
 }) {
-  const { variantTypes = [] } = useCatalog();
+  const { variantTypes = [], mutate, notify, busy } = useCatalog();
+  const [deleteTarget, setDeleteTarget] = useState(null), [deleteError, setDeleteError] = useState("");
+  async function deleteSelected() {
+    if (!deleteTarget || busy) return;
+    try { await mutate(`/variants/${encodeURIComponent(deleteTarget.id)}`, {}, "DELETE"); setDeleteTarget(null); setDeleteError(""); notify("Varyant silindi."); }
+    catch (error) { setDeleteError(error.message); }
+  }
+  function confirmDelete(v) { setDeleteError(""); setDeleteTarget(v); }
   const [typeId, setTypeId] = useState("");
   const [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
@@ -330,6 +340,7 @@ export default function VariantManager({
                         {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title={p.variants.length >= 50 ? "Bir üründe en fazla 50 varyant olabilir" : "Varyantı çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /></Button>}
                         <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyant kartı ve QR"} title="Varyant kartı ve QR" onClick={() => onCard(p, v)}><QrCode size={18} /></Button>
                         <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + (canWrite ? " düzenle" : " görüntüle")} title={canWrite ? "Düzenle" : "Görüntüle"} onClick={() => onEdit(p, false, v.id)}><PencilSimple size={18} /></Button>
+                        {canWrite && <Button type="button" className="icon-btn" aria-label={v.size + " varyantını sil"} title="Varyantı sil" onClick={() => confirmDelete(v)}><Trash size={18} /></Button>}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -386,6 +397,7 @@ export default function VariantManager({
                   <Button type="button" onClick={() => onEdit(p, false, v.id)}>
                     {canWrite ? "Düzenle" : "Görüntüle"}
                   </Button>
+                  {canWrite && <Button type="button" aria-label={v.size + " varyantını sil"} onClick={() => confirmDelete(v)}><Trash size={16} /> Varyantı sil</Button>}
                   </div>
                 </article>
               ))}
@@ -398,6 +410,11 @@ export default function VariantManager({
             </div>
           </Card>
 
+      {deleteTarget && <Modal title="Varyantı sil" busy={busy} onClose={() => { setDeleteTarget(null); setDeleteError(""); }}>
+        <p><strong>{deleteTarget.size}</strong> varyantını silmek istediğinizden emin misiniz?{deleteTarget.publicCardEnabled && " Yayınlanan varyant kartı ve QR bağlantısı da erişilemez olacak."}</p>
+        {deleteError && <SlAlert open variant="danger">{deleteError}</SlAlert>}
+        <div className="variant-delete-actions"><Button type="button" disabled={busy} onClick={() => setDeleteTarget(null)}>Vazgeç</Button><Button type="button" variant="danger" disabled={busy} onClick={deleteSelected}>Varyantı sil</Button></div>
+      </Modal>}
     </section>
   );
 }

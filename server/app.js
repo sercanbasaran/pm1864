@@ -384,6 +384,9 @@ export async function createApp({ env = process.env, database } = {}) {
       } else if ((match = route.match(/^\/api\/variants\/([a-zA-Z0-9-]+)\/card$/)) && method === "PATCH") {
         requirePermission("products.write");
         catalog = await service.publishVariantCard(body, match[1], user.email);
+      } else if ((match = route.match(/^\/api\/variants\/([a-zA-Z0-9-]+)$/)) && method === "DELETE") {
+        requirePermission("products.write");
+        catalog = await service.deleteVariant(body, match[1], user.email);
       } else if (route === "/api/prices/bulk" && method === "POST") {
         requirePermission("prices.write");
         catalog = await service.bulk(body, user.email);

@@ -196,3 +196,5 @@
 .variant-module .variant-identity .product-image { flex:none; width:4rem; }
 .variant-module .variant-serving-cell, .variant-module .variant-price-cell { display:flex; flex-direction:column; align-items:flex-start; gap:.3rem; }
 .variant-module .variant-price-cell small { color:var(--sl-color-neutral-600); white-space:nowrap; }
+
+.variant-delete-actions { display:flex; justify-content:flex-end; gap:.75rem; margin-top:1rem; }

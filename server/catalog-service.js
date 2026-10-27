@@ -468,6 +468,8 @@ export function createCatalogService(db) {
         )
       )
         throw new ApiError(422, "Geçersiz varyant verisi.");
+      if (Array.isArray(input.variants) && input.variants.some(v => typeof v.size === "string" && v.size.trim().length > 45))
+        throw new ApiError(422, "Varyant adı en fazla 45 karakter olabilir.");
       let c = input.categoryId
         ? doc.categories.find((c) => c.id === input.categoryId)
         : doc.categories.find((c) => c.name === input.category);
@@ -522,7 +524,7 @@ export function createCatalogService(db) {
                       images: v.images ?? [],
                     }
                   : {}),
-                size: text(v.size, 30),
+                size: text(v.size, 45),
                 typeId: typeof v.typeId === "string" ? v.typeId : "",
                 price: v.price,
                 weight: v.weight,
@@ -1060,6 +1062,16 @@ export function createCatalogService(db) {
     const imageUrl = (asset) => `/api/variant-pages/${encodeURIComponent(id)}/images/${encodeURIComponent(asset)}`;
     return { ...variantCardData(product, variant, catalog.categories, catalog.products, catalog.satietyProducts), images: images.map(image => ({id:image.id, url:imageUrl(image.id)})), customImage: /^https?:\/\//i.test(product.customImage || "") ? product.customImage : "" };
   }
+  async function deleteVariant(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      const product = doc.products.find(p => p.variants.some(v => String(v.id) === id));
+      if (!product) throw new ApiError(404, "Varyant bulunamadı.");
+      const variant = product.variants.find(v => String(v.id) === id);
+      product.variants = product.variants.filter(v => String(v.id) !== id);
+      product.version++; product.updated = new Date().toISOString();
+      audit(doc, "Varyant silindi", `${product.name} · ${variant.size} · ${variant.sku || ""}`, actor);
+    });
+  }
   async function publishVariantCard(body, id, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
       const product = doc.products.find((p) => p.variants.some((v) => String(v.id) === id));
@@ -1116,6 +1128,7 @@ export function createCatalogService(db) {
     productPage,
     variantPage,
     publishVariantCard,
+    deleteVariant,
     publishedProduct,
     publicCard,
     publishCard,
