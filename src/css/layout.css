@@ -1034,9 +1034,9 @@ sl-button::part(label) {
   -webkit-line-clamp: 2;
   min-block-size: calc(2em * var(--sl-line-height-normal));
 }
-.product-summary-category {
+/* .product-summary-category {
   min-block-size: calc(2em * var(--sl-line-height-normal));
-}
+} */
 .catalog th,
 .catalog td {
   padding-inline: var(--sl-spacing-small);
