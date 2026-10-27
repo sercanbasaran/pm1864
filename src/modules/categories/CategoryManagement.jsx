@@ -7,7 +7,6 @@ import CategoryGallery from "./CategoryGallery.jsx";
 import { categoryPageUrl } from "./category-page.js";
 import {
   CategoryChannelSwitches,
-  CategoryChannelSummary,
 } from "../../components/ui/SalesChannels.jsx";
 import {
   salesChannels,
@@ -430,7 +429,6 @@ export default function CategoryManager({
                     {sortColumn("code", "Kod")}
                     {sortColumn("type", "Tür")}
                     {sortColumn("status", "Durum")}
-                    {sortColumn("channels", "Satış kanalları")}
                     {sortColumn("count", "Ürün sayısı")}
                     <TableHeading scope="col">İşlemler</TableHeading>
                   </TableRow>
@@ -482,12 +480,6 @@ export default function CategoryManager({
                               Ana kategori pasif
                             </small>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <CategoryChannelSummary
-                            category={category}
-                            categories={categories}
-                          />
                         </TableCell>
                         <TableCell>
                           <SlBadge>{count}</SlBadge>
@@ -547,7 +539,7 @@ export default function CategoryManager({
                   })}
                   {!rows.length && (
                     <TableRow>
-                      <TableCell colSpan={7}>
+                      <TableCell colSpan={6}>
                         <div className="empty">
                           <FolderSimple size={32} />
                           <h3>Kategori bulunamadı</h3>
