@@ -30,14 +30,14 @@ export default function ProductImport({ onClose }) {
       const seen = new Set(products.map(p => p.name.trim().toLocaleLowerCase("tr-TR")));
       const parsed = data.map((row, index) => {
         const code = String(row["Kategori kodu"] || "").trim();
-        const matches = categories.filter(c => { const parent = categories.find(p => p.id === c.parentId); return c.parentId ? parent && String(parent.code || "") + String(c.code || "") === code : String(c.code || "") === code; });
+        const matches = categories.filter(c => { const parent = categories.find(p => p.id === c.parentId); const ownCode = String(c.code || "").trim(); return c.parentId ? (ownCode === code || (parent && String(parent.code || "").trim() + ownCode === code)) : ownCode === code; });
         const category = matches.length === 1 ? matches[0] : null;
         const unit = String(row["Birim"] || "").trim();
         const hasPrice = String(row["Birim fiyat"] || "").trim() || unit || String(row["Birim gramaj (g)"] || "").trim();
         const product = { isNew: true, name: String(row["Ürün adı"] || "").trim(), categoryId: category?.id || "", category: category?.name || "", description: String(row["Kısa açıklama"] || "").trim(), status: String(row["Durum"] || "Taslak").trim(), variants: [], unitPricing: hasPrice ? { unit, price: number(row["Birim fiyat"]), weight: unit === "Kilogram" ? 1000 : unit === "Gram" ? 1 : number(row["Birim gramaj (g)"]) } : null };
         for (const [column, key] of [["İçindekiler", "ingredients"], ["Alerjen uyarısı", "allergens"], ["Besin değerleri", "nutrition"], ["Servis önerisi", "servingSuggestion"], ["Saklama koşulları", "storageConditions"], ["Uzun süreli muhafaza", "longTermStorage"]]) product[key] = String(row[column] || "").trim();
         const normalized = product.name.toLocaleLowerCase("tr-TR");
-        let issue = !category ? "Kategori kodu bulunamadı veya birden fazla kategoriyle eşleşiyor." : !["Aktif", "Taslak"].includes(product.status) ? "Durum Aktif veya Taslak olmalı." : seen.has(normalized) ? "Bu isimde bir ürün zaten var veya dosyada tekrar ediyor." : validateProduct(product, categories, variantTypes)?.message || "";
+        let issue = !category ? "Kategori kodu bulunamadı veya birden fazla kategoriyle eşleşiyor; ana kategori ve alt kategori kodunu birlikte girin." : !["Aktif", "Taslak"].includes(product.status) ? "Durum Aktif veya Taslak olmalı." : seen.has(normalized) ? "Bu isimde bir ürün zaten var veya dosyada tekrar ediyor." : validateProduct(product, categories, variantTypes)?.message || "";
         if (normalized) seen.add(normalized);
         return { line: index + 2, product, issue };
       });
@@ -56,7 +56,7 @@ export default function ProductImport({ onClose }) {
     setRows([]); setResult({ count, message: "İçe aktarma tamamlandı." }); setSaving(false); notify(`${count} ürün içe aktarıldı.`);
   }
   return <Modal title="Excel ile ürün içe aktar" onClose={onClose} busy={saving} wide>
-    <p>Şablonu indirip ürünleri doldurun. Ana kategori için 4 haneli kodu, alt kategori için ana kategori kodu ve 3 haneli alt kategori kodunu birlikte yazın (ör. 0100010). Kod hücrelerini metin biçiminde tutun. Yeni ürün kodları sistem tarafından oluşturulur.</p>
+    <p>Şablonu indirip ürünleri doldurun. Ana kategori için 4 haneli kodu, alt kategori için 3 haneli kodu yazın. Aynı alt kategori kodu birden fazla kategoride varsa ana ve alt kategori kodlarını birlikte yazın (ör. 0100010). Kod hücrelerini metin biçiminde tutun. Yeni ürün kodları sistem tarafından oluşturulur.</p>
     <Button type="button" onClick={template}>Excel şablonunu indir</Button>
     <p><label>Excel dosyası seçin (.xlsx, .xls) <input type="file" accept=".xlsx,.xls" onChange={read} disabled={saving} /></label></p>
     {error && <p role="alert">{error}</p>}
