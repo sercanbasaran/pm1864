@@ -65,6 +65,7 @@ export default function ProductManagement({
     [sort, setSort] = useState("updated"),
     [view, setView] = useState("list"),
     [page, setPage] = useState(1),
+    [pageSize, setPageSize] = useState(10),
     [selected, setSelected] = useState([]),
     [filters, setFilters] = useState(false),
     search = useRef(null);
@@ -118,8 +119,8 @@ export default function ProductManagement({
             ? (b.unitPricing?.price ?? 0) - (a.unitPricing?.price ?? 0)
             : new Date(b.updated) - new Date(a.updated),
     );
-  const current = Math.min(page, Math.max(1, Math.ceil(visible.length / 8))),
-    shown = visible.slice((current - 1) * 8, current * 8),
+  const current = Math.min(page, Math.max(1, Math.ceil(visible.length / pageSize))),
+    shown = visible.slice((current - 1) * pageSize, current * pageSize),
     parent =
       rootOf(
         categories.find((c) => c.id === category || c.name === category),
@@ -550,7 +551,19 @@ export default function ProductManagement({
             </Button>
           </EmptyState>
         )}
-        <Pagination total={visible.length} page={current} onChange={setPage} />
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "1rem" }}>
+          <Select
+            label="Sayfa başına ürün"
+            aria-label="Sayfa başına ürün"
+            value={String(pageSize)}
+            onChange={(e) => filter(setPageSize, Number(e.target.value))}
+          >
+            {[10, 25, 50, 100].map((size) => (
+              <option key={size} value={String(size)}>{size}</option>
+            ))}
+          </Select>
+          <Pagination total={visible.length} page={current} pageSize={pageSize} onChange={setPage} />
+        </div>
       </Card>
       {write && <ActionBar position="bottom">{addAction}</ActionBar>}
     </section>
