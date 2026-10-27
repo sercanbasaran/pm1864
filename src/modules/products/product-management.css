@@ -148,3 +148,6 @@
     justify-content: space-between;
   }
 }
+
+.product-module .toolbar-right .icon-btn[aria-pressed="true"]::part(base) { background: var(--sl-color-primary-600); border-color: var(--sl-color-primary-600); color: white; }
+.product-module .toolbar-right .icon-btn[aria-pressed="true"]:hover::part(base) { background: var(--sl-color-primary-700); border-color: var(--sl-color-primary-700); }

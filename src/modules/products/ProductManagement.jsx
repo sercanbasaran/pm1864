@@ -62,12 +62,13 @@ export default function ProductManagement({
     [status, setStatus] = useState(""),
     [quality, setQuality] = useState(""),
     [sort, setSort] = useState("updated"),
-    [view, setView] = useState("list"),
+    [view, setView] = useState(() => { try { return sessionStorage.getItem("product-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } }),
     [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
     [selected, setSelected] = useState([]),
     [filters, setFilters] = useState(false),
     search = useRef(null);
+  useEffect(() => { try { sessionStorage.setItem("product-list-view", view); } catch {} }, [view]);
   const write = can(user, "products.write"),
     price = can(user, "prices.write");
   useEffect(() => {
