@@ -31,6 +31,7 @@ import {
   Stack,
   MagnifyingGlass,
   PencilSimple,
+  Copy,
   List,
   GridFour,
 } from "@phosphor-icons/react";
@@ -41,6 +42,7 @@ export default function VariantManager({
   categories,
   canWrite,
   onEdit,
+  onDuplicate,
 }) {
   const { variantTypes = [] } = useCatalog();
   const [typeId, setTypeId] = useState("");
@@ -355,6 +357,7 @@ export default function VariantManager({
                         />
                       </TableCell>
                       <TableCell>
+                        {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title="Varyantı çoğalt" disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /></Button>}
                         <Button
                           className="btn"
                           onClick={() => onEdit(p, false)}
@@ -410,6 +413,7 @@ export default function VariantManager({
                       <dd>{v.packaging || "—"}</dd>
                     </div>
                   </dl>
+                  {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /> Varyantı çoğalt</Button>}
                   <Button type="button" onClick={() => onEdit(p, false)}>
                     {canWrite ? "Yönet" : "Görüntüle"}
                   </Button>

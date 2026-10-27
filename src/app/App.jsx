@@ -15,6 +15,7 @@ import AppShell from "../components/layout/AppShell.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import ModuleBoundary from "../components/ui/ModuleBoundary.jsx";
 import { duplicateProduct } from "../duplicate-product.js";
+import { duplicateVariant } from "../catalog.js";
 import ProductEditor from "../modules/products/ProductEditor.jsx";
 import VariantEditor from "../modules/variants/VariantEditor.jsx";
 import ModuleHome from "../modules/workspace/ModuleHome.jsx";
@@ -149,6 +150,10 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         (variants ? "?tab=variants" + (append ? "&append=1" : "") : ""),
     );
   }
+  function duplicateVariantForProduct(product, variant) {
+    if (!can(user, "products.write") || product.variants.length >= 50) return;
+    navigate(`variants/${product.id}/edit?duplicateVariant=${encodeURIComponent(variant.id)}`);
+  }
   function create(categoryId) {
     if (!can(user, "products.write")) return;
     const category =
@@ -205,10 +210,15 @@ function Workspace({ user, onLogout, onUserUpdated }) {
               }
             : null
           : products.find((p) => String(p.id) === record && action === "edit");
-    if (product)
+    const duplicateSource = page === "variants" && params.has("duplicateVariant")
+      ? product?.variants.find((variant) => String(variant.id) === params.get("duplicateVariant"))
+      : null;
+    if (product && (!params.has("duplicateVariant") || (duplicateSource && can(user, "products.write") && product.variants.length < 50)))
       editing = {
         product:
-          page === "variants" && params.get("append") === "1"
+          duplicateSource
+            ? { ...structuredClone(product), variants: [...structuredClone(product.variants), duplicateVariant(structuredClone(duplicateSource), product.variants)] }
+            : page === "variants" && params.get("append") === "1"
             ? {
                 ...structuredClone(product),
                 variants: [
@@ -289,6 +299,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         categories={categories}
         canWrite={can(user, "products.write")}
         onEdit={(p, append) => open(p, true, append)}
+        onDuplicate={duplicateVariantForProduct}
       />
     ),
     "satiety-products": (
