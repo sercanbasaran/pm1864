@@ -5,15 +5,16 @@ import { Button, Input, Select, Textarea } from "../../components/ui/Controls.js
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import ProductSatiety from "../products/ProductSatiety.jsx";
+import VariantProductPicker from "./VariantProductPicker.jsx";
 import { productInformationFields } from "../../product-information.js";
 import { calculateVariant, defaultConsumables, deriveVariantInformation, packagingOptions } from "../../variant-composition.js";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import { money } from "../../catalog-tools.js";
 
 const steps = ["Varyant türü", "Ürünler", "Fiyat ve ambalaj", "Ürün bilgileri"];
-export default function VariantCompositionFields({ product, onChange, disabled, focusVariantId = "", onReady }) {
-  const { products, variantTypes, satietyProducts, consumables = defaultConsumables(), refresh } = useCatalog();
-  const [step, setStep] = useState(0), [choice, setChoice] = useState(""), [error, setError] = useState("");
+export default function VariantCompositionFields({ product, onChange, disabled, focusVariantId = "", initialStep = 0, onReady }) {
+  const { products, categories, variantTypes, satietyProducts, consumables = defaultConsumables(), refresh } = useCatalog();
+  const [step, setStep] = useState(initialStep), [error, setError] = useState("");
   const index = focusVariantId ? product.variants.findIndex(v => String(v.id) === focusVariantId) : product.variants.findIndex(v => !v.id);
   const i = index < 0 ? 0 : index, v = product.variants[i];
   useEffect(() => { onReady?.(step === steps.length - 1); }, [step, onReady]);
@@ -44,7 +45,7 @@ export default function VariantCompositionFields({ product, onChange, disabled, 
     </div></section>}
     {step === 1 && <section className="variant-wizard-section"><h3>Varyantın içindeki ürünler</h3><p>Her ürünün varyanttaki miktarını birimi üzerinden belirleyin.</p>
       {items.map((item, n) => { const source = products.find(p => p.id === item.productId); return <div className="variant-wizard-item" key={item.productId}><div><strong>{source?.name || "Ürün bulunamadı"}</strong><small>{source?.unitPricing ? `${money(source.unitPricing.price)} / ${source.unitPricing.unit} · ${source.unitPricing.weight} g` : "Birim fiyatı veya gramajı eksik"}</small></div><Input label={`Miktar (${source?.unitPricing?.unit || "birim"})`} aria-label={`${source?.name || "Ürün"} miktarı`} type="number" min={0.001} step="any" value={item.quantity} onChange={e => updateItems(items.map((x,j) => j === n ? {...x,quantity:Number(e.target.value)} : x))} />{n > 0 && <Button type="button" aria-label={`${source?.name || "Ürün"} kaldır`} onClick={() => updateItems(items.filter((_,j) => j !== n))}>Kaldır</Button>}</div>; })}
-      <div className="variant-wizard-add"><Select label="Ürün ekle" value={choice} onChange={e => setChoice(e.target.value)}><option value="">Ürün seçin</option>{products.filter(p => p.status === "Aktif" && hasUnitPricing(p.unitPricing) && !items.some(item => item.productId === p.id)).map(p => <option key={p.id} value={String(p.id)}>{p.name} · {p.productCode}</option>)}</Select><Button type="button" disabled={!choice || items.length >= 50} onClick={() => { if (choice) updateItems([...items, {productId:Number(choice),quantity:1}]); setChoice(""); }}>Ürünü ekle</Button></div>
+      <VariantProductPicker products={products} categories={categories} exclude={items.map(item => item.productId)} disabled={items.length >= 50} onSelect={selected => updateItems([...items, {productId:selected.id, quantity:1}])} />
     </section>}
     {step === 2 && <section className="variant-wizard-section"><h3>Fiyat ve ambalaj</h3><p>Fiyat ve gramaj seçilen ürünlere göre hesaplanır.</p><div className="variant-basic-grid"><Select label="Ambalaj / servis şekli" value={v.packaging || ""} onChange={e => update({packaging:e.target.value})}><option value="">Seçin</option>{packagingOptions.map(p => <option key={p}>{p}</option>)}</Select><Input label="Satış fiyatı düzeltmesi (isteğe bağlı)" type="number" min={0.01} step={0.01} value={v.priceOverride ?? ""} onChange={e => update({priceOverride:e.target.value === "" ? null : Number(e.target.value)})} /></div>
       {calculated ? <div className="variant-calculation"><div><small>Hesaplanan fiyat</small><strong>{money(calculated.calculatedPrice)}</strong></div><div><small>Net gramaj</small><strong>{calculated.weight} g</strong></div><div><small>Satış fiyatı</small><strong>{money(calculated.price)}</strong></div></div> : <p role="status">{calculationError}</p>}

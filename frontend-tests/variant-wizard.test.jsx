@@ -14,7 +14,7 @@ test("wizard tür, ürünler, fiyat ve bilgileri sırayla düzenler",async()=>{
  render(<CatalogProvider snapshot={catalog} notify={vi.fn()}><Harness /></CatalogProvider>);await settle();
  expect(document.querySelector('[aria-current="step"]').textContent).toContain('Varyant türü');
  await click('Devam et');
- const select=[...document.querySelectorAll('sl-select')].find(s=>s.label==='Ürün ekle');select.value='2';fireEvent(select,new CustomEvent('sl-change',{bubbles:true}));await settle();await click('Ürünü ekle');
+ fireEvent.click(document.querySelector('sl-button[aria-label="Cevizli seç"]'));await settle();
  expect(document.querySelectorAll('.variant-wizard-item')).toHaveLength(2);
  await click('Devam et');
  const packaging=[...document.querySelectorAll('sl-select')].find(s=>s.label==='Ambalaj / servis şekli');packaging.value='Metal%20kutu';fireEvent(packaging,new CustomEvent('sl-change',{bubbles:true}));await settle();

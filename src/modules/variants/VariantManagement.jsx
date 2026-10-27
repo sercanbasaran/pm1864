@@ -1,8 +1,6 @@
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import "./variant-management.css";
-import Modal from "../../components/ui/Modal.jsx";
 import Pagination from "../../components/ui/Pagination.jsx";
-import { hasUnitPricing } from "../../unit-pricing.js";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { variantTypeName } from "../../variant-types.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
@@ -41,23 +39,15 @@ export default function VariantManager({
   onEdit,
   onDuplicate,
   onCard,
+  onCreate,
 }) {
   const { variantTypes = [] } = useCatalog();
   const [typeId, setTypeId] = useState("");
-  const [creating, setCreating] = useState(false),
-    [createId, setCreateId] = useState(""),
-    [createTypeId, setCreateTypeId] = useState(""),
-    [page, setPage] = useState(1),
+  const [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
     [filtersOpen, setFiltersOpen] = useState(false),
     [sort, setSort] = useState("updated"),
     [view, setView] = useState(() => { try { return sessionStorage.getItem("variant-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } });
-  const eligible = products.filter(
-    (p) =>
-      p.status === "Aktif" &&
-      hasUnitPricing(p.unitPricing) &&
-      p.variants.length < 50,
-  );
   function clearFilters() {
     setQuery("");
     setRoot("");
@@ -97,14 +87,10 @@ export default function VariantManager({
     <Button
       type="button"
       variant="primary"
-      onClick={() => {
-        setCreateId("");
-        setCreateTypeId("");
-        setCreating(true);
-      }}
+      onClick={onCreate}
     >
       <Plus size={16} />
-      Varyant ekle
+      Varyant oluştur
     </Button>
   ) : null;
   return (
@@ -408,54 +394,6 @@ export default function VariantManager({
               </Select>
               <Pagination total={rows.length} page={current} pageSize={pageSize} onChange={setPage} />
             </div>
-            {creating && (
-              <Modal title="Yeni varyant" onClose={() => setCreating(false)}>
-                <p>Önce varyant türünü, ardından ilk ürünü seçin. Sonraki adımda başka ürünler ekleyebilirsiniz.</p>
-                <Select label="Varyant türü" value={createTypeId} onChange={(e) => { setCreateTypeId(e.target.value); setCreateId(""); }}>
-                  <option value="">Tür seçin</option>
-                  {variantTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
-                </Select>
-                {createTypeId && <Select
-                  label="Varyant oluşturulacak ürün"
-                  value={createId}
-                  onChange={(e) => setCreateId(e.target.value)}
-                >
-                  <option value="">Ürün seçin</option>
-                  {eligible.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </Select>}
-                {createTypeId && !eligible.length && (
-                  <p>
-                    Uygun ürün bulunamadı. Ürünler bölümünden birim fiyat ve
-                    gramaj bilgilerini tamamlayın.
-                  </p>
-                )}
-                <div className="variant-header-actions">
-                  <Button type="button" onClick={() => setCreating(false)}>
-                    Vazgeç
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    disabled={!createTypeId || !eligible.some((p) => String(p.id) === createId)}
-                    onClick={() => {
-                      setCreating(false);
-                      onEdit(
-                        eligible.find((p) => String(p.id) === createId),
-                        true,
-                        "",
-                        createTypeId,
-                      );
-                    }}
-                  >
-                    Varyant oluştur
-                  </Button>
-                </div>
-              </Modal>
-            )}
           </Card>
 
     </section>
