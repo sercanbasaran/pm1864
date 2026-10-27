@@ -553,7 +553,7 @@ export default function ProductManagement({
         <div className="product-list-footer">
           <div className="product-page-size">
           <Select
-            aria-label="Sayfa başına ürün"
+            aria-label=""
             value={String(pageSize)}
             onChange={(e) => filter(setPageSize, Number(e.target.value))}
           >
