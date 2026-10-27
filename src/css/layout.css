@@ -417,6 +417,8 @@ th {
 }
 .product-cell {
   max-width: 28rem;
+  border: 1px solid #e1e1e1;
+  border-radius: 6px;
 }
 .product-cell > div {
   text-align: left;
