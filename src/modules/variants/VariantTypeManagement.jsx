@@ -1,3 +1,4 @@
+import "./variant-management.css";
 import React, { useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
@@ -45,7 +46,7 @@ export default function VariantTypeManagement({ canWrite }) {
     }
   }
   return (
-    <Card className="variant-type-manager">
+    <div className="variant-module"><Card className="variant-type-manager">
       <div className="panel-title">
         <div>
           <h2>Varyant tipleri</h2>
@@ -144,6 +145,6 @@ export default function VariantTypeManagement({ canWrite }) {
           </TableBody>
         </Table>
       </div>
-    </Card>
+    </Card></div>
   );
 }

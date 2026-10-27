@@ -30,6 +30,8 @@ const ProductCardManagement = lazy(
 const ProductManagement = lazy(
   () => import("../modules/products/ProductManagement.jsx"),
 );
+const VariantTypeManagement = lazy(() => import("../modules/variants/VariantTypeManagement.jsx"));
+const VariantCardManagement = lazy(() => import("../modules/variants/VariantCardManagement.jsx"));
 const VariantManagement = lazy(
   () => import("../modules/variants/VariantManagement.jsx"),
 );
@@ -300,8 +302,10 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         canWrite={can(user, "products.write")}
         onEdit={(p, append, variantId, typeId) => open(p, true, append, variantId, typeId)}
         onDuplicate={duplicateVariantForProduct}
+        onCard={(p, v) => navigate(`variants/${p.id}/card?variant=${encodeURIComponent(v.id)}`)}
       />
     ),
+    "variant-types": <VariantTypeManagement canWrite={can(user, "products.write")} />,
     "satiety-products": (
       <SatietyProductManagement canWrite={can(user, "settings.write")} />
     ),
@@ -381,7 +385,11 @@ function Workspace({ user, onLogout, onUserUpdated }) {
       page === "products" && action === "card"
         ? products.find((p) => String(p.id) === record)
         : null;
-    pageContent = cardProduct ? (
+    const variantCardProduct = page === "variants" && action === "card" ? products.find((p) => String(p.id) === record) : null;
+    const cardVariant = variantCardProduct?.variants.find((v) => String(v.id) === params.get("variant"));
+    pageContent = variantCardProduct && cardVariant ? (
+      <VariantCardManagement key={cardVariant.id} product={variantCardProduct} variant={cardVariant} user={user} onClose={closeEditor} />
+    ) : cardProduct ? (
       <ProductCardManagement
         key={cardProduct.id}
         product={cardProduct}

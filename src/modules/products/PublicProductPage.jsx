@@ -8,7 +8,7 @@ import Card from "../../components/ui/Card.jsx";
 import { Button } from "../../components/ui/Controls.jsx";
 import ProductDetails from "./ProductDetails.jsx";
 
-export default function PublicProductPage() {
+export default function PublicProductPage({ variant = false }) {
   const [product, setProduct] = useState(null),
     [error, setError] = useState(null),
     [attempt, setAttempt] = useState(0),
@@ -36,7 +36,7 @@ export default function PublicProductPage() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController(),
-      code = window.location.pathname.match(/^\/p\/([a-zA-Z0-9-]+)\/?$/)?.[1];
+      code = window.location.pathname.match(variant ? /^\/v\/([a-zA-Z0-9-]+)\/?$/ : /^\/p\/([a-zA-Z0-9-]+)\/?$/)?.[1];
     setLoading(true);
     setError(null);
     setProduct(null);
@@ -47,7 +47,7 @@ export default function PublicProductPage() {
             new Error("Ürün kartı bulunamadı veya yayından kaldırıldı."),
             { status: 404 },
           );
-        const response = await fetch("/api/product-pages/" + code, {
+        const response = await fetch((variant ? "/api/variant-pages/" : "/api/product-pages/") + code, {
           signal: controller.signal,
           credentials: "same-origin",
           cache: "no-store",
@@ -79,7 +79,7 @@ export default function PublicProductPage() {
       active = false;
       controller.abort();
     };
-  }, [attempt]);
+  }, [attempt, variant]);
   useEffect(() => {
     const old = document.title;
     document.title = product
@@ -90,7 +90,7 @@ export default function PublicProductPage() {
     };
   }, [product]);
   if (error?.status === 401)
-    return <BackendGate>{() => <PublicProductPage />}</BackendGate>;
+    return <BackendGate>{() => <PublicProductPage variant={variant} />}</BackendGate>;
   return (
     <div className="public-product-page" ref={pageRef}>
       <header className="public-product-header">

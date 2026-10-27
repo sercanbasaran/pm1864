@@ -65,3 +65,29 @@ export function productCardData(
       })),
   };
 }
+
+export function variantCardEligible(product, variant, categories) {
+  return !!variant && variant.active !== false && productCardEligible(product, categories);
+}
+export function variantCardData(product, variant, categories, products = [], satietyProducts = defaultSatietyProducts()) {
+  const information = variant.information || product;
+  const items = (variant.items || [{ productId: variant.sourceProductId ?? product.id, quantity: variant.quantity ?? 1 }]).map((item) => {
+    const source = products.find((p) => p.id === item.productId) || (item.productId === product.id ? product : null);
+    return { name: source?.name || "Ürün", quantity: item.quantity, unit: source?.unitPricing?.unit || "Adet" };
+  });
+  return {
+    productCode: displaySku(variant.sku),
+    name: variant.size,
+    category: categoryPath(categoryOf(product, categories), categories),
+    description: product.name,
+    variantPricing: { price: variant.price, weight: variant.weight, packaging: variant.packaging || "" },
+    variantContents: items,
+    salesAvailability: effectiveSales(product, variant, categories),
+    satiety: resolvedSatiety(information.satiety, satietyProducts),
+    ...Object.fromEntries(productInformationFields.map((field) => [field.key, information[field.key] || ""])),
+    images: variant.images || [],
+    customImage: product.customImage || "",
+    variants: [],
+    isVariantCard: true,
+  };
+}

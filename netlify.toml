@@ -32,3 +32,8 @@
   from = "/kategori/*"
   to = "/index.html"
   status = 200
+
+[[redirects]]
+  from = "/v/*"
+  to = "/index.html"
+  status = 200

@@ -193,7 +193,7 @@ export const moduleGroups = [
     icon: Gear,
     description:
       "Kod/SKU, doygunluk ürünleri, para birimi ve dil tanımlarını yönetin.",
-    children: ["codes", "satiety-products", "currencies", "languages"],
+    children: ["codes", "variant-types", "satiety-products", "currencies", "languages"],
   },
   {
     id: "user-management",
@@ -251,6 +251,13 @@ export const modules = [
     icon: Stack,
     permission: "catalog.read",
     description: "Ürünlerdeki doygunluk içerikleri ve simgeleri.",
+  },
+  {
+    id: "variant-types",
+    label: "Varyant tipleri",
+    icon: Stack,
+    permission: "catalog.read",
+    description: "Porsiyon, kutu ve diğer varyant tiplerini yönetin.",
   },
   ...newMainModules,
   {

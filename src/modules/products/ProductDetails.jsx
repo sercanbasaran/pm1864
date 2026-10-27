@@ -74,6 +74,12 @@ export default function ProductDetails({ product }) {
                 </div>
               </dl>
             )}
+            {product.variantPricing && (
+              <dl className="public-unit-pricing">
+                <div><dt>Satış fiyatı</dt><dd>{money(product.variantPricing.price)}</dd></div>
+                <div><dt>Net gramaj</dt><dd>{new Intl.NumberFormat("tr-TR").format(product.variantPricing.weight)} g</dd></div>
+              </dl>
+            )}
             {product.salesAvailability && (
               <>
                 <hr className="product-summary-divider" />
@@ -100,6 +106,13 @@ export default function ProductDetails({ product }) {
           </div>
         </div>
       </Card>
+      {product.variantContents?.length > 0 && (
+        <Card className="product-detail-card product-detail-information">
+          <h3>Varyant içeriği</h3>
+          <ul>{product.variantContents.map((item, index) => <li key={index}>{item.name} · {item.quantity} {item.unit}</li>)}</ul>
+          {product.variantPricing?.packaging && <p>Ambalaj / servis: {product.variantPricing.packaging}</p>}
+        </Card>
+      )}
       {information.length > 0 && (
         <Card className="product-detail-card product-detail-information">
           <h3>Ürün bilgileri</h3>
@@ -114,14 +127,14 @@ export default function ProductDetails({ product }) {
           ))}
         </Card>
       )}
-      <Card className="product-detail-card">
+      {!product.isVariantCard && <Card className="product-detail-card">
         <h3>Ürün varyantları</h3>
         {product.variants?.length ? (
           <ProductVariantsTable product={product} />
         ) : (
           <p>Henüz eklenmiş bir varyant bulunmuyor.</p>
         )}
-      </Card>
+      </Card>}
     </div>
   );
 }

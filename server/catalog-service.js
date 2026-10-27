@@ -35,6 +35,8 @@ import {
   productCardCode,
   productCardEligible,
   productCardData,
+  variantCardData,
+  variantCardEligible,
 } from "../src/product-card.js";
 import {
   productInformationFields,
@@ -496,6 +498,7 @@ export function createCatalogService(db) {
                   "",
                 slices: v.slices ?? 0,
                 active: v.active !== false,
+                publicCardEnabled: old?.variants.find((previous) => previous.id === v.id)?.publicCardEnabled === true,
               }))
             : [],
           isNew: !old,
@@ -999,6 +1002,32 @@ export function createCatalogService(db) {
       catalog.satietyProducts,
     );
   }
+  async function variantPage(id, authenticated = false, assetId = "") {
+    const catalog = await read();
+    const product = catalog.products.find((p) => p.variants.some((v) => String(v.id) === id));
+    const variant = product?.variants.find((v) => String(v.id) === id);
+    if (!product || !variantCardEligible(product, variant, catalog.categories)) throw new ApiError(404, "Varyant kartı bulunamadı.", "NOT_FOUND");
+    if (!variant.publicCardEnabled && !authenticated) throw new ApiError(401, "Bu varyant için giriş yapın.", "UNAUTHORIZED");
+    const images = variant.images?.length ? variant.images : (product.images?.length ? product.images : product.mediaId ? [{id:product.mediaId}] : []);
+    if (assetId) {
+      if (!images.some(image => image.id === assetId)) throw new ApiError(404, "Görsel bulunamadı.", "NOT_FOUND");
+      return assetId;
+    }
+    const imageUrl = (asset) => `/api/variant-pages/${encodeURIComponent(id)}/images/${encodeURIComponent(asset)}`;
+    return { ...variantCardData(product, variant, catalog.categories, catalog.products, catalog.satietyProducts), images: images.map(image => ({id:image.id, url:imageUrl(image.id)})), customImage: /^https?:\/\//i.test(product.customImage || "") ? product.customImage : "" };
+  }
+  async function publishVariantCard(body, id, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      const product = doc.products.find((p) => p.variants.some((v) => String(v.id) === id));
+      const variant = product?.variants.find((v) => String(v.id) === id);
+      if (!product || !variant) throw new ApiError(404, "Varyant bulunamadı.");
+      if (typeof body.enabled !== "boolean") throw new ApiError(422, "Kartın yayın durumunu belirtin.");
+      if (body.enabled && !variantCardEligible(product, variant, doc.categories)) throw new ApiError(422, "Varyant, ürün ve bağlı kategoriler aktif olmalıdır.");
+      if ((variant.publicCardEnabled === true) === body.enabled) return;
+      variant.publicCardEnabled = body.enabled; product.version++; product.updated = new Date().toISOString();
+      audit(doc, body.enabled ? "Varyant kartı yayınlandı" : "Varyant kartı yayından kaldırıldı", `${product.name} · ${variant.size}`, actor);
+    });
+  }
   async function publishCard(body, id, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
       const product = doc.products.find((p) => p.id === Number(id));
@@ -1039,6 +1068,8 @@ export function createCatalogService(db) {
     prices,
     categoryPage,
     productPage,
+    variantPage,
+    publishVariantCard,
     publishedProduct,
     publicCard,
     publishCard,

@@ -112,6 +112,14 @@ export async function createApp({ env = process.env, database } = {}) {
         if (productPageRoute[2]) return media.content(page);
         return json({ product: page });
       }
+      const variantPageRoute = route.match(/^\/api\/variant-pages\/([a-zA-Z0-9-]+)(?:\/images\/([a-zA-Z0-9-]+))?$/);
+      if (variantPageRoute && method === "GET") {
+        const user = await session(request);
+        const allowed = !!user && !user.mustChangePassword && can(user, "catalog.read");
+        const page = await service.variantPage(variantPageRoute[1], allowed, variantPageRoute[2]);
+        if (variantPageRoute[2]) return media.content(page);
+        return json({ product: page });
+      }
       const publicRoute = route.match(
         /^\/api\/public\/products\/(P[0-9]{6,})(\/image)?$/,
       );
@@ -364,6 +372,9 @@ export async function createApp({ env = process.env, database } = {}) {
       ) {
         requirePermission("products.write");
         catalog = await service.publishCard(body, match[1], user.email);
+      } else if ((match = route.match(/^\/api\/variants\/([a-zA-Z0-9-]+)\/card$/)) && method === "PATCH") {
+        requirePermission("products.write");
+        catalog = await service.publishVariantCard(body, match[1], user.email);
       } else if (route === "/api/prices/bulk" && method === "POST") {
         requirePermission("prices.write");
         catalog = await service.bulk(body, user.email);

@@ -3,15 +3,11 @@ import "./variant-management.css";
 import Modal from "../../components/ui/Modal.jsx";
 import Pagination from "../../components/ui/Pagination.jsx";
 import { hasUnitPricing } from "../../unit-pricing.js";
-import VariantTypeManagement from "./VariantTypeManagement.jsx";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { variantTypeName } from "../../variant-types.js";
-import SlTabGroup from "@shoelace-style/shoelace/dist/react/tab-group/index.js";
-import SlTab from "@shoelace-style/shoelace/dist/react/tab/index.js";
-import SlTabPanel from "@shoelace-style/shoelace/dist/react/tab-panel/index.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
+import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import Card from "../../components/ui/Card.jsx";
-import { SalesChannelSummary } from "../../components/ui/SalesChannels.jsx";
 import { salesChannels, effectiveSales } from "../../sales-availability.js";
 import {
   Button,
@@ -31,6 +27,7 @@ import {
   MagnifyingGlass,
   PencilSimple,
   Copy,
+  QrCode,
   DownloadSimple,
   List,
   GridFour,
@@ -43,6 +40,7 @@ export default function VariantManager({
   canWrite,
   onEdit,
   onDuplicate,
+  onCard,
 }) {
   const { variantTypes = [] } = useCatalog();
   const [typeId, setTypeId] = useState("");
@@ -135,14 +133,6 @@ export default function VariantManager({
         ]}
       />
 
-      <SlTabGroup aria-label="Varyant modülü bölümleri">
-        <SlTab slot="nav" panel="management" active>
-          Varyant yönetimi
-        </SlTab>
-        <SlTab slot="nav" panel="types">
-          Varyant tipleri
-        </SlTab>
-        <SlTabPanel name="management" active>
           <Card className="panel variant-manager">
             <div className="panel-title">
               <div>
@@ -316,7 +306,6 @@ export default function VariantManager({
                     <TableHeading>MİKTAR / SERVİS</TableHeading>
                     <TableHeading>SATIŞ FİYATI</TableHeading>
                     <TableHeading>DURUM</TableHeading>
-                    <TableHeading>SATIŞ KANALLARI</TableHeading>
                     <TableHeading>İŞLEMLER</TableHeading>
                   </TableRow>
                 </TableHead>
@@ -324,14 +313,10 @@ export default function VariantManager({
                   {shown.map(({ p, v, c }) => (
                     <TableRow key={v.id}>
                       <TableCell>
-                        <strong>{p.name}</strong>
-                        <small className="user-email">
-                          {categoryPath(c, categories)}
-                        </small>
+                        <div className="variant-cell-main"><strong>{p.name}</strong><small>{categoryPath(c, categories)}</small></div>
                       </TableCell>
                       <TableCell>
-                        <strong>{v.size}</strong>
-                        <small className="user-email">{v.sku}</small>
+                        <div className="variant-cell-main"><strong>{v.size}</strong><SlTag size="small">{v.sku || "—"}</SlTag></div>
                       </TableCell>
                       <TableCell>{variantTypeName(v, variantTypes)}</TableCell>
                       <TableCell>
@@ -353,22 +338,10 @@ export default function VariantManager({
                         </SlBadge>
                       </TableCell>
                       <TableCell>
-                        <SalesChannelSummary
-                          categories={categories}
-                          product={p}
-                          variant={v}
-                        />
-                      </TableCell>
-                      <TableCell>
                         <div className="variant-row-actions">
                         {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title={p.variants.length >= 50 ? "Bir üründe en fazla 50 varyant olabilir" : "Varyantı çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /></Button>}
-                        <Button
-                          className="btn"
-                          onClick={() => onEdit(p, false, v.id)}
-                        >
-                          <PencilSimple size={15} />
-                          {canWrite ? "Yönet" : "Görüntüle"}
-                        </Button>
+                        <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyant kartı ve QR"} title="Varyant kartı ve QR" onClick={() => onCard(p, v)}><QrCode size={18} /></Button>
+                        <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + (canWrite ? " düzenle" : " görüntüle")} title={canWrite ? "Düzenle" : "Görüntüle"} onClick={() => onEdit(p, false, v.id)}><PencilSimple size={18} /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -421,8 +394,9 @@ export default function VariantManager({
                   </dl>
                   <div className="variant-card-actions">
                   {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /> Varyantı çoğalt</Button>}
+                  <Button type="button" aria-label={p.name + " " + v.size + " varyant kartı ve QR"} onClick={() => onCard(p, v)}><QrCode size={16} /> Varyant kartı ve QR</Button>
                   <Button type="button" onClick={() => onEdit(p, false, v.id)}>
-                    {canWrite ? "Yönet" : "Görüntüle"}
+                    {canWrite ? "Düzenle" : "Görüntüle"}
                   </Button>
                   </div>
                 </article>
@@ -483,11 +457,7 @@ export default function VariantManager({
               </Modal>
             )}
           </Card>
-        </SlTabPanel>
-        <SlTabPanel name="types">
-          <VariantTypeManagement canWrite={canWrite} />
-        </SlTabPanel>
-      </SlTabGroup>
+
     </section>
   );
 }

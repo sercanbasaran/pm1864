@@ -14,6 +14,8 @@ export function RootApp() {
     <ShoelaceTheme>
       {window.location.pathname.startsWith("/kategori/") ? (
         <CategoryPage />
+      ) : window.location.pathname.startsWith("/v/") ? (
+        <PublicProductPage variant />
       ) : window.location.pathname.startsWith("/p/") ? (
         <PublicProductPage />
       ) : (
