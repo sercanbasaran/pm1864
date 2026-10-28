@@ -1,3 +1,4 @@
+import TableText from "../../components/ui/TableText.jsx";
 import ProductImport from "./ProductImport.jsx";
 import "./product-management.css";
 import ProductQualitySummary from "./ProductQualitySummary.jsx";
@@ -453,7 +454,7 @@ export default function ProductManagement({
                       >
                         <ProductImage product={p} />
                         <div>
-                          <strong title={p.name}>{p.name}</strong>
+                          <strong><TableText value={p.name} /></strong>
                           <small>
                             {p.productCode} · {p.variants.length} varyant
                           </small>
@@ -462,7 +463,7 @@ export default function ProductManagement({
                     </TableCell>
                     <TableCell>
                       <SlTag size="small">
-                        {categoryPath(categoryOf(p, categories), categories)}
+                        <TableText value={categoryPath(categoryOf(p, categories), categories)} />
                       </SlTag>
                     </TableCell>
                     <TableCell>

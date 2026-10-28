@@ -1,3 +1,4 @@
+import TableText from "../../components/ui/TableText.jsx";
 import "./category-management.css";
 import CategoryPromotion from "./CategoryPromotion.jsx";
 import EditableField from "../../components/ui/EditableField.jsx";
@@ -408,11 +409,11 @@ export default function CategoryManager({
                           >
                             <FolderSimple size={18} aria-hidden="true" />
                             <div>
-                              <span>{category.name}</span>
-                              {parent && <small>{parent.name}</small>}
+                              <span><TableText value={category.name} /></span>
+                              {parent && <small><TableText value={parent.name} /></small>}
                               {category.description && (
                                 <small className="category-table-description">
-                                  {category.description}
+                                  <TableText value={category.description} />
                                 </small>
                               )}
                             </div>

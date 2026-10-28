@@ -1349,3 +1349,35 @@ sl-button > svg[slot="suffix"] {
 .module-home-card sl-button {
   margin-top: auto;
 }
+
+
+/* Consistent thumbnails in the product and variant list tables. */
+.product-table .product-cell .product-image,
+.variant-desktop-table .product-cell .product-image {
+  width: 4rem;
+  height: 4rem;
+  flex: 0 0 4rem;
+}
+.product-table .product-cell .product-image img,
+.variant-desktop-table .product-cell .product-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Keep wide management tables usable on small screens without widening the page. */
+@media (max-width: 767px) {
+  .workspace-main, .workspace-content, .catalog, .table-scroll {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .table-scroll {
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .records-pagination, .records-pagination nav {
+    flex-wrap: wrap;
+  }
+}

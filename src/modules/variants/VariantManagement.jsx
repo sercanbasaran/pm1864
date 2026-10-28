@@ -1,3 +1,4 @@
+import TableText from "../../components/ui/TableText.jsx";
 import VariantQualitySummary from "./VariantQualitySummary.jsx";
 import { missingVariantInformation } from "./variant-quality.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
@@ -323,7 +324,7 @@ export default function VariantManager({
                       <TableCell>
                         <Button type="button" className="product-cell variant-identity" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
                           <ProductImage product={{ name: v.size, customImage: v.images?.[0]?.url || "" }} />
-                          <div className="variant-cell-main"><strong>{v.size}</strong><small>{v.sku || "—"} · {variantTypeName(v, variantTypes)}</small></div>
+                          <div className="variant-cell-main"><strong><TableText value={v.size} /></strong><small><TableText value={`${v.sku || "—"} · ${variantTypeName(v, variantTypes)}`} /></small></div>
                         </Button>
                       </TableCell>
                       <TableCell>
@@ -331,7 +332,7 @@ export default function VariantManager({
                       </TableCell>
                       <TableCell>
                         <div className="variant-serving-cell">
-                          <span>{v.packagingName || v.packaging || "Ambalaj belirtilmedi"}</span>
+                          <span><TableText value={v.packagingName || v.packaging || "Ambalaj belirtilmedi"} /></span>
                           <SlTag size="small">{v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}</SlTag>
                           {v.items?.length > 1 && v.slices > 0 && <SlTag size="small">{v.slices} dilim</SlTag>}
                         </div>

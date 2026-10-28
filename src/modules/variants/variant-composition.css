@@ -101,3 +101,13 @@
 .variant-picker-identity .product-image img,
 .variant-selected-identity .product-image img { width:100%; height:100%; object-fit:contain; }
 .variant-product-transfer .image-placeholder small { display:none; }
+.product-wizard-navigation { border: 0; padding: 0; }
+.product-wizard-review h3 { margin: 0 0 .5rem; }
+.product-wizard-review p { color: var(--sl-color-neutral-600); }
+.product-wizard-review dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.product-wizard-review dt { color: var(--sl-color-neutral-600); font-size: .875rem; }
+.product-wizard-review dd { margin: .25rem 0 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .product-wizard-review dl { grid-template-columns: 1fr; }
+  .product-wizard-navigation { width: 100%; }
+}

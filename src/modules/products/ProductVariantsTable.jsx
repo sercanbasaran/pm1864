@@ -1,3 +1,4 @@
+import TableText from "../../components/ui/TableText.jsx";
 import React from "react";
 import { Plus, Trash, Copy, ArrowUp, ArrowDown } from "@phosphor-icons/react";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
@@ -100,7 +101,7 @@ export default function ProductVariantsTable({
               {variants.map((v, i) => (
                 <TableRow key={v.id || i}>
                   <TableCell>
-                    {editing ? control(v, i, "size", "Boyut / ad") : v.size}
+                    {editing ? control(v, i, "size", "Boyut / ad") : <TableText value={v.size} />}
                   </TableCell>
                   <TableCell>
                     {editing ? (
@@ -119,9 +120,7 @@ export default function ProductVariantsTable({
                         ))}
                       </Select>
                     ) : (
-                      v.typeName ||
-                      variantTypes.find((t) => t.id === v.typeId)?.name ||
-                      "—"
+                      <TableText value={v.typeName || variantTypes.find((t) => t.id === v.typeId)?.name || "—"} />
                     )}
                   </TableCell>
                   <TableCell>
@@ -158,9 +157,7 @@ export default function ProductVariantsTable({
                   <TableCell>
                     {editing
                       ? control(v, i, "packaging", "Ambalaj")
-                      : v.packaging === "Tabakta servis"
-                        ? "Servis: Tabakta servis"
-                        : v.packaging || "—"}
+                      : <TableText value={v.packaging === "Tabakta servis" ? "Servis: Tabakta servis" : v.packaging || "—"} />}
                   </TableCell>
                   <TableCell>
                     {editing ? (

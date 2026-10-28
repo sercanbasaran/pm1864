@@ -205,6 +205,8 @@ test("new products retain the complete creation form with required fields and pr
   );
   expect(name.required).toBe(true);
   expect(document.querySelector("form").textContent).toContain("Özel");
+  fireEvent.click([...document.querySelectorAll('nav[aria-label="Ürün oluşturma adımları"] button')].find((button) => button.textContent.includes("Ürünü tamamla")));
+  await settle();
   expect(
     [...document.querySelectorAll("sl-button")].some(
       (c) => c.textContent === "Ürünü oluştur",

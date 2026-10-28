@@ -1,3 +1,4 @@
+import "../variants/variant-composition.css";
 import UnitPricing from "./UnitPricing.jsx";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import React, { useEffect, useState } from "react";
@@ -5,7 +6,6 @@ import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
 import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
 import { Check } from "@phosphor-icons/react";
-import ActionBar from "../../components/ui/ActionBar.jsx";
 import BackToListButton from "../../components/ui/BackToListButton.jsx";
 import EditableField from "../../components/ui/EditableField.jsx";
 import { SalesChannelSwitches } from "../../components/ui/SalesChannels.jsx";
@@ -17,7 +17,6 @@ import {
 } from "../../components/ui/Controls.jsx";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { validateProduct } from "../../catalog.js";
-import { money } from "../../catalog-tools.js";
 import { effectiveSales, salesChannels } from "../../sales-availability.js";
 import { productCardPath } from "../../product-card.js";
 import NutritionTable from "./NutritionTable.jsx";
@@ -32,6 +31,8 @@ import { categoryOf, rootOf } from "../../hierarchy.js";
 import CategoryFields from "../categories/CategoryFields.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import EditorPage from "../../components/layout/EditorPage.jsx";
+
+const productWizardSteps = ["Genel bilgiler", "Ürün bilgileri", "Doygunluk bilgisi", "Ürün görselleri", "Ürünü tamamla"];
 
 const normalize = (product) => ({
   ...structuredClone(product),
@@ -84,7 +85,9 @@ export default function ProductEditor({
   async function persist(field, value, snapshot) {
     if (busy || readOnly) return false;
     if (draft.isNew) {
-      setDraft({ ...draft, [field]: value });
+      setDraft((previous) => field === "images"
+        ? { ...previous, images: value, mediaId: value[0]?.id || "", customImage: value[0]?.url || "" }
+        : { ...previous, [field]: value });
       return true;
     }
     const base = snapshot?.products.find((p) => p.id === current.id) || current;
@@ -148,7 +151,8 @@ export default function ProductEditor({
     if (busy || readOnly) return;
     const invalid = validateProduct(draft, categories, variantTypes);
     if (invalid) {
-      setActive(stepForProductError(invalid));
+      const errorStep = stepForProductError(invalid);
+      setActive(errorStep === "Genel bilgiler" || errorStep === "Doygunluk bilgisi" ? errorStep : "Ürün bilgileri");
       setError(invalid.message);
       return;
     }
@@ -191,7 +195,7 @@ export default function ProductEditor({
       ? [{ id: "external", url: draft.customImage }]
       : [];
   const saveAction =
-    draft.isNew && !readOnly ? (
+    draft.isNew && !readOnly && active === "Ürünü tamamla" ? (
       <Button type="submit" variant="primary" disabled={busy}>
         <Check size={17} />
         Ürünü oluştur
@@ -199,11 +203,21 @@ export default function ProductEditor({
     ) : null;
   return (
     <EditorPage
-      title={draft.isNew ? "Ürün ekle" : "Ürün düzenle"}
+      title={draft.isNew ? "Ürün oluştur" : "Ürün düzenle"}
       busy={busy}
       onClose={onClose}
     >
       {!readOnly && !product.isNew && <Button type="button" disabled={busy || product.variants.length >= 50} onClick={() => onCreateVariant(product)}>Varyant oluştur</Button>}
+      {draft.isNew ? (
+        <nav className="variant-wizard-steps" aria-label="Ürün oluşturma adımları">
+          {productWizardSteps.map((label, index) => (
+            <button key={label} type="button" aria-current={active === label ? "step" : undefined}
+              disabled={busy} onClick={() => { setActive(label); setError(""); }}>
+              <b>{index + 1}</b> {label}
+            </button>
+          ))}
+        </nav>
+      ) : (
       <div
         className="editor-tabs product-detail-steps"
         role="group"
@@ -225,8 +239,8 @@ export default function ProductEditor({
           </Button>
         ))}
       </div>
+      )}
       <form onSubmit={save} noValidate>
-        {saveAction && <ActionBar>{saveAction}</ActionBar>}
         {error && (
           <SlAlert open variant="danger" className="form-error">
             {error}
@@ -402,7 +416,7 @@ export default function ProductEditor({
                 ) : (
                   <EditableField label="Bağlantı erişimi" value="Özel" />
                 )}
-                <section className="category-field-card category-images-card">
+                {!draft.isNew && <section className="category-field-card category-images-card">
                   <h3>Ürün görselleri</h3>
                   <MediaGallery
                     label="Ürün"
@@ -418,8 +432,23 @@ export default function ProductEditor({
                       )
                     }
                   />
-                </section>
+                </section>}
               </>
+            ) : active === "Ürün görselleri" && draft.isNew ? (
+              <section className="category-field-card category-images-card">
+                <h3>Ürün görselleri</h3>
+                <MediaGallery label="Ürün" images={images} editable={!readOnly} disabled={busy || readOnly}
+                  onRefresh={refresh} onChange={(next, _, snapshot) => persist("images", next.filter((image) => image.id !== "external"), snapshot)} />
+              </section>
+            ) : active === "Ürünü tamamla" && draft.isNew ? (
+              <section className="category-field-card product-wizard-review">
+                <h3>Ürünü tamamla</h3>
+                <p>Bilgileri kontrol edin. Eksikleri ilgili adıma dönerek düzenleyebilirsiniz.</p>
+                <dl><div><dt>Ürün adı</dt><dd>{draft.name || "Belirtilmedi"}</dd></div>
+                  <div><dt>Kategori</dt><dd>{[root?.name, category?.parentId ? category.name : null].filter(Boolean).join(" / ") || "Seçilmedi"}</dd></div>
+                  <div><dt>Birim fiyat</dt><dd><UnitPricing value={draft.unitPricing} /></dd></div>
+                  <div><dt>Görseller</dt><dd>{images.length} görsel</dd></div></dl>
+              </section>
             ) : active === "Doygunluk bilgisi" ? (
               field(
                 "satiety",
@@ -444,15 +473,13 @@ export default function ProductEditor({
               productInformationFields
                 .filter(
                   (info) =>
-                    info.key ===
-                    productDetailSteps.find((step) => step.label === active)
-                      ?.key,
+                    (draft.isNew && active === "Ürün bilgileri") || info.key ===
+                    productDetailSteps.find((step) => step.label === active)?.key,
                 )
                 .map((info) =>
                   field(
                     info.key,
-                    productDetailSteps.find((step) => step.label === active)
-                      .label,
+                    draft.isNew ? info.label : productDetailSteps.find((step) => step.label === active).label,
                     info.key === "nutrition" ? (
                       <NutritionTable value={draft.nutrition || ""} />
                     ) : (
@@ -487,7 +514,10 @@ export default function ProductEditor({
         </fieldset>
         <div className="editor-footer">
           <BackToListButton busy={busy} onClick={onClose} />
-          {saveAction}
+          {draft.isNew && <div className="variant-wizard-navigation product-wizard-navigation">
+            {productWizardSteps.indexOf(active) > 0 && <Button type="button" disabled={busy} onClick={() => { setActive(productWizardSteps[productWizardSteps.indexOf(active) - 1]); setError(""); }}>Geri</Button>}
+            {active !== "Ürünü tamamla" ? <Button type="button" variant="primary" disabled={busy || readOnly} onClick={() => { setActive(productWizardSteps[productWizardSteps.indexOf(active) + 1]); setError(""); }}>Devam et</Button> : saveAction}
+          </div>}
         </div>
       </form>
     </EditorPage>
