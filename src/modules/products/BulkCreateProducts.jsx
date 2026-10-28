@@ -33,7 +33,7 @@ export default function BulkCreateProducts({ onClose }) {
     }
     notify(`${count} ürün oluşturuldu.`); onClose();
   }
-  return <Modal title="Çoklu ürün ekle" onClose={onClose} busy={saving} wide><div className="bulk-products">
+  return <Modal title="Çoklu ürün ekle" onClose={onClose} busy={saving} wide className="bulk-products-dialog"><div className="bulk-products">
     <p>Ürünleri taslak olarak oluşturun; fiyat, görsel ve diğer bilgileri daha sonra tamamlayabilirsiniz. Her ürün ayrı kaydedilir.</p>
     {rows.map((row, index) => <div className="bulk-products-grid" key={index}>
       <Input label={`${index + 1}. ürün adı`} maxLength={160} value={row.name} onChange={e => update(index, { name: e.target.value })} />

@@ -1,3 +1,5 @@
+import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
+import { money } from "../../catalog-tools.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
 import { downloadTransfer } from "../transfer/transfer.js";
 import BulkCreateProducts from "./BulkCreateProducts.jsx";
@@ -413,6 +415,7 @@ export default function ProductManagement({
                       />
                     </TableCell>
                     <TableCell>
+                      <SlTooltip placement="top" content={[p.name, categoryPath(categoryOf(p, categories), categories), p.productCode ? `Kod: ${p.productCode}` : "", p.unitPricing?.price ? `Birim fiyat: ${money(p.unitPricing.price)} / ${p.unitPricing.unit}` : "", `${p.variants.length} varyant`, p.status].filter(Boolean).join(" · ")}>
                       <Button
                         className="product-cell"
                         onClick={() => onEdit(p)}
@@ -425,6 +428,7 @@ export default function ProductManagement({
                           </small>
                         </div>
                       </Button>
+                      </SlTooltip>
                     </TableCell>
                     <TableCell>
                       <SlTag size="small">

@@ -4,6 +4,6 @@ import React from "react";
 export default function TableText({ value }) {
   const text = String(value ?? "");
   const characters = Array.from(text);
-  if (characters.length <= 30) return text;
-  return <span title={text} aria-label={text}>{characters.slice(0, 30).join("")}…</span>;
+  if (characters.length <= 25) return text;
+  return <span title={text} aria-label={text}>{characters.slice(0, 25).join("")}…</span>;
 }

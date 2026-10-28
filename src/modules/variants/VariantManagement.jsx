@@ -1,3 +1,4 @@
+import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
 import VariantExcel, { exportVariants } from "./VariantExcel.jsx";
 import { defaultPackagingItems } from "../packaging/packaging-data.js";
@@ -286,10 +287,12 @@ export default function VariantManager({
                   {shown.map(({ p, v, members }) => (
                     <TableRow key={v.id}>
                       <TableCell>
+                        <SlTooltip placement="top" content={[v.size, `Tür: ${variantTypeName(v, variantTypes)}`, members.length ? `Ürünler: ${members.map(item => item.name).join(", ")}` : "", v.weight ? `≈ ${v.weight} g` : "", `Fiyat: ${money(v.price)}`, v.active !== false ? "Aktif" : "Pasif"].filter(Boolean).join(" · ")}>
                         <Button type="button" className="product-cell variant-identity" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
                           <ProductImage product={{ name: v.size, customImage: v.images?.[0]?.url || "" }} />
                           <div className="variant-cell-main"><strong><TableText value={v.size} /></strong><small><TableText value={`${v.sku || "—"} · ${variantTypeName(v, variantTypes)}`} /></small></div>
                         </Button>
+                        </SlTooltip>
                       </TableCell>
                       <TableCell>
                         ≈ {v.weight} g{v.slices > 0 ? ` / ${v.slices} dilim` : ""}

@@ -96,7 +96,7 @@ export default function VariantExcel({ onClose, format = "xls", manualOnly = fal
     }
     setRows([]); setResult(`${count} varyant içe aktarıldı.`); notify(`${count} varyant içe aktarıldı.`); setWorking(false);
   }
-  return <Modal title="Çoklu varyant ekle" onClose={onClose} busy={working} wide>
+  return <Modal title="Çoklu varyant ekle" onClose={onClose} busy={working} wide className="variant-bulk-dialog">
     <p>Her satır yeni bir varyant oluşturur. Ürün kodlarını metin olarak yazın. Birden fazla ürün için <strong>ürün kodu:miktar;ürün kodu:miktar</strong> kullanın. Kutu varyantlarında aktif kutu tipi adını girin; boş satış fiyatı otomatik hesaplanır.</p>
     {manualOnly && <details open><summary>Elle çoklu varyant ekle</summary>
       <p>Ürün kodu ve tip seçin; miktarları örnekteki gibi girin. Satış fiyatı boşsa otomatik hesaplanır.</p>

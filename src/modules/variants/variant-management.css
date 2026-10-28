@@ -198,3 +198,5 @@
 .variant-module .variant-price-cell small { color:var(--sl-color-neutral-600); white-space:nowrap; }
 
 .variant-delete-actions { display:flex; justify-content:flex-end; gap:.75rem; margin-top:1rem; }
+
+sl-dialog.variant-bulk-dialog { --width: calc(100vw - 2rem); }
