@@ -1,3 +1,5 @@
+import BulkCreateProducts from "./BulkCreateProducts.jsx";
+import BulkProducts from "./BulkProducts.jsx";
 import TableText from "../../components/ui/TableText.jsx";
 import ProductImport from "./ProductImport.jsx";
 import "./product-management.css";
@@ -72,6 +74,8 @@ export default function ProductManagement({
     [selected, setSelected] = useState([]),
     [filters, setFilters] = useState(false),
     [importOpen, setImportOpen] = useState(false),
+    [bulkProductsOpen, setBulkProductsOpen] = useState(false),
+    [bulkCreateOpen, setBulkCreateOpen] = useState(false),
     search = useRef(null);
   useEffect(() => { try { sessionStorage.setItem("product-list-view", view); } catch {} }, [view]);
   const write = can(user, "products.write"),
@@ -254,6 +258,7 @@ export default function ProductManagement({
             </p>
           </div>
           <div className="product-catalog-actions">
+            {write && <Button type="button" onClick={() => setBulkCreateOpen(true)}>Çoklu ürün ekle</Button>}
             {write && <Button type="button" onClick={() => setImportOpen(true)}><UploadSimple size={16} /> Excel içe aktar</Button>}
             <Button type="button" onClick={exportRows}>
               <DownloadSimple size={16} />
@@ -371,14 +376,15 @@ export default function ProductManagement({
             </Button>
           </div>
         )}
-        {price && (
+        {(price || write) && (
           <div className="selection-bar">
             <strong>
               {selected.length
                 ? selected.length + " ürün seçildi"
                 : "Toplu işlem için ürün seçebilirsiniz"}
             </strong>
-            <Button
+            <Button type="button" disabled={busy || !selected.length} onClick={() => setBulkProductsOpen(true)}>Toplu ürün işlemleri</Button>
+            {price && <Button
               disabled={busy || !visible.length}
               onClick={() =>
                 onBulk(selected.length ? selected : visible.map((p) => p.id))
@@ -386,13 +392,13 @@ export default function ProductManagement({
             >
               <Tag size={16} />
               Toplu fiyat güncelle
-            </Button>
+            </Button>}
             {!!selected.length && (
               <Button onClick={() => setSelected([])}>Seçimi kaldır</Button>
             )}
           </div>
         )}
-        {price && view === "grid" && shown.length > 0 && <div className="product-grid-select-all"><Input type="checkbox" aria-label="Sayfadaki tüm ürünleri seç" checked={shown.every((p) => selected.includes(p.id))} onChange={() => setSelected(shown.every((p) => selected.includes(p.id)) ? selected.filter((id) => !shown.some((p) => p.id === id)) : [...new Set([...selected, ...shown.map((p) => p.id)])])} /><span>Sayfadaki tüm ürünleri seç</span></div>}
+        {(price || write) && view === "grid" && shown.length > 0 && <div className="product-grid-select-all"><Input type="checkbox" aria-label="Sayfadaki tüm ürünleri seç" checked={shown.every((p) => selected.includes(p.id))} onChange={() => setSelected(shown.every((p) => selected.includes(p.id)) ? selected.filter((id) => !shown.some((p) => p.id === id)) : [...new Set([...selected, ...shown.map((p) => p.id)])])} /><span>Sayfadaki tüm ürünleri seç</span></div>}
         {view === "list" ? (
           <div
             className="table-scroll"
@@ -406,7 +412,7 @@ export default function ProductManagement({
                   <TableHeading>
                     <Input
                       type="checkbox"
-                      disabled={!price}
+                      disabled={!price && !write}
                       aria-label="Sayfadaki tüm ürünleri seç"
                       checked={
                         !!shown.length &&
@@ -441,7 +447,7 @@ export default function ProductManagement({
                     <TableCell>
                       <Input
                         type="checkbox"
-                        disabled={!price}
+                        disabled={!price && !write}
                         aria-label={p.name + " seç"}
                         checked={selected.includes(p.id)}
                         onChange={() => toggle(p.id)}
@@ -515,7 +521,7 @@ export default function ProductManagement({
           <div className="product-grid">
             {shown.map((p) => (
               <Card className="product-summary-card" key={p.id}>
-                {price && <div className="product-grid-selection"><Input type="checkbox" aria-label={p.name + " seç"} checked={selected.includes(p.id)} onChange={() => toggle(p.id)} /></div>}
+                {(price || write) && <div className="product-grid-selection"><Input type="checkbox" aria-label={p.name + " seç"} checked={selected.includes(p.id)} onChange={() => toggle(p.id)} /></div>}
                 <button type="button" className="product-summary-image-link" aria-label={p.name + " detayını aç"} onClick={() => onEdit(p)}>
                   <ProductImage product={p} />
                 </button>
@@ -578,6 +584,8 @@ export default function ProductManagement({
           <Pagination total={visible.length} page={current} pageSize={pageSize} onChange={setPage} />
         </div>
       </Card>
+      {bulkCreateOpen && <BulkCreateProducts onClose={() => setBulkCreateOpen(false)} />}
+      {bulkProductsOpen && <BulkProducts ids={selected} canEditProducts={write} canEditPrices={price} onClose={() => setBulkProductsOpen(false)} onDone={() => { setBulkProductsOpen(false); setSelected([]); }} />}
       {importOpen && <ProductImport onClose={() => setImportOpen(false)} />}
     </section>
   );

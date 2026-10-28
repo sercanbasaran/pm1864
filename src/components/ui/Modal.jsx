@@ -6,12 +6,13 @@ export default function Modal({
   busy = false,
   children,
   wide = false,
+  className = "",
 }) {
   return (
     <SlDialog
       open
       label={title}
-      className={wide ? "wide-dialog" : ""}
+      className={[wide ? "wide-dialog" : "", className].filter(Boolean).join(" ")}
       onSlRequestClose={(e) => {
         if (busy || e.detail.source === "overlay") e.preventDefault();
       }}

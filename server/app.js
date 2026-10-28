@@ -353,6 +353,10 @@ export async function createApp({ env = process.env, database } = {}) {
           decodeURIComponent(match[1]),
           user.email,
         );
+      } else if (route === "/api/products/bulk" && method === "POST") {
+        if (body.changes?.channels !== undefined || body.changes?.unit !== undefined) requirePermission("products.write");
+        if (body.changes?.price !== undefined) requirePermission("prices.write");
+        catalog = await service.bulkProducts(body, user.email);
       } else if (route === "/api/products" && method === "POST") {
         requirePermission("products.write");
         catalog = await service.saveProduct(body, null, user.email);

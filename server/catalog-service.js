@@ -763,6 +763,43 @@ export function createCatalogService(db) {
       );
     });
   }
+  async function bulkProducts(body, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      const { ids, changes } = body;
+      if (!Array.isArray(ids) || !ids.length || ids.length > 2000 || new Set(ids).size !== ids.length || !changes || typeof changes !== "object" || Array.isArray(changes) || Object.keys(changes).some(k => !["price", "unit", "weight", "channels"].includes(k)) || !Object.keys(changes).length)
+        throw new ApiError(422, "Geçersiz toplu ürün güncellemesi.");
+      const selected = doc.products.filter(p => ids.includes(p.id));
+      if (selected.length !== ids.length) throw new ApiError(422, "Seçili ürünlerin bir kısmı bulunamadı.");
+      if (changes.channels !== undefined && (!changes.channels || typeof changes.channels !== "object" || !Object.keys(changes.channels).length || validateSalesAvailability(changes.channels))) throw new ApiError(422, "Satış kanallarını kontrol edin.");
+      if (changes.weight !== undefined && changes.unit === undefined) throw new ApiError(422, "Gramaj için birim türünü de seçin.");
+      for (const p of selected) {
+        if (changes.price !== undefined || changes.unit !== undefined) {
+          const old = p.unitPricing || {};
+          const unit = changes.unit ?? old.unit;
+          const value = { unit, price: changes.price ?? old.price, weight: unit === "Kilogram" ? 1000 : unit === "Gram" ? 1 : changes.weight ?? old.weight };
+          const issue = validateUnitPricing(value);
+          if (issue) throw new ApiError(422, `${p.name}: ${issue}`);
+          p.unitPricing = normalizeUnitPricing(value);
+        }
+        if (changes.channels) p.salesAvailability = { ...salesAvailability(p.salesAvailability), ...changes.channels };
+        p.version = (p.version || 0) + 1;
+        p.updated = new Date().toISOString();
+      }
+      if (changes.price !== undefined || changes.unit !== undefined) {
+        for (const owner of doc.products) {
+          let affected = false;
+          owner.variants = owner.variants.map(v => {
+            if (v.sourceProductId === undefined || !(v.items || [{ productId: v.sourceProductId }]).some(item => ids.includes(item.productId))) return v;
+            affected = true;
+            try { return calculateVariant(v, doc.products, doc.consumables ?? defaultConsumables()); }
+            catch (e) { throw new ApiError(422, `${v.size}: ${e.message}`); }
+          });
+          if (affected && !ids.includes(owner.id)) { owner.version = (owner.version || 0) + 1; owner.updated = new Date().toISOString(); }
+        }
+      }
+      audit(doc, "Toplu ürün güncellemesi", `${selected.length} ürün`, actor);
+    });
+  }
   async function bulk(body, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
       const { ids, percent, direction } = body;
@@ -1108,6 +1145,7 @@ export function createCatalogService(db) {
     promoteCategory,
     saveProduct,
     bulk,
+    bulkProducts,
     settings,
     prices,
     categoryPage,

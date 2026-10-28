@@ -1,0 +1,6 @@
+sl-dialog.bulk-products-dialog { --width: calc(100vw - 2rem); }
+.bulk-products { display: grid; gap: 1rem; }
+.bulk-products p { margin: 0; }
+.bulk-products-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.bulk-products-actions { display: flex; justify-content: flex-end; gap: .5rem; }
+@media (max-width: 700px) { .bulk-products-grid { grid-template-columns: 1fr; } }

@@ -1,3 +1,5 @@
+import VariantExcel, { exportVariants } from "./VariantExcel.jsx";
+import { defaultPackagingItems } from "../packaging/packaging-data.js";
 import TableText from "../../components/ui/TableText.jsx";
 import VariantQualitySummary from "./VariantQualitySummary.jsx";
 import { missingVariantInformation } from "./variant-quality.js";
@@ -49,7 +51,8 @@ export default function VariantManager({
   onCreate,
   relatedProducts,
 }) {
-  const { variantTypes = [], mutate, notify, busy } = useCatalog();
+  const { variantTypes = [], packagingItems = defaultPackagingItems(), mutate, notify, busy } = useCatalog();
+  const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null), [deleteError, setDeleteError] = useState("");
   async function deleteSelected() {
     if (!deleteTarget || busy) return;
@@ -147,6 +150,7 @@ export default function VariantManager({
         ]}
       />
 
+      {importOpen && <VariantExcel onClose={() => setImportOpen(false)} />}
       <VariantQualitySummary rows={qualityRows} products={sources} types={variantTypes} selected={quality} onSelect={value => {setQuality(value); setPage(1);}} />
           <Card className="panel variant-manager">
             <div className="panel-title">
@@ -159,49 +163,9 @@ export default function VariantManager({
               </div>
               <div className="variant-header-actions">
                 {addAction}
-                <Button
-                  type="button"
-                  disabled={!rows.length}
-                  className="btn"
-                  onClick={() =>
-                    downloadCSV(
-                      [
-                        [
-                          "İçerikteki ürünler",
-                          "Varyant",
-                          "Varyant SKU",
-                          "Varyant tipi",
-                          "Gramaj (g)",
-                          "Birim",
-                          "Ambalaj",
-                          "Dilim",
-                          "Fiyat TRY",
-                          "Durum",
-                          ...salesChannels.map((c) => c.label),
-                        ],
-                        ...rows.map(({ p, v, members }) => [
-                          members.map((item) => item.name).join(" / "),
-                          v.size,
-                          v.sku,
-                          variantTypeName(v, variantTypes),
-                          v.weight,
-                          v.unit || "Adet",
-                          v.packaging || "",
-                          v.slices,
-                          v.price,
-                          v.active !== false ? "Aktif" : "Pasif",
-                          ...salesChannels.map((c) =>
-                            effectiveSales(p, v, categories)[c.key]
-                              ? "Açık"
-                              : "Kapalı",
-                          ),
-                        ]),
-                      ],
-                      "HM1864_Varyantlar.csv",
-                    )
-                  }
-                >
-                  <DownloadSimple size={16} /> Dışa aktar
+                {canWrite && <Button type="button" onClick={() => setImportOpen(true)}>Çoklu varyant ekle / Excel içe aktar</Button>}
+                <Button type="button" disabled={!rows.length} onClick={() => exportVariants(rows, variantTypes, sources, packagingItems).catch(() => notify("Excel dosyası hazırlanamadı."))}>
+                  <DownloadSimple size={16} /> Excel dışa aktar
                 </Button>
               </div>
             </div>
