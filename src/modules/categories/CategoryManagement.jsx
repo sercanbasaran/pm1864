@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import TableText from "../../components/ui/TableText.jsx";
 import "./category-management.css";
 import CategoryPromotion from "./CategoryPromotion.jsx";
@@ -75,7 +76,7 @@ export default function CategoryManager({
   onClose,
 }) {
   const [draft, setDraft] = useState(null),
-    [filters, setFilters] = useState({ ...emptyCategoryFilters }),
+    [filters, setFilters] = useSessionFilter("categories:filters", { ...emptyCategoryFilters }),
     [sort, setSort] = useState({ key: "hierarchy", direction: "asc" }),
     [filtersOpen, setFiltersOpen] = useState(false),
     [view, setView] = useState(() => { try { return sessionStorage.getItem("category-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } }),

@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
 import { downloadTransfer } from "../transfer/transfer.js";
 import Card from "../../components/ui/Card.jsx";
@@ -20,7 +21,7 @@ import { useCatalog } from "../../app/CatalogContext.jsx";
 import { categoryOf, categoryPath } from "../../hierarchy.js";
 export default function CodeManagement({ user }) {
   const { products, categories, notify } = useCatalog(),
-    [query, setQuery] = useState("");
+    [query, setQuery] = useSessionFilter("codes:query", "");
   const rows = products.filter((p) =>
     `${p.productCode} ${p.sku} ${p.name} ${p.variants.map((v) => v.sku).join(" ")}`
       .toLocaleLowerCase("tr")

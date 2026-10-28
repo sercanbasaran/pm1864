@@ -3,7 +3,7 @@ import { test, expect, afterEach, vi } from "vitest";
 import { render, cleanup, fireEvent } from "@testing-library/react";
 import { settle } from "./shadow-queries.js";
 import CategoryManagement from "../src/modules/categories/CategoryManagement.jsx";
-afterEach(cleanup);
+afterEach(() => { cleanup(); sessionStorage.clear(); });
 const categories = [
   {
     id: "a",

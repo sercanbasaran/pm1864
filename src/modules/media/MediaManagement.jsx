@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Card from "../../components/ui/Card.jsx";
 import ActionBar from "../../components/ui/ActionBar.jsx";
@@ -23,7 +24,7 @@ export default function MediaManagement({ user }) {
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [query, setQuery] = useState(""),
+    [query, setQuery] = useSessionFilter("media:query", ""),
     [dialog, setDialog] = useState(null),
     [name, setName] = useState(""),
     input = useRef(null),

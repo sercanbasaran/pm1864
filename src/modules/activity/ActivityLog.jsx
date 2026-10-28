@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
 import { downloadTransfer } from "../transfer/transfer.js";
 import Card from "../../components/ui/Card.jsx";
@@ -9,10 +10,10 @@ import {
 } from "@phosphor-icons/react";
 import { dateTime } from "../../catalog-tools.js";
 export default function ActivityLog({ logs }) {
-  const [query, setQuery] = useState(""),
-    [actor, setActor] = useState(""),
-    [from, setFrom] = useState(""),
-    [to, setTo] = useState(""),
+  const [query, setQuery] = useSessionFilter("activity:query", ""),
+    [actor, setActor] = useSessionFilter("activity:actor", ""),
+    [from, setFrom] = useSessionFilter("activity:from", ""),
+    [to, setTo] = useSessionFilter("activity:to", ""),
     [page, setPage] = useState(1),
     [exportError, setExportError] = useState("");
   const actors = [...new Set(logs.map((l) => l.actor).filter(Boolean))];

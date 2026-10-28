@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
@@ -41,7 +42,7 @@ export default function UserManagement({
     [draft, setDraft] = useState(null),
     [reset, setReset] = useState(null),
     [password, setPassword] = useState(""),
-    [query, setQuery] = useState(""),
+    [query, setQuery] = useSessionFilter("users:query", ""),
     [notice, setNotice] = useState("");
   async function load() {
     setLoading(true);

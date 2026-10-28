@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import VariantProductImage from "./VariantProductImage.jsx";
 import React, { useState } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react";
@@ -14,8 +15,8 @@ export default function VariantProductPicker({
   onSelect,
   disabled = false,
 }) {
-  const [query, setQuery] = useState(""),
-    [category, setCategory] = useState("");
+  const [query, setQuery] = useSessionFilter("variant-picker:query", ""),
+    [category, setCategory] = useSessionFilter("variant-picker:category", "");
   const ordered = categories
     .filter((c) => !c.parentId)
     .flatMap((root) => [

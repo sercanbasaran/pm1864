@@ -290,6 +290,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
       <ProductManagement
         user={user}
         focus={focus}
+        onFocusConsumed={() => setFocus(null)}
         onEdit={(p) => open(p)}
         onNew={create}
         onDuplicate={duplicate}

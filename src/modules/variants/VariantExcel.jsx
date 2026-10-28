@@ -94,7 +94,7 @@ export default function VariantExcel({ onClose, format = "xls", manualOnly = fal
       try { await mutate(`/products/${id}`, {product: {...product, variants: [...product.variants, ...additions.map(r => r.variant)]}}, "PUT"); count += additions.length; }
       catch (e) { setRows(rows.filter(r => !ids.slice(0, ids.indexOf(id)).includes(r.product.id))); setResult(`${count} varyant kaydedildi; ${product.name}: ${e.message}`); setWorking(false); return; }
     }
-    setRows([]); setResult(`${count} varyant ${manualOnly ? "oluşturuldu" : "içe aktarıldı"}.`); notify(`${count} varyant ${manualOnly ? "oluşturuldu" : "içe aktarıldı"}.`); setWorking(false);
+    setRows([]); setResult(`${count} varyant ${manualOnly ? "oluşturuldu" : "içe aktarıldı"}.`); notify(`${count} varyant ${manualOnly ? "oluşturuldu" : "içe aktarıldı"}.`); setWorking(false); if (manualOnly) onClose();
   }
   return <Modal title="Çoklu varyant ekle" onClose={onClose} busy={working} wide className="variant-bulk-dialog">
     {!manualOnly && <p>Her satır yeni bir varyant oluşturur. Ürün kodlarını metin olarak yazın. Birden fazla ürün için <strong>ürün kodu:miktar;ürün kodu:miktar</strong> kullanın. Kutu varyantlarında aktif kutu tipi adını girin; boş satış fiyatı otomatik hesaplanır.</p>}

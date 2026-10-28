@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
 import { downloadTransfer } from "../transfer/transfer.js";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
@@ -33,9 +34,9 @@ export default function PriceManager({
   onBulk,
   busy,
 }) {
-  const [query, setQuery] = useState(""),
-    [category, setCategory] = useState(""),
-    [status, setStatus] = useState(""),
+  const [query, setQuery] = useSessionFilter("pricing:query", ""),
+    [category, setCategory] = useSessionFilter("pricing:category", ""),
+    [status, setStatus] = useSessionFilter("pricing:status", ""),
     [draft, setDraft] = useState(null),
     [error, setError] = useState(""),
     [exportError, setExportError] = useState("");

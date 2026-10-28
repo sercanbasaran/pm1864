@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
 import VariantExcel, { exportVariants } from "./VariantExcel.jsx";
@@ -61,8 +62,8 @@ export default function VariantManager({
     catch (error) { setDeleteError(error.message); }
   }
   function confirmDelete(v) { setDeleteError(""); setDeleteTarget(v); }
-  const [typeId, setTypeId] = useState("");
-  const [quality, setQuality] = useState("");
+  const [typeId, setTypeId] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}type`, "");
+  const [quality, setQuality] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}quality`, "");
   const sources = relatedProducts || products;
   const qualityRows = products.flatMap(p => p.variants.map(v => ({p, v})));
   const [page, setPage] = useState(1),
@@ -81,11 +82,11 @@ export default function VariantManager({
     setPage(1);
   }
 
-  const [query, setQuery] = useState(""),
-    [root, setRoot] = useState(""),
-    [sub, setSub] = useState(""),
-    [status, setStatus] = useState(""),
-    [productId, setProductId] = useState("");
+  const [query, setQuery] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}query`, ""),
+    [root, setRoot] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}root`, ""),
+    [sub, setSub] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}sub`, ""),
+    [status, setStatus] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}status`, ""),
+    [productId, setProductId] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}product`, "");
   const itemProducts = (owner, variant) => {
     const ids = Array.isArray(variant.items) && variant.items.length
       ? variant.items.map((item) => item.productId)

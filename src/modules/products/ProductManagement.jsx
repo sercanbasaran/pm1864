@@ -1,3 +1,4 @@
+import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
 import { money } from "../../catalog-tools.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
@@ -61,12 +62,13 @@ export default function ProductManagement({
   onBulk,
   onCard,
   onCreateVariant,
+  onFocusConsumed,
 }) {
   const { products, categories, variantTypes, busy, notify } = useCatalog(),
-    [query, setQuery] = useState(""),
-    [category, setCategory] = useState(""),
-    [status, setStatus] = useState(""),
-    [quality, setQuality] = useState(""),
+    [query, setQuery] = useSessionFilter("products:query", ""),
+    [category, setCategory] = useSessionFilter("products:category", ""),
+    [status, setStatus] = useSessionFilter("products:status", ""),
+    [quality, setQuality] = useSessionFilter("products:quality", ""),
     [sort, setSort] = useState("updated"),
     [view, setView] = useState(() => { try { return sessionStorage.getItem("product-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } }),
     [page, setPage] = useState(1),
@@ -81,6 +83,7 @@ export default function ProductManagement({
   const write = can(user, "products.write"),
     price = can(user, "prices.write");
   useEffect(() => {
+    if (!focus) return;
     setCategory(focus?.category || "");
     setStatus(focus?.status || "");
     setQuality(focus?.quality || "");
@@ -88,6 +91,7 @@ export default function ProductManagement({
     setPage(1);
     setFilters(!!focus?.quality);
     setSelected([]);
+    onFocusConsumed?.();
   }, [focus]);
   useEffect(() => {
     const handler = (e) => {
