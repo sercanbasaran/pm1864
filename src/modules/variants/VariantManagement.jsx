@@ -2,7 +2,7 @@ import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
 import VariantExcel, { exportVariants } from "./VariantExcel.jsx";
-import { defaultPackagingItems } from "../packaging/packaging-data.js";
+import { defaultPackagingItems, isBoxVariant } from "../packaging/packaging-data.js";
 import TableText from "../../components/ui/TableText.jsx";
 import VariantQualitySummary from "./VariantQualitySummary.jsx";
 import { missingVariantInformation } from "./variant-quality.js";
@@ -63,6 +63,8 @@ export default function VariantManager({
   }
   function confirmDelete(v) { setDeleteError(""); setDeleteTarget(v); }
   const [typeId, setTypeId] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}type`, "");
+  const [boxId, setBoxId] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}box`, "");
+  const boxSelected = !!typeId && isBoxVariant({ typeId }, variantTypes);
   const [quality, setQuality] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}quality`, "");
   const sources = relatedProducts || products;
   const qualityRows = products.flatMap(p => p.variants.map(v => ({p, v})));
@@ -78,6 +80,7 @@ export default function VariantManager({
     setProductId("");
     setStatus("");
     setTypeId("");
+    setBoxId("");
     setQuality("");
     setPage(1);
   }
@@ -87,7 +90,7 @@ export default function VariantManager({
     [sub, setSub] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}sub`, ""),
     [status, setStatus] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}status`, ""),
     [productId, setProductId] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}product`, "");
-  useEffect(() => { if (query || root || sub || status || productId || typeId || quality) setFiltersOpen(true); }, []);
+  useEffect(() => { if (query || root || sub || status || productId || typeId || (boxSelected && boxId) || quality) setFiltersOpen(true); }, []);
   const itemProducts = (owner, variant) => {
     const ids = Array.isArray(variant.items) && variant.items.length
       ? variant.items.map((item) => item.productId)
@@ -103,6 +106,7 @@ export default function VariantManager({
       ({ p, v, members }) =>
         (!quality || missingVariantInformation(v, quality, sources, variantTypes, p)) &&
         (!typeId || v.typeId === typeId) &&
+        (!boxSelected || !boxId || v.packagingId === boxId) &&
         (!(root || sub || productId) || members.some((item) => {
           const c = categoryOf(item, categories);
           return (!root || rootOf(c, categories)?.id === root) && (!sub || c?.id === sub) && (!productId || String(item.id) === productId);
@@ -113,7 +117,7 @@ export default function VariantManager({
           .includes(query.toLocaleLowerCase("tr")),
     )
     .sort((a, b) => sort === "name" ? String(a.v.size).localeCompare(String(b.v.size), "tr") : sort === "price-asc" ? a.v.price - b.v.price : sort === "price-desc" ? b.v.price - a.v.price : (new Date(b.v.updated || b.p.updated || 0) - new Date(a.v.updated || a.p.updated || 0)));
-  const hasFilters = !!(query || root || sub || productId || status || typeId || quality);
+  const hasFilters = !!(query || root || sub || productId || status || typeId || (boxSelected && boxId) || quality);
   const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     current = Math.min(page, pages),
     shown = rows.slice((current - 1) * pageSize, current * pageSize);
@@ -248,6 +252,7 @@ export default function VariantManager({
                   value={typeId}
                   onChange={(e) => {
                     setTypeId(e.target.value);
+                    setBoxId("");
                     setPage(1);
                   }}
                 >
@@ -258,6 +263,10 @@ export default function VariantManager({
                     </option>
                   ))}
                 </Select>
+                {boxSelected && <Select label="Kutu tipi" aria-label="Kutu tipi filtresi" value={boxId} onChange={(e) => { setBoxId(e.target.value); setPage(1); }}>
+                  <option value="">Tüm kutu tipleri</option>
+                  {packagingItems.map(box => <option key={box.id} value={box.id}>{box.name}{box.active === false ? " (pasif)" : ""}</option>)}
+                </Select>}
               </div>
               <Button type="button" size="small" onClick={clearFilters}>
                 Filtreleri temizle
