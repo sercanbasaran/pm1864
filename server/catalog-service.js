@@ -1,3 +1,5 @@
+import {validateProductDimensions, normalizeProductDimensions} from "../src/product-dimensions.js";
+import {packagingShape} from "../src/modules/packaging/packaging-volume.js";
 import {packagingApprovalIssue} from "../src/modules/packaging/packaging-approval.js";
 import {upgradePackagingCodes, allocatePackagingCode} from "../src/modules/packaging/packaging-codes.js";
 import {productCardNeighbors, variantCardNeighbors} from "../src/card-navigation.js";
@@ -407,12 +409,14 @@ export function createCatalogService(db) {
       if (body.active !== undefined && typeof body.active !== "boolean") throw new ApiError(422, "Geçerli durum seçin.");
       if (body.description !== undefined && (typeof body.description !== "string" || body.description.length > 4000)) throw new ApiError(422, "Açıklama en fazla 4000 karakter olmalıdır.");
       const dimensions = {};
-      for (const key of ["length", "width", "height", "emptyWeight", "maxProductWeight"]) {
-        const value = key === "maxProductWeight" && body[key] === undefined ? old?.[key] : body[key];
+      for (const key of ["length", "width", "height", "diameter", "emptyWeight", "maxProductWeight"]) {
+        const value = ["maxProductWeight", "diameter"].includes(key) && body[key] === undefined ? old?.[key] : body[key];
         if (value !== null && value !== undefined && (!Number.isFinite(value) || value <= 0 || value > 100000)) throw new ApiError(422, "Ölçü ve ağırlıklar boş veya pozitif sayı olmalıdır.");
         dimensions[key] = value ?? null;
       }
       if (!old && doc.packagingItems.length >= 500) throw new ApiError(422, "Ambalaj kayıt sınırına ulaşıldı.");
+      const shape = body.shape === undefined ? packagingShape(old || {name}) : body.shape;
+      if (!["rectangular", "cylinder"].includes(shape)) throw new ApiError(422, "Geçerli kutu şekli seçin.");
       const allowedProductIds = body.allowedProductIds === undefined ? old?.allowedProductIds || [] : body.allowedProductIds;
       if (!Array.isArray(allowedProductIds) || allowedProductIds.length > doc.products.length || new Set(allowedProductIds.map(String)).size !== allowedProductIds.length || allowedProductIds.some(id => !doc.products.some(p => p.id === id))) throw new ApiError(422, "Geçerli izin verilen ürünleri seçin.");
       const allowedCategoryIds = body.allowedCategoryIds === undefined ? old?.allowedCategoryIds || [] : body.allowedCategoryIds;
@@ -420,7 +424,7 @@ export function createCatalogService(db) {
       const mediaId = body.mediaId === undefined ? old?.mediaId || "" : body.mediaId;
       if (typeof mediaId !== "string" || mediaId.length > 100) throw new ApiError(422, "Geçerli ambalaj görseli seçin.");
       if (mediaId && !(await tx.query("SELECT id FROM app_media WHERE id=?", [mediaId])).rows.length) throw new ApiError(422, "Ambalaj görseli bulunamadı.");
-      const item = { id: old?.id || randomUUID(), name, code, material, ...dimensions, description: text(body.description, 4000), active: body.active ?? true, allowedProductIds, allowedCategoryIds, mediaId, imageUrl: mediaId ? "/api/media/" + encodeURIComponent(mediaId) + "/content" : "" };
+      const item = { id: old?.id || randomUUID(), name, code, material, shape, ...dimensions, description: text(body.description, 4000), active: body.active ?? true, allowedProductIds, allowedCategoryIds, mediaId, imageUrl: mediaId ? "/api/media/" + encodeURIComponent(mediaId) + "/content" : "" };
       if (old) doc.packagingItems = doc.packagingItems.map(value => value.id === id ? item : value); else doc.packagingItems.push(item);
       audit(doc, old ? "Ambalaj güncellendi" : "Ambalaj eklendi", name, actor);
     });
@@ -482,6 +486,9 @@ export function createCatalogService(db) {
       const old = id ? doc.products.find((p) => p.id === Number(id)) : null;
       if (id && !old) throw new ApiError(404, "Ürün bulunamadı.");
       const input = body.product || {};
+      const dimensions = input.dimensions === undefined ? old?.dimensions : input.dimensions;
+      const dimensionsError = validateProductDimensions(dimensions);
+      if (dimensionsError) throw new ApiError(422, dimensionsError);
       const pricingError = validateUnitPricing(input.unitPricing);
       if (pricingError) throw new ApiError(422, pricingError);
       const informationError = validateProductInformation(input);
@@ -525,6 +532,7 @@ export function createCatalogService(db) {
             100,
           ),
           description: text(input.description, 4000),
+          dimensions: normalizeProductDimensions(dimensions),
           unitPricing: normalizeUnitPricing(
             input.unitPricing === undefined
               ? old?.unitPricing

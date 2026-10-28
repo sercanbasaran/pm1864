@@ -1,3 +1,4 @@
+import ProductDimensions from "./ProductDimensions.jsx";
 import "../variants/variant-composition.css";
 import UnitPricing from "./UnitPricing.jsx";
 import { hasUnitPricing } from "../../unit-pricing.js";
@@ -317,6 +318,12 @@ export default function ProductEditor({
                   !hasUnitPricing(draft.unitPricing),
                 )}
                 {field(
+                  "dimensions",
+                  "Ürün ölçüleri",
+                  <ProductDimensions value={draft.dimensions} />,
+                  <ProductDimensions value={draft.dimensions} editing onChange={dimensions=>setDraft({...draft,dimensions})} />,
+                )}
+                {field(
                   "description",
                   "Kısa açıklama",
                   draft.description,
@@ -446,6 +453,7 @@ export default function ProductEditor({
                 <p>Bilgileri kontrol edin. Eksikleri ilgili adıma dönerek düzenleyebilirsiniz.</p>
                 <dl><div><dt>Ürün adı</dt><dd>{draft.name || "Belirtilmedi"}</dd></div>
                   <div><dt>Kategori</dt><dd>{[root?.name, category?.parentId ? category.name : null].filter(Boolean).join(" / ") || "Seçilmedi"}</dd></div>
+                  <div><dt>Ürün ölçüleri</dt><dd><ProductDimensions value={draft.dimensions} /></dd></div>
                   <div><dt>Birim fiyat</dt><dd><UnitPricing value={draft.unitPricing} /></dd></div>
                   <div><dt>Görseller</dt><dd>{images.length} görsel</dd></div></dl>
               </section>

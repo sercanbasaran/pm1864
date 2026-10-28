@@ -1,3 +1,4 @@
+import {packagingVolumeLabel} from "./packaging-volume.js";
 import React from 'react';
 import {Select} from '../../components/ui/Controls.jsx';
 import './packaging-center.css';
@@ -14,7 +15,7 @@ export default function PackagingSelect({items=[],value='',onChange,disabled=fal
   </Select>
   {selected && <div className="packaging-selected-preview">
    {image(selected)?<img src={image(selected)} alt={selected.name}/>:<span>Görsel eklenmedi</span>}
-   <div><strong>{selected.name}</strong><small>{selected.code} · {selected.material}{selected.maxProductWeight ? ` · Maksimum ${new Intl.NumberFormat('tr-TR').format(selected.maxProductWeight)} g` : ''}</small></div>
+   <div><strong>{selected.name}</strong><small>{selected.code} · {selected.material}{selected.maxProductWeight ? ` · Maksimum ${new Intl.NumberFormat('tr-TR').format(selected.maxProductWeight)} g` : ''}</small>{packagingVolumeLabel(selected) && <small>Hesaplanan hacim: {packagingVolumeLabel(selected)}</small>}</div>
   </div>}
  </div>;
 }

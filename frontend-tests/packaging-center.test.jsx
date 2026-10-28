@@ -64,3 +64,14 @@ test('box selection shows uploaded photos and category approval enables its prod
  fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.trim()==='Devam et'));await settle();
  expect(document.querySelector('sl-button[aria-label="Baklava seç"]').disabled).toBe(false);
 });
+
+test('internal volume updates immediately and disappears when a dimension is cleared',async()=>{
+ render(<CatalogProvider snapshot={snapshot} notify={vi.fn()}><PackagingCenter canWrite /></CatalogProvider>);await settle();
+ fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.includes('Yeni ambalaj')));await settle();
+ for(const [label,value] of [['Uzunluk (mm)','200'],['Genişlik (mm)','100'],['Yükseklik (mm)','50']]){
+  const input=[...document.querySelectorAll('sl-input')].find(i=>i.label===label);input.value=value;fireEvent(input,new CustomEvent('sl-input',{bubbles:true}));
+ }
+ await settle();expect(document.querySelector('.packaging-volume-summary output').textContent).toBe('≈ 1.000 cm³ · 1 L');
+ const height=[...document.querySelectorAll('sl-input')].find(i=>i.label==='Yükseklik (mm)');height.value='';fireEvent(height,new CustomEvent('sl-input',{bubbles:true}));await settle();
+ expect(document.querySelector('.packaging-volume-summary output').textContent).toContain('iç ölçüleri girin');
+});

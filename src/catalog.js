@@ -1,3 +1,4 @@
+import {validateProductDimensions} from "./product-dimensions.js";
 import { validateUnitPricing } from "./unit-pricing.js";
 import { defaultVariantTypes } from "./variant-types.js";
 import { validateSalesAvailability } from "./sales-availability.js";
@@ -95,6 +96,8 @@ export function validateProduct(
     )
   )
     return { tab: "Genel bilgiler", message: "Aktif bir kategori seçin." };
+  const dimensionsError = validateProductDimensions(product.dimensions);
+  if (dimensionsError) return {tab:"Genel bilgiler",message:dimensionsError};
   const unitPriceError = validateUnitPricing(product.unitPricing);
   if (unitPriceError) return { tab: "Genel bilgiler", message: unitPriceError };
   const salesError =

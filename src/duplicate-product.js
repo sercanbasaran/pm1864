@@ -15,6 +15,7 @@ export function duplicateProduct(source) {
     "mainCategoryId",
     "description",
     "unitPricing",
+    "dimensions",
     "satiety",
     "salesAvailability",
     "images",
