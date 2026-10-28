@@ -40,7 +40,7 @@ export default function VariantCardManagement({ product, variant, user, onClose 
   const preview = variantCardData(product, variant, categories, products, satietyProducts);
   if (!preview.images.length) preview.images = product.images || [];
   return <EditorPage title="Varyant kartı ve QR" onClose={onClose} busy={busy}>
-    <div className="product-card-workspace"><ProductDetails product={preview} /><Card className="product-card-sharing">
+    <div className="product-card-workspace"><ProductDetails product={preview} localizationUrl={"/api/variant-pages/" + encodeURIComponent(variant.id)} /><Card className="product-card-sharing">
       <h3>QR kod ve paylaşım</h3><SlTag variant={live ? "success" : "neutral"}>{live ? "Yayında" : enabled ? "Yayın durduruldu" : "Yayınlanmadı"}</SlTag>
       <p className="muted">Yayınlanan varyant kartı QR kod veya bağlantı üzerinden görüntülenir.</p>
       {can(user, "products.write") && <SlSwitch checked={enabled} disabled={busy || (!enabled && !eligible)} onSlChange={publish}>Varyant kartını yayınla</SlSwitch>}

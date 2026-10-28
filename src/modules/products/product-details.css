@@ -203,3 +203,13 @@ small.product-detail-identifiers {
     transition: none;
   }
 }
+
+.card-localization-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--sl-spacing-medium);
+  margin-bottom: var(--sl-spacing-medium);
+}
+.card-localization-controls sl-select { flex: 1 1 180px; min-width: 0; }
+.card-localization-controls small { flex-basis: 100%; }

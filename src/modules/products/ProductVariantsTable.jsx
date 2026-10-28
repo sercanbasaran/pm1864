@@ -20,6 +20,8 @@ import { variantUnits, duplicateVariant } from "../../catalog.js";
 import { money } from "../../catalog-tools.js";
 export default function ProductVariantsTable({
   product,
+  formatPrice = money,
+  priceLabel = "Fiyat (₺)",
   variantTypes = [],
   categories = [],
   editing = false,
@@ -84,7 +86,7 @@ export default function ProductVariantsTable({
                   "Boyut / ad",
                   "Varyant tipi",
                   "Gramaj (g)",
-                  "Fiyat (₺)",
+                  priceLabel,
                   "Dilim adedi",
                   "Birim",
                   "Ambalaj / servis",
@@ -131,7 +133,7 @@ export default function ProductVariantsTable({
                   <TableCell>
                     {editing
                       ? control(v, i, "price", "Fiyat (₺)", "number")
-                      : money(v.price)}
+                      : formatPrice(v.price)}
                   </TableCell>
                   <TableCell>
                     {editing

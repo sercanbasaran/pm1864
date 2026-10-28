@@ -9,7 +9,7 @@ Sistem Ayarları > Çeviri ve Kur Merkezi, kaynak ürün/kategori/varyant kayıt
 - `POST /api/localization/translate`: ürün yazma yetkisi, `kind` (product/variant/category), `recordId`, aktif hedef `language`, `expectedRevision`.
 - `POST /api/localization/rates`: sistem ayarları yetkisi ve `expectedRevision`.
 - Üç uç da oturum doğrulaması kullanır. Yazmalar origin kontrolünden ve iyimser sürüm kontrolünden geçer.
-- Kur ve çeviri kayıtları mevcut katalog belgesindeki `localization` alanında kalıcı tutulur. Ana katalog yanıtına eklenmez; yalnızca merkezin API'sinden okunur. Mevcut veritabanı yedekleri bu alanı da kapsar.
+- Kur ve çeviri kayıtları mevcut katalog belgesindeki `localization` alanında kalıcı tutulur. Ana katalog yanıtına eklenmez; merkezin API'sinden ve kartın kendisine ait güvenli alt küme üzerinden okunur. Mevcut veritabanı yedekleri bu alanı da kapsar.
 
 ## Çeviri
 
@@ -23,7 +23,7 @@ Kaynak hash'i aynıysa saklanan çıktı kullanılır. Kaynak değişirse eski �
 
 Frankfurter v2 sunucu adaptörü, aktif para birimlerinin TRY karşılıklarını tarihleriyle alır. Altı saatlik önbellek, aynı veriyi tekrar istemeyi sınırlar. Kurlar kullanıcı talebiyle güncellenir; kaynak servis günlük referans kurlar sağlar. Döviz verisi 24 saatten eskiyse arayüzde belirtilir. Eksik veya geçersiz bir kur varsa yeni görüntü kaydedilmez; önceki görüntü korunur.
 
-Kaynak ürün fiyatları halen TRY'dir. Varsayılan para birimi tanımı kaynak fiyatın birimini değiştirmez. Kur dönüşümü satış fiyatı belirleme veya ödeme tahsilatı değildir. Gösterilen tutar hedef para biriminin ondalık hassasiyetine göre yuvarlanır; indirilen dönüşümler aynı tutarları ve kullanılan kuru, tarihi, sağlayıcıyı içerir.
+Kaynak ürün fiyatları halen TRY'dir. Varsayılan para birimi tanımı kaynak fiyatın birimini değiştirmez. Kur dönüşümü satış fiyatı belirleme veya ödeme tahsilatı değildir. Döviz karşılıkları en yakın tam sayıya yuvarlanır; TRY kaynak tutarının kuruş hassasiyeti korunur; indirilen dönüşümler aynı tutarları ve kullanılan kuru, tarihi, sağlayıcıyı içerir.
 
 ## Hata ve eşzamanlılık
 
@@ -35,3 +35,10 @@ Dış servis çağrıları veritabanı kilidi dışında gerçekleşir. Yanıt g
 - https://frankfurter.dev/javascript/
 
 Geliştirme testleri sağlayıcı yanıtlarını taklit eder. Canlı Google anahtarıyla çeviri ve dağıtım ağından Frankfurter erişimi ayrıca doğrulanmalıdır.
+
+
+## Ürün ve varyant kartları
+
+Public kartlar ve yönetimdeki kart önizlemeleri dil ve para birimi seçicileri sunar. Varsayılan Türkçe / TRY'dir. Kart uçları yalnızca ilgili kaydın aktif dillerdeki güncel çeviri alanlarını, aktif para birimi tanımlarını ve kayıtlı kurları döndürür; başka kayıtların çevirileri, kaynak metin önbelleği ve API anahtarları açılmaz. Kartların mevcut yayın ve oturum kontrolleri korunur.
+
+Kaynak değiştiğinde eski çeviri seçilemez. Hazırlanmamış çeviriler ve eksik kurlar devre dışıdır. Seçim dış servis çağrısı veya veritabanı yazması yapmaz. Kaynak fiyatlar değişmez. Ürün birim fiyatı, varyant satış fiyatı ve karttaki varyant tablosu aynı dönüşüm kuralını kullanır. İçerik metinleri çevrilir; sabit arayüz başlıkları ve ölçü adları Türkçe kalır. Arapça, Farsça ve Urduca içerik sağdan sola gösterilir.

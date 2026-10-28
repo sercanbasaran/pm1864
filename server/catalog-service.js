@@ -1,3 +1,4 @@
+import { cardLocalization } from "./card-localization.js";
 import { defaultRegionalDefinitions } from "../src/regional-definitions.js";
 import { audit } from "./audit.js";
 export { audit } from "./audit.js";
@@ -1020,6 +1021,12 @@ export function createCatalogService(db) {
       ),
     };
   }
+  async function readCardLocalization(kind, id) {
+    return db.transaction(async tx => {
+      const row = (await tx.query("SELECT document FROM app_catalog WHERE id=1")).rows[0];
+      return cardLocalization(JSON.parse(row.document), kind, id);
+    });
+  }
   async function productPage(code, authenticated = false, assetId = "") {
     const catalog = await read();
     const product = catalog.products.find(
@@ -1052,6 +1059,7 @@ export function createCatalogService(db) {
       "/images/" +
       encodeURIComponent(id);
     return {
+      localization: await readCardLocalization("product", product.id),
       ...productCardData(
         product,
         catalog.categories,
@@ -1122,7 +1130,7 @@ export function createCatalogService(db) {
       return assetId;
     }
     const imageUrl = (asset) => `/api/variant-pages/${encodeURIComponent(id)}/images/${encodeURIComponent(asset)}`;
-    return { ...variantCardData(product, variant, catalog.categories, catalog.products, catalog.satietyProducts), images: images.map(image => ({id:image.id, url:imageUrl(image.id)})), customImage: /^https?:\/\//i.test(product.customImage || "") ? product.customImage : "" };
+    return { localization: await readCardLocalization("variant", variant.id), ...variantCardData(product, variant, catalog.categories, catalog.products, catalog.satietyProducts), images: images.map(image => ({id:image.id, url:imageUrl(image.id)})), customImage: /^https?:\/\//i.test(product.customImage || "") ? product.customImage : "" };
   }
   async function deleteVariant(body, id, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {

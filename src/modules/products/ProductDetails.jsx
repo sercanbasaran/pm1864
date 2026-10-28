@@ -2,23 +2,53 @@ import { salesChannels } from "../../sales-availability.js";
 import "./product-details.css";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import ProductVariantsTable from "./ProductVariantsTable.jsx";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { Select } from "../../components/ui/Controls.jsx";
+import { convertedPrice } from "../../card-localization.js";
 import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
 import Card from "../../components/ui/Card.jsx";
 import MediaGallery from "../categories/CategoryGallery.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
-import { money } from "../../catalog-tools.js";
 import NutritionTable from "./NutritionTable.jsx";
 import ProductSatiety from "./ProductSatiety.jsx";
 import { hasSatiety } from "../../satiety.js";
 import { productDetailSteps } from "../../product-information.js";
 
-export default function ProductDetails({ product }) {
+export default function ProductDetails({ product: source, localizationUrl }) {
+  const [language, setLanguage] = useState('tr'), [currency, setCurrency] = useState('TRY');
+  const [loaded, setLoaded] = useState(null);
+  useEffect(() => {
+    setLoaded(null); setLanguage('tr'); setCurrency('TRY');
+    if (!localizationUrl) return;
+    const controller = new AbortController();
+    fetch(localizationUrl, {credentials:'same-origin', cache:'no-store', signal:controller.signal})
+      .then(r => r.ok ? r.json() : null).then(data => { if (!controller.signal.aborted) setLoaded(data?.product?.localization || null); }).catch(() => {});
+    return () => controller.abort();
+  }, [localizationUrl]);
+  const localization = source.localization || loaded;
+  const translation = localization?.translations?.[language];
+  const product = {...source, ...(language !== 'tr' ? translation : {})};
+  const rate = localization?.rates?.find(r => r.currency === currency);
+  const activeCurrency = currency === 'TRY' || rate ? currency : 'TRY';
+  const formatPrice = value => convertedPrice(value, activeCurrency, rate?.rate, language);
+
   const information = productDetailSteps.filter(
     (field) => field.key && field.key !== "satiety" && product[field.key],
   );
   return (
-    <div className="product-details">
+    <div className="product-details" lang={language} dir={['ar','fa','ur'].includes(language) ? 'rtl' : 'ltr'}>
+      {localization && <div className="card-localization-controls product-pdf-action">
+        <Select label="Dil" value={language} onChange={e => setLanguage(e.target.value)}>
+          <option value="tr">Türkçe</option>
+          {localization.languages?.filter(l => l.code !== 'tr').map(l => <option key={l.code} value={l.code} disabled={!localization.translations?.[l.code]}>{l.nativeName || l.name}{!localization.translations?.[l.code] ? ' · Çeviri hazırlanmadı' : ''}</option>)}
+        </Select>
+        <Select label="Para birimi" value={activeCurrency} onChange={e => setCurrency(e.target.value)}>
+          <option value="TRY">TRY</option>
+          {localization.currencies?.filter(c => c.code !== 'TRY').map(c => <option key={c.code} value={c.code} disabled={!localization.rates?.some(r => r.currency === c.code)}>{c.code} · {c.name}</option>)}
+        </Select>
+        {activeCurrency !== 'TRY' && <small>Kur tarihi: {rate.date} · Tutarlar en yakın tam sayıya yuvarlanır.</small>}
+      </div>}
+
       <Card className="product-detail-card">
         <div className="product-detail-hero">
           {product.images?.length ? (
@@ -59,7 +89,7 @@ export default function ProductDetails({ product }) {
                 <div>
                   <dt>Birim fiyatı</dt>
                   <dd>
-                    {money(product.unitPricing.price)} /{" "}
+                    {formatPrice(product.unitPricing.price)} /{" "}
                     {product.unitPricing.unit.toLocaleLowerCase("tr-TR")}
                   </dd>
                 </div>
@@ -76,7 +106,7 @@ export default function ProductDetails({ product }) {
             )}
             {product.variantPricing && (
               <dl className="public-unit-pricing">
-                <div><dt>Satış fiyatı</dt><dd>{money(product.variantPricing.price)}</dd></div>
+                <div><dt>Satış fiyatı</dt><dd>{formatPrice(product.variantPricing.price)}</dd></div>
                 <div><dt>Net gramaj</dt><dd>≈ {new Intl.NumberFormat("tr-TR").format(product.variantPricing.weight)} g</dd></div>
               </dl>
             )}
@@ -130,7 +160,7 @@ export default function ProductDetails({ product }) {
       {!product.isVariantCard && <Card className="product-detail-card">
         <h3>Ürün varyantları</h3>
         {product.variants?.length ? (
-          <ProductVariantsTable product={product} />
+          <ProductVariantsTable product={product} formatPrice={formatPrice} priceLabel={`Fiyat (${activeCurrency})`} />
         ) : (
           <p>Henüz eklenmiş bir varyant bulunmuyor.</p>
         )}

@@ -91,6 +91,7 @@ export default function ProductCardManagement({ product, user, onClose }) {
     <EditorPage title="Ürün kartı ve QR" onClose={onClose} busy={busy}>
       <div className="product-card-workspace">
         <ProductDetails
+          localizationUrl={"/api/product-pages/" + encodeURIComponent(productCardPath(product).split("/").pop())}
           product={productCardData(
             product,
             categories,
