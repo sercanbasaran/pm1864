@@ -1,3 +1,4 @@
+import { createLocalizationService } from "./localization-service.js";
 import { ApiError } from "./errors.js";
 import { readJsonBody } from "./http/json-body.js";
 import { createMediaService } from "./media-service.js";
@@ -32,6 +33,7 @@ export async function createApp({ env = process.env, database } = {}) {
   const media = createMediaService(db),
     service = createCatalogService(db),
     users = createUserService(db, env);
+  const localization = createLocalizationService(db, service, env);
   await users.initialize();
   async function session(request) {
     const token = readCookie(request);
@@ -282,7 +284,23 @@ export async function createApp({ env = process.env, database } = {}) {
       if (route === "/api/profile" && method === "PATCH")
         return json({ user: await users.profile(body, user) });
       let catalog;
-      if (route === "/api/consumables" && method === "POST") {
+      if (route === "/api/localization" && method === "GET") {
+        requirePermission("catalog.read");
+        return json(await localization.view());
+      } else if (route === "/api/localization/rates" && method === "POST") {
+        requirePermission("settings.write");
+        catalog = await localization.rates(body, user.email);
+      } else if (route === "/api/localization/translate" && method === "POST") {
+        requirePermission("products.write");
+        catalog = await localization.translate(body, user.email);
+      } else if ((match = route.match(/^\/api\/regional-definitions\/(currencies|languages)\/([a-zA-Z-]+)$/)) && method === "PUT") {
+        requirePermission("settings.write");
+        catalog = await service.saveRegionalDefinition(body, match[2], match[1], user.email);
+      } else if ((match = route.match(/^\/api\/managed-channels\/(stores|digital-stores|food-platforms)(?:\/([a-zA-Z0-9-]+))?$/)) && ["POST", "PUT", "DELETE"].includes(method)) {
+        requirePermission("settings.write");
+        if ((method === "POST") === !!match[2]) throw new ApiError(405, "Geçersiz kanal işlemi.");
+        catalog = await service.manageChannel(body, match[2], match[1], method, user.email);
+      } else if (route === "/api/consumables" && method === "POST") {
         requirePermission("settings.write");
         catalog = await service.saveConsumable(body, null, user.email);
       } else if (

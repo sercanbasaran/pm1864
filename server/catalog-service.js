@@ -1,3 +1,4 @@
+import { defaultRegionalDefinitions } from "../src/regional-definitions.js";
 import { audit } from "./audit.js";
 export { audit } from "./audit.js";
 import { defaultPackagingItems, isBoxVariant } from "../src/modules/packaging/packaging-data.js";
@@ -62,6 +63,7 @@ import {
 import { ApiError } from "./errors.js";
 export { ApiError } from "./errors.js";
 export const seedCatalog = () => ({
+  ...defaultRegionalDefinitions(),
   categories: [
     ["Baklavalar", "100"],
     ["Lokumlar", "200"],
@@ -94,6 +96,11 @@ const text = (v, max = 200) =>
 export function publicCatalog(doc, revision) {
   return {
     revision,
+    managedChannels: doc.managedChannels || [],
+    currencies: doc.currencies || defaultRegionalDefinitions().currencies,
+    languages: doc.languages || defaultRegionalDefinitions().languages,
+    defaultCurrency: doc.defaultCurrency || "TRY",
+    defaultLanguage: doc.defaultLanguage || "tr",
     satietyProducts: doc.satietyProducts ?? defaultSatietyProducts(),
     consumables: doc.consumables ?? defaultConsumables(),
     packagingItems: doc.packagingItems ?? defaultPackagingItems(),
@@ -314,6 +321,36 @@ export function createCatalogService(db) {
         name,
         actor,
       );
+    });
+  }
+  async function saveRegionalDefinition(body, code, kind, actor) {
+    return mutate(body.expectedRevision, actor, doc => {
+      if (!["currencies", "languages"].includes(kind)) throw new ApiError(422, "Geçersiz tanım türü.");
+      const items = doc[kind];
+      const old = items.find(item => item.code === code);
+      if (!old) throw new ApiError(404, "Tanım bulunamadı.");
+      if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 100 || typeof body.active !== "boolean" || (body.makeDefault !== undefined && typeof body.makeDefault !== "boolean")) throw new ApiError(422, "Ad ve durum bilgilerini kontrol edin.");
+      const defaultKey = kind === "currencies" ? "defaultCurrency" : "defaultLanguage";
+      if (!body.active && (doc[defaultKey] === code || body.makeDefault)) throw new ApiError(422, "Varsayılan tanım pasif yapılamaz. Önce başka bir varsayılan seçin.");
+      if (kind === "languages" && (typeof body.nativeName !== "string" || !body.nativeName.trim() || body.nativeName.length > 100)) throw new ApiError(422, "Dilin kendi adını girin.");
+      const item = {...old,name:body.name.trim(),active:body.active,...(kind === "languages" ? {nativeName:body.nativeName.trim()} : {})};
+      doc[kind] = items.map(current => current.code === code ? item : current);
+      if (body.makeDefault) doc[defaultKey] = code;
+      audit(doc, "Bölgesel tanım güncellendi", `${kind}: ${code}`, actor);
+    });
+  }
+  async function manageChannel(body, id, kind, method, actor) {
+    return mutate(body.expectedRevision, actor, doc => {
+      doc.managedChannels ||= [];
+      const old = doc.managedChannels.find(item => item.id === id && item.kind === kind);
+      if (id && !old) throw new ApiError(404, "Kanal bulunamadı.");
+      if (method === "DELETE") { doc.managedChannels = doc.managedChannels.filter(item => item.id !== id); audit(doc, "Kanal silindi", old.name, actor); return; }
+      if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 100 || (body.description !== undefined && (typeof body.description !== "string" || body.description.length > 1000)) || (body.active !== undefined && typeof body.active !== "boolean")) throw new ApiError(422, "Kanal bilgilerini kontrol edin.");
+      const name = body.name.trim();
+      if (doc.managedChannels.some(item => item.id !== id && item.kind === kind && normalizeName(item.name) === normalizeName(name))) throw new ApiError(422, "Bu isimde bir kanal zaten var.");
+      const item = {id: old?.id || randomUUID(), kind, name, description: body.description || "", active: body.active !== false};
+      if (old) doc.managedChannels = doc.managedChannels.map(current => current.id === id ? item : current); else doc.managedChannels.push(item);
+      audit(doc, old ? "Kanal güncellendi" : "Kanal oluşturuldu", name, actor);
     });
   }
   async function saveConsumable(body, id, actor) {
@@ -1137,6 +1174,8 @@ export function createCatalogService(db) {
   return {
     read,
     mutate,
+    saveRegionalDefinition,
+    manageChannel,
     saveConsumable,
     savePackaging,
     removePackaging,

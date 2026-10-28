@@ -1,3 +1,6 @@
+import LocalizationCenter from "../modules/localization/LocalizationCenter.jsx";
+import RegionalDefinitions from "../modules/settings/RegionalDefinitions.jsx";
+import ChannelManagement from "../modules/channels/ChannelManagement.jsx";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import Card from "../components/ui/Card.jsx";
 import EditorPage from "../components/layout/EditorPage.jsx";
@@ -315,6 +318,12 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     "satiety-products": (
       <SatietyProductManagement canWrite={can(user, "settings.write")} />
     ),
+    localization: <LocalizationCenter user={user} />,
+    currencies: <RegionalDefinitions key="currencies" kind="currencies" canWrite={can(user, "settings.write")} />,
+    languages: <RegionalDefinitions key="languages" kind="languages" canWrite={can(user, "settings.write")} />,
+    stores: <ChannelManagement key="stores" kind="stores" canWrite={can(user, "settings.write")} />,
+    "digital-stores": <ChannelManagement key="digital-stores" kind="digital-stores" canWrite={can(user, "settings.write")} />,
+    "food-platforms": <ChannelManagement key="food-platforms" kind="food-platforms" canWrite={can(user, "settings.write")} />,
     consumables: (
       <ConsumableManagement canWrite={can(user, "settings.write")} />
     ),

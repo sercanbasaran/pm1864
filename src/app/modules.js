@@ -169,7 +169,7 @@ const plannedModules = [
 ].map((module) => ({
   ...module,
   permission: module.permission || "catalog.read",
-  status: "planned",
+  status: ["stores", "digital-stores", "food-platforms", "currencies", "languages"].includes(module.id) ? undefined : "planned",
 }));
 export const moduleGroups = [
   {
@@ -213,7 +213,7 @@ export const moduleGroups = [
     icon: Gear,
     description:
       "Kod/SKU, doygunluk ürünleri, para birimi ve dil tanımlarını yönetin.",
-    children: ["codes", "variant-types", "satiety-products", "currencies", "languages"],
+    children: ["codes", "variant-types", "satiety-products", "currencies", "languages", "localization"],
   },
   {
     id: "user-management",
@@ -271,6 +271,7 @@ export const modules = [
     description: "Porsiyon, kutu ve diğer varyant tiplerini yönetin.",
   },
   ...newMainModules,
+  { id: "localization", label: "Çeviri ve Kur Merkezi", icon: Translate, permission: "catalog.read", description: "Otomatik çeviriler, referans kur dönüşümleri ve dışa aktarma." },
   {
     id: "user-roles",
     label: "Kullanıcı rolleri",
