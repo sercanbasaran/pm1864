@@ -74,12 +74,13 @@ export default function ProductManagement({
     [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
     [selected, setSelected] = useState([]),
-    [filters, setFilters] = useState(false),
+    [filters, setFilters] = useSessionFilter("products:panel-open", false),
     [importOpen, setImportOpen] = useState(""),
     [bulkProductsOpen, setBulkProductsOpen] = useState(false),
     [bulkCreateOpen, setBulkCreateOpen] = useState(false),
     search = useRef(null);
   useEffect(() => { try { sessionStorage.setItem("product-list-view", view); } catch {} }, [view]);
+  useEffect(() => { if (query || category || status || quality) setFilters(true); }, []);
   const write = can(user, "products.write"),
     price = can(user, "prices.write");
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function ProductManagement({
     setQuality(focus?.quality || "");
     setQuery("");
     setPage(1);
-    setFilters(!!focus?.quality);
+    setFilters(!!(focus?.quality || focus?.category || focus?.status));
     setSelected([]);
     onFocusConsumed?.();
   }, [focus]);

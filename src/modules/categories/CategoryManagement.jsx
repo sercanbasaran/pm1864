@@ -78,13 +78,14 @@ export default function CategoryManager({
   const [draft, setDraft] = useState(null),
     [filters, setFilters] = useSessionFilter("categories:filters", { ...emptyCategoryFilters }),
     [sort, setSort] = useState({ key: "hierarchy", direction: "asc" }),
-    [filtersOpen, setFiltersOpen] = useState(false),
+    [filtersOpen, setFiltersOpen] = useSessionFilter("categories:panel-open", false),
     [view, setView] = useState(() => { try { return sessionStorage.getItem("category-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } }),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false);
   const [editingField, setEditingField] = useState(null);
   const [promotionOpen, setPromotionOpen] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
+  useEffect(() => { if (filters.query || filters.status || filters.parent.length || filters.type.length || filters.channel.length || filters.quality.length) setFiltersOpen(true); }, []);
   const main = roots(categories);
   const suggestedSlug = (name, parentId) =>
     slugify(

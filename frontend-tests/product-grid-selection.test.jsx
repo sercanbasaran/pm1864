@@ -22,5 +22,14 @@ test("döşemede birden fazla ürün seçimi toplu işleme aktarılır", async (
   expect(bulk).toHaveBeenCalledWith([1, 2]);
 });
 test("ana menü istenen sıradadır", () => {
-  expect(primaryModules.map(m => m.id)).toEqual(["overview", "product-management", "channel-management", "sales-management", "campaign-management", "user-management", "packaging-center", "library", "system-settings"]);
+  expect(primaryModules.map(m => m.id)).toEqual(["overview", "product-management", "guest-management", "channel-management", "sales-management", "campaign-management", "user-management", "packaging-center", "library", "system-settings"]);
+});
+test("misafir ve kampanya bölümleri istenen alt menüleri içerir", async () => {
+  const { moduleGroups, moduleFor, parentFor } = await import('../src/app/modules.js');
+  const guest = moduleGroups.find(group => group.id === 'guest-management');
+  const campaign = moduleGroups.find(group => group.id === 'campaign-management');
+  expect(guest.children.map(id => moduleFor(id).label)).toEqual(['E-Mağaza Misafirler', 'Mağaza Misafirler']);
+  expect(campaign.children.map(id => moduleFor(id).label)).toEqual(['Google Ads', 'Meta Ads', 'E-Mağaza Kampanyaları', 'Mağaza Kampanyaları']);
+  expect(parentFor('offline-guests').id).toBe('guest-management');
+  expect([...guest.children, ...campaign.children].every(id => moduleFor(id).status === 'planned')).toBe(true);
 });

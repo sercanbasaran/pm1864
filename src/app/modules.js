@@ -110,6 +110,12 @@ export const secondaryModules = [
 ];
 // Stable leaf IDs keep existing bookmarks, editors and public card links valid.
 const plannedModules = [
+  { id: "online-guests", label: "E-Mağaza Misafirler", icon: Globe, description: "Dijital kanallardan gelen misafirlerin yönetimi." },
+  { id: "offline-guests", label: "Mağaza Misafirler", icon: Storefront, description: "Mağazalardaki misafirlerin yönetimi." },
+  { id: "google-ads", label: "Google Ads", icon: ChartLine, description: "Google Ads kampanyalarının yönetimi." },
+  { id: "meta-ads", label: "Meta Ads", icon: ChartLine, description: "Meta Ads kampanyalarının yönetimi." },
+  { id: "e-store-campaigns", label: "E-Mağaza Kampanyaları", icon: Globe, description: "E-Mağaza kampanyalarının yönetimi." },
+  { id: "store-campaigns", label: "Mağaza Kampanyaları", icon: Storefront, description: "Mağaza kampanyalarının yönetimi." },
   {
     id: "currencies",
     label: "Para Birimleri",
@@ -174,6 +180,20 @@ export const moduleGroups = [
     children: ["categories", "products", "variants"],
   },
   {
+    id: "guest-management",
+    label: "MİSAFİR YÖNETİMİ",
+    icon: UsersThree,
+    description: "E-Mağaza ve mağaza misafir süreçlerini yönetin.",
+    children: ["online-guests", "offline-guests"],
+  },
+  {
+    id: "campaign-management",
+    label: "KAMPANYA YÖNETİMİ",
+    icon: Megaphone,
+    description: "Reklam ve satış kanalı kampanyalarını yönetin.",
+    children: ["google-ads", "meta-ads", "e-store-campaigns", "store-campaigns"],
+  },
+  {
     id: "sales-management",
     label: "SATIŞ YÖNETİMİ",
     icon: ChartLine,
@@ -216,14 +236,6 @@ export const moduleGroups = [
 }));
 export const newMainModules = [
   {
-    id: "campaign-management",
-    label: "KAMPANYA YÖNETİMİ",
-    icon: Megaphone,
-    permission: "catalog.read",
-    status: "planned",
-    description: "Kampanya tanımları ve kampanya süreçlerinin yönetimi.",
-  },
-  {
     id: "packaging-center",
     label: "AMBALAJ MERKEZİ",
     icon: Cube,
@@ -233,7 +245,7 @@ export const newMainModules = [
 ];
 export const primaryModules = [
   existingModules[0],
-  ...["product-management", "channel-management", "sales-management", "campaign-management", "user-management", "packaging-center", "library", "system-settings"].map((id) => [...moduleGroups, ...newMainModules].find((module) => module.id === id)),
+  ...["product-management", "guest-management", "channel-management", "sales-management", "campaign-management", "user-management", "packaging-center", "library", "system-settings"].map((id) => [...moduleGroups, ...newMainModules].find((module) => module.id === id)),
 ];
 export const modules = [
   ...existingModules,

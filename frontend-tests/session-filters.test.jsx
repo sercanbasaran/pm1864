@@ -21,3 +21,21 @@ test("invalid stored values fall back to empty filters", async () => {
  sessionStorage.setItem("hm1864:filter:products:query", "{bad"); show(); await settle();
  expect(document.querySelector('sl-input[aria-label="Ürün ara"]').value).toBe("");
 });
+test("stored active filters reopen the panel while manual panel choices are saved", async () => {
+ sessionStorage.setItem('hm1864:filter:products:query', JSON.stringify('Baklava'));
+ sessionStorage.setItem('hm1864:filter:products:panel-open', JSON.stringify(false));
+ const screen = show(); await settle();
+ let toggle = document.querySelector('sl-button[aria-controls="product-filter-panel"]');
+ expect(document.querySelector('#product-filter-panel')).not.toBeNull();
+ fireEvent.click(toggle); await settle();
+ expect(JSON.parse(sessionStorage.getItem('hm1864:filter:products:panel-open'))).toBe(false);
+ screen.unmount(); show(); await settle();
+ toggle = document.querySelector('sl-button[aria-controls="product-filter-panel"]');
+ expect(document.querySelector('#product-filter-panel')).not.toBeNull();
+ expect(JSON.parse(sessionStorage.getItem('hm1864:filter:products:panel-open'))).toBe(true);
+});
+test("without active filters the saved panel state is restored", async () => {
+ sessionStorage.setItem('hm1864:filter:products:panel-open', JSON.stringify(true));
+ show(); await settle();
+ expect(document.querySelector('#product-filter-panel')).not.toBeNull();
+});

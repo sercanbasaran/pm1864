@@ -28,7 +28,7 @@ import {
   TableHeading,
   TableCell,
 } from "../../components/ui/Controls.jsx";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Plus,
   Stack,
@@ -68,7 +68,7 @@ export default function VariantManager({
   const qualityRows = products.flatMap(p => p.variants.map(v => ({p, v})));
   const [page, setPage] = useState(1),
     [pageSize, setPageSize] = useState(10),
-    [filtersOpen, setFiltersOpen] = useState(false),
+    [filtersOpen, setFiltersOpen] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}panel-open`, false),
     [sort, setSort] = useState("updated"),
     [view, setView] = useState(() => { try { return sessionStorage.getItem("variant-list-view") === "grid" ? "grid" : "list"; } catch { return "list"; } });
   function clearFilters() {
@@ -87,6 +87,7 @@ export default function VariantManager({
     [sub, setSub] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}sub`, ""),
     [status, setStatus] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}status`, ""),
     [productId, setProductId] = useSessionFilter(`${relatedProducts ? `variants:product:${products[0]?.id}:` : "variants:list:"}product`, "");
+  useEffect(() => { if (query || root || sub || status || productId || typeId || quality) setFiltersOpen(true); }, []);
   const itemProducts = (owner, variant) => {
     const ids = Array.isArray(variant.items) && variant.items.length
       ? variant.items.map((item) => item.productId)
