@@ -405,9 +405,10 @@ function Workspace({ user, onLogout, onUserUpdated }) {
     pageContent = page === "variants" && record === "new" && can(user, "products.write") ? (
       <VariantCreatePage initialProduct={products.find(p => String(p.id) === params.get("product"))} onClose={closeEditor} onSaved={p => navigate(`variants/${p.id}/edit`, {replace:true})} onDuplicate={duplicateVariantForProduct} onCard={(p,v) => navigate(`variants/${p.id}/card?variant=${encodeURIComponent(v.id)}&siblings=1`)} onCreate={() => navigate("variants/new")} />
     ) : variantCardProduct && cardVariant ? (
-      <VariantCardManagement key={cardVariant.id} product={variantCardProduct} variant={cardVariant} user={user} onClose={params.get("siblings") === "1" ? () => navigate(`variants/${variantCardProduct.id}/edit`, {replace:true}) : closeEditor} />
+      <VariantCardManagement onNavigate={navigate} key={cardVariant.id} product={variantCardProduct} variant={cardVariant} user={user} onClose={params.get("siblings") === "1" ? () => navigate(`variants/${variantCardProduct.id}/edit`, {replace:true}) : closeEditor} />
     ) : cardProduct ? (
       <ProductCardManagement
+        onNavigate={navigate}
         key={cardProduct.id}
         product={cardProduct}
         user={user}

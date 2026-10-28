@@ -9,6 +9,7 @@ import { money } from "../../catalog-tools.js";
 
 export default function VariantProductPicker({
   products,
+  isProductAllowed = () => true,
   categories,
   exclude = [],
   requireCapacity = false,
@@ -83,9 +84,10 @@ export default function VariantProductPicker({
                 </small>
               </div>
             </div>
+            {!isProductAllowed(p) && <small role="status">Bu ürün seçilen kutu için onaylı değil.</small>}
             <Button
               type="button"
-              disabled={disabled}
+              disabled={disabled || !isProductAllowed(p)}
               aria-label={`${p.name} seç`}
               onClick={() => onSelect(p)}
             >

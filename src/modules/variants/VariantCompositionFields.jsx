@@ -1,3 +1,5 @@
+import PackagingSelect from "../packaging/PackagingSelect.jsx";
+import {packagingAllowsProduct, packagingApprovalIssue} from "../packaging/packaging-approval.js";
 import "./variant-composition.css";
 import React, { useEffect, useState } from "react";
 import VariantProductImage from "./VariantProductImage.jsx";
@@ -66,6 +68,7 @@ export default function VariantCompositionFields({
           quantity: v.quantity ?? (v.slices || 1),
         },
       ];
+  const approvalIssue = isBox && v.packagingId ? packagingApprovalIssue({...v,items}, selectedBox, product.id, products, categories) : "";
   const update = (patch) =>
     onChange({
       ...product,
@@ -106,6 +109,7 @@ export default function VariantCompositionFields({
   }
   function next() {
     setError("");
+    if (step === 1 && approvalIssue) return setError(approvalIssue);
     if (step === 0 && (!v.typeId || !v.size.trim()))
       return setError("Varyant türünü ve adını girin.");
     if (
@@ -175,6 +179,7 @@ export default function VariantCompositionFields({
           ),
         )}
       </nav>
+      {approvalIssue && <p role="alert" className="variant-wizard-error">{approvalIssue}</p>}
       {error && (
         <p className="variant-wizard-error" role="alert">
           {error}
@@ -240,9 +245,7 @@ export default function VariantCompositionFields({
               </Select>
             )}
             {isBox && (
-              <Select
-                label="Kutu tipi"
-                value={v.packagingId || ""}
+              <PackagingSelect items={packagingItems} value={v.packagingId || ""} includeInactive
                 onChange={(e) => {
                   const box = packagingItems.find(
                     (item) => item.id === e.target.value,
@@ -259,17 +262,7 @@ export default function VariantCompositionFields({
                       : {}),
                   });
                 }}
-              >
-                <option value="">Kutu tipi seçin</option>
-                {packagingItems
-                  .filter((item) => item.active || item.id === v.packagingId)
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                      {item.active ? "" : " (Pasif)"}
-                    </option>
-                  ))}
-              </Select>
+              />
             )}
           </div>
         </section>
@@ -287,6 +280,7 @@ export default function VariantCompositionFields({
               <VariantProductPicker
                 products={products}
                 categories={categories}
+                isProductAllowed={p => !isBox || !v.packagingId || packagingAllowsProduct(selectedBox,p.id,products,categories)}
                 exclude={items.map((item) => item.productId)}
                 disabled={items.length >= 50}
                 onSelect={(selected) =>

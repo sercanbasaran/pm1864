@@ -1,3 +1,6 @@
+import {packagingApprovalIssue} from "../src/modules/packaging/packaging-approval.js";
+import {upgradePackagingCodes, allocatePackagingCode} from "../src/modules/packaging/packaging-codes.js";
+import {productCardNeighbors, variantCardNeighbors} from "../src/card-navigation.js";
 import { cardLocalization } from "./card-localization.js";
 import { defaultRegionalDefinitions } from "../src/regional-definitions.js";
 import { audit } from "./audit.js";
@@ -84,6 +87,7 @@ export const seedCatalog = () => ({
   satietyProducts: defaultSatietyProducts(),
   consumables: defaultConsumables(),
   packagingItems: defaultPackagingItems(),
+  nextPackagingNumber: defaultPackagingItems().length + 1,
   products: [],
   logs: [],
   settings: { skuPrefix: "HM" },
@@ -390,25 +394,33 @@ export function createCatalogService(db) {
     });
   }
   async function savePackaging(body, id, actor) {
-    return mutate(body.expectedRevision, actor, (doc) => {
+    return mutate(body.expectedRevision, actor, async (doc, tx) => {
       doc.packagingItems ??= defaultPackagingItems();
       const old = id ? doc.packagingItems.find((item) => item.id === id) : null;
       if (id && !old) throw new ApiError(404, "Ambalaj bulunamadı.");
       const name = typeof body.name === "string" ? body.name.trim().replace(/\s+/g, " ") : "";
-      const code = typeof body.code === "string" ? body.code.trim() : "";
+      upgradePackagingCodes(doc);
+      const code = old?.code || allocatePackagingCode(doc);
       const material = body.material;
       if (!name || name.length > 120 || code.length > 50 || !["Metal", "Karton", "Diğer"].includes(material)) throw new ApiError(422, "Ambalaj adı, kodu veya malzemesi geçersiz.");
       if (doc.packagingItems.some(item => item.id !== id && (normalizeName(item.name) === normalizeName(name) || (code && item.code && normalizeName(item.code) === normalizeName(code))))) throw new ApiError(422, "Bu ambalaj adı veya kodu zaten kullanılıyor.");
       if (body.active !== undefined && typeof body.active !== "boolean") throw new ApiError(422, "Geçerli durum seçin.");
       if (body.description !== undefined && (typeof body.description !== "string" || body.description.length > 4000)) throw new ApiError(422, "Açıklama en fazla 4000 karakter olmalıdır.");
       const dimensions = {};
-      for (const key of ["length", "width", "height", "emptyWeight"]) {
-        const value = body[key];
+      for (const key of ["length", "width", "height", "emptyWeight", "maxProductWeight"]) {
+        const value = key === "maxProductWeight" && body[key] === undefined ? old?.[key] : body[key];
         if (value !== null && value !== undefined && (!Number.isFinite(value) || value <= 0 || value > 100000)) throw new ApiError(422, "Ölçü ve ağırlıklar boş veya pozitif sayı olmalıdır.");
         dimensions[key] = value ?? null;
       }
       if (!old && doc.packagingItems.length >= 500) throw new ApiError(422, "Ambalaj kayıt sınırına ulaşıldı.");
-      const item = { id: old?.id || randomUUID(), name, code, material, ...dimensions, description: text(body.description, 4000), active: body.active ?? true };
+      const allowedProductIds = body.allowedProductIds === undefined ? old?.allowedProductIds || [] : body.allowedProductIds;
+      if (!Array.isArray(allowedProductIds) || allowedProductIds.length > doc.products.length || new Set(allowedProductIds.map(String)).size !== allowedProductIds.length || allowedProductIds.some(id => !doc.products.some(p => p.id === id))) throw new ApiError(422, "Geçerli izin verilen ürünleri seçin.");
+      const allowedCategoryIds = body.allowedCategoryIds === undefined ? old?.allowedCategoryIds || [] : body.allowedCategoryIds;
+      if (!Array.isArray(allowedCategoryIds) || allowedCategoryIds.length > doc.categories.length || new Set(allowedCategoryIds).size !== allowedCategoryIds.length || allowedCategoryIds.some(id => !doc.categories.some(c => c.id === id))) throw new ApiError(422, "Geçerli izin verilen kategorileri seçin.");
+      const mediaId = body.mediaId === undefined ? old?.mediaId || "" : body.mediaId;
+      if (typeof mediaId !== "string" || mediaId.length > 100) throw new ApiError(422, "Geçerli ambalaj görseli seçin.");
+      if (mediaId && !(await tx.query("SELECT id FROM app_media WHERE id=?", [mediaId])).rows.length) throw new ApiError(422, "Ambalaj görseli bulunamadı.");
+      const item = { id: old?.id || randomUUID(), name, code, material, ...dimensions, description: text(body.description, 4000), active: body.active ?? true, allowedProductIds, allowedCategoryIds, mediaId, imageUrl: mediaId ? "/api/media/" + encodeURIComponent(mediaId) + "/content" : "" };
       if (old) doc.packagingItems = doc.packagingItems.map(value => value.id === id ? item : value); else doc.packagingItems.push(item);
       audit(doc, old ? "Ambalaj güncellendi" : "Ambalaj eklendi", name, actor);
     });
@@ -570,6 +582,11 @@ export function createCatalogService(db) {
         };
       for (let i = 0; i < p.variants.length; i++) {
         const v = p.variants[i];
+        if (isBoxVariant(v, doc.variantTypes) && v.packagingId) {
+          const box = (doc.packagingItems ?? defaultPackagingItems()).find(item => item.id === v.packagingId);
+          const issue = packagingApprovalIssue(v, box, p.id, [...doc.products.filter(item => item.id !== p.id), p], doc.categories);
+          if (issue) throw new ApiError(422, issue);
+        }
         if (v.sourceProductId !== undefined) {
           if (v.packagingId !== undefined && v.packagingId !== "") {
             const box = (doc.packagingItems ?? defaultPackagingItems()).find(item => item.id === v.packagingId);
@@ -1059,6 +1076,7 @@ export function createCatalogService(db) {
       "/images/" +
       encodeURIComponent(id);
     return {
+      navigation: productCardNeighbors(product, catalog.products, catalog.categories),
       localization: await readCardLocalization("product", product.id),
       ...productCardData(
         product,
@@ -1130,7 +1148,7 @@ export function createCatalogService(db) {
       return assetId;
     }
     const imageUrl = (asset) => `/api/variant-pages/${encodeURIComponent(id)}/images/${encodeURIComponent(asset)}`;
-    return { localization: await readCardLocalization("variant", variant.id), ...variantCardData(product, variant, catalog.categories, catalog.products, catalog.satietyProducts), images: images.map(image => ({id:image.id, url:imageUrl(image.id)})), customImage: /^https?:\/\//i.test(product.customImage || "") ? product.customImage : "" };
+    return { navigation: variantCardNeighbors(product, variant, catalog.products, catalog.categories), localization: await readCardLocalization("variant", variant.id), ...variantCardData(product, variant, catalog.categories, catalog.products, catalog.satietyProducts), images: images.map(image => ({id:image.id, url:imageUrl(image.id)})), customImage: /^https?:\/\//i.test(product.customImage || "") ? product.customImage : "" };
   }
   async function deleteVariant(body, id, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {

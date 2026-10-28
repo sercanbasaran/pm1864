@@ -213,3 +213,15 @@ small.product-detail-identifiers {
 }
 .card-localization-controls sl-select { flex: 1 1 180px; min-width: 0; }
 .card-localization-controls small { flex-basis: 100%; }
+
+/* Card data and the variants table use the entire available workspace width. */
+.product-card-workspace > .product-details { grid-column: 1 / -1; width: 100%; }
+.product-card-variants { width: 100%; min-width: 0; }
+.product-card-variants .product-variants-table table { width: 100%; }
+.card-record-navigation { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sl-spacing-medium); }
+.card-record-navigation sl-button { min-width: 0; max-width: 100%; }
+.card-neighbor-name { display: inline-block; max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; margin-inline-start: .5rem; }
+@media (max-width: 600px) {
+ .card-record-navigation sl-button { width: 100%; }
+ .card-neighbor-name { max-width: 55vw; }
+}

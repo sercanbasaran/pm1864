@@ -1,3 +1,5 @@
+import PackagingSelect from "../packaging/PackagingSelect.jsx";
+import {packagingAllowsProduct} from "../packaging/packaging-approval.js";
 import { variantWizardSteps } from "./variant-wizard.js";
 import { packagingOptions } from "../../variant-composition.js";
 import React, { useState } from "react";
@@ -33,10 +35,11 @@ export default function VariantCreatePage({
     [step, setStep] = useState(0),
     [owner, setOwner] = useState(null),
     [packagingId, setPackagingId] = useState(""),
-    [packaging, setPackaging] = useState("");
+    [packaging, setPackaging] = useState(""), [approvalError, setApprovalError] = useState("");
   const isBox = isBoxVariant({ typeId }, variantTypes);
   const isPortion = isPortionVariant({ typeId }, variantTypes);
   const selectedBox = packagingItems.find((item) => item.id === packagingId);
+  const selectOwner = p => { if(isBox && !packagingAllowsProduct(selectedBox,p.id,products,categories)) {setApprovalError("Bu ürün seçilen kutu için onaylı değil. Ambalaj Merkezi’nden ürün onayı verin veya başka kutu seçin."); return;} setApprovalError(""); setOwner(p); };
   if (owner) {
     const draft = {
       ...structuredClone(owner),
@@ -76,6 +79,7 @@ export default function VariantCreatePage({
   }
   return (
     <EditorPage title="Varyant oluştur" onClose={onClose}>
+      {approvalError && <p role="alert">{approvalError}</p>}
       <div className="variant-editor-layout">
         <nav
           className="variant-wizard-steps"
@@ -135,20 +139,7 @@ export default function VariantCreatePage({
                 </Select>
               )}
               {isBox && (
-                <Select
-                  label="Kutu tipi"
-                  value={packagingId}
-                  onChange={(e) => setPackagingId(e.target.value)}
-                >
-                  <option value="">Kutu tipi seçin</option>
-                  {packagingItems
-                    .filter((item) => item.active)
-                    .map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                </Select>
+                <PackagingSelect items={packagingItems} value={packagingId} onChange={e=>setPackagingId(e.target.value)} />
               )}
             </div>
             {!variantTypes.length && (
@@ -166,7 +157,7 @@ export default function VariantCreatePage({
                   (initialProduct && initialProduct.variants.length >= 50)
                 }
                 onClick={() =>
-                  initialProduct ? setOwner(initialProduct) : setStep(1)
+                  initialProduct ? selectOwner(initialProduct) : setStep(1)
                 }
               >
                 Devam et
@@ -184,7 +175,8 @@ export default function VariantCreatePage({
               products={products}
               categories={categories}
               requireCapacity
-              onSelect={setOwner}
+              isProductAllowed={p => !isBox || packagingAllowsProduct(selectedBox,p.id,products,categories)}
+              onSelect={selectOwner}
             />
             <div className="variant-wizard-navigation">
               <Button type="button" onClick={() => setStep(0)}>

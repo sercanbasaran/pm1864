@@ -1,3 +1,4 @@
+import {productCardNeighbors} from "../../card-navigation.js";
 import React, { useRef, useState } from "react";
 import SlQrCode from "@shoelace-style/shoelace/dist/react/qr-code/index.js";
 import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
@@ -16,8 +17,8 @@ import {
 } from "../../product-card.js";
 import ProductDetails from "./ProductDetails.jsx";
 
-export default function ProductCardManagement({ product, user, onClose }) {
-  const { categories, variantTypes, satietyProducts, busy, mutate, notify } =
+export default function ProductCardManagement({ product, user, onClose, onNavigate }) {
+  const { products, categories, variantTypes, satietyProducts, busy, mutate, notify } =
       useCatalog(),
     qr = useRef(null),
     [error, setError] = useState(""),
@@ -91,6 +92,7 @@ export default function ProductCardManagement({ product, user, onClose }) {
     <EditorPage title="Ürün kartı ve QR" onClose={onClose} busy={busy}>
       <div className="product-card-workspace">
         <ProductDetails
+          navigation={productCardNeighbors(product, products, categories, false)} onNavigate={onNavigate}
           localizationUrl={"/api/product-pages/" + encodeURIComponent(productCardPath(product).split("/").pop())}
           product={productCardData(
             product,

@@ -1,3 +1,4 @@
+import CardNavigation from "./CardNavigation.jsx";
 import { salesChannels } from "../../sales-availability.js";
 import "./product-details.css";
 import { hasUnitPricing } from "../../unit-pricing.js";
@@ -14,7 +15,7 @@ import ProductSatiety from "./ProductSatiety.jsx";
 import { hasSatiety } from "../../satiety.js";
 import { productDetailSteps } from "../../product-information.js";
 
-export default function ProductDetails({ product: source, localizationUrl }) {
+export default function ProductDetails({ product: source, localizationUrl, navigation, onNavigate }) {
   const [language, setLanguage] = useState('tr'), [currency, setCurrency] = useState('TRY');
   const [loaded, setLoaded] = useState(null);
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function ProductDetails({ product: source, localizationUrl }) {
   );
   return (
     <div className="product-details" lang={language} dir={['ar','fa','ur'].includes(language) ? 'rtl' : 'ltr'}>
+      <CardNavigation navigation={navigation || source.navigation} onNavigate={onNavigate} />
       {localization && <div className="card-localization-controls product-pdf-action">
         <Select label="Dil" value={language} onChange={e => setLanguage(e.target.value)}>
           <option value="tr">Türkçe</option>
@@ -157,7 +159,7 @@ export default function ProductDetails({ product: source, localizationUrl }) {
           ))}
         </Card>
       )}
-      {!product.isVariantCard && <Card className="product-detail-card">
+      {!product.isVariantCard && <Card className="product-detail-card product-card-variants">
         <h3>Ürün varyantları</h3>
         {product.variants?.length ? (
           <ProductVariantsTable product={product} formatPrice={formatPrice} priceLabel={`Fiyat (${activeCurrency})`} />
