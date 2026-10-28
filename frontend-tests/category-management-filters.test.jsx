@@ -8,7 +8,7 @@ const categories = [
   {
     id: "a",
     name: "Baklava",
-    code: "0100",
+    code: "10",
     slug: "baklava",
     active: true,
     salesAvailability: { store: true, online: false, foodDelivery: true },
@@ -17,12 +17,12 @@ const categories = [
     id: "b",
     parentId: "a",
     name: "Fıstıklı",
-    code: "101",
+    code: "10",
     slug: "fistikli",
     active: true,
     description: "Tam",
   },
-  { id: "c", name: "Lokum", code: "0200", slug: "lokum", active: false },
+  { id: "c", name: "Lokum", code: "11", slug: "lokum", active: false },
 ];
 async function setup() {
   render(
@@ -138,7 +138,7 @@ test("category filters support multiple selections and show hierarchical categor
   const options = [...categorySelect.querySelectorAll("sl-option")];
   expect(options.map((o) => o.value)).toEqual(["a", "b", "c"]);
   expect(options[0].querySelector(".category-filter-code").textContent).toBe(
-    "0100",
+    "10",
   );
   expect(options[1].className).toBe("category-filter-child");
   await choose("Kategori", ["b", "c"]);

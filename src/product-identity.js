@@ -12,8 +12,8 @@ export function upgradeProductIdentity(doc) {
     publicSlug: p.publicSlug,
   }));
   for (const p of next.products) {
-    if (!/^\d{10}$/.test(p.productCode || "")) {
-      const match = p.sku?.match(/^(?:HM)?(\d{4})\.(\d{3})(\d{3})$/);
+    if (!(doc.skuSchemaVersion === 3 ? /^\d{7}$/ : /^\d{10}$/).test(p.productCode || "")) {
+      const match = p.sku?.match(doc.skuSchemaVersion === 3 ? /^(\d{4})\.(\d{3})$/ : /^(?:HM)?(\d{4})\.(\d{3})(\d{3})$/);
       if (!match)
         throw Error(
           "Ürün kodu geçişi için geçerli kategori ve sıra kodları bulunamadı: " +

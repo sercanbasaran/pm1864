@@ -377,7 +377,7 @@ test("a duplicated product opens as editable new content and posts to creation e
   const sent = JSON.parse(call[1].body).product;
   expect(sent.id).toBeUndefined();
   expect(sent.sku).toBeUndefined();
-  expect(sent.variants[0].id).toBeUndefined();
+  expect(sent.variants).toEqual([]);
   expect(sent.publicCardEnabled).toBe(false);
 });
 

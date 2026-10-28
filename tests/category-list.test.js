@@ -9,7 +9,7 @@ const categories = [
   {
     id: "a",
     name: "Baklava",
-    code: "0100",
+    code: "10",
     slug: "baklava",
     active: true,
     salesAvailability: { store: true, online: false, foodDelivery: true },
@@ -18,24 +18,24 @@ const categories = [
     id: "b",
     parentId: "a",
     name: "Fıstıklı",
-    code: "101",
+    code: "10",
     slug: "fistikli",
     active: true,
     description: "Açıklama",
   },
-  { id: "c", name: "Lokum", code: "0200", slug: "lokum", active: false },
+  { id: "c", name: "Lokum", code: "11", slug: "lokum", active: false },
   {
     id: "d",
     parentId: "c",
     name: "Güllü",
-    code: "201",
+    code: "11",
     slug: "gullu",
     active: true,
   },
   {
     id: "e",
     name: "Çay",
-    code: "0300",
+    code: "12",
     slug: "cay",
     active: true,
     salesAvailability: { online: true, foodDelivery: false, store: false },
@@ -84,7 +84,7 @@ test("sorts use Turkish text, numeric codes and aggregate product counts without
       key,
       direction,
     }).map((c) => c.id);
-  assert.deepEqual(rows("code", "desc"), ["e", "d", "c", "b", "a"]);
+  assert.deepEqual(rows("code", "desc"), ["e", "c", "d", "a", "b"]);
   assert.deepEqual(rows("name", "asc"), ["a", "e", "b", "d", "c"]);
   assert.equal(rows("count", "desc")[0], "a");
   assert.equal(JSON.stringify(categories), before);

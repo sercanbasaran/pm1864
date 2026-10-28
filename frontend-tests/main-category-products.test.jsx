@@ -26,5 +26,5 @@ test("subcategory is optional and clearing it restores the selected root",async(
  await choose(1,"c");expect(document.querySelector("output").textContent).toBe("c:Fistikli");
  await choose(1,"");expect(document.querySelector("output").textContent).toBe("r:Baklava");
  await choose(0,"r2");expect(document.querySelector("output").textContent).toBe("r2:Lokum");
- expect(document.body.textContent).toContain("SKU alt kategori kodu 000 olur");
+ expect(document.body.textContent).toContain("Ürün kodunda alt kategori bölümü 00 olur");
 });

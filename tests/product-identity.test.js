@@ -70,7 +70,7 @@ test("products can be created and published without variants; named and legacy l
     assert.equal(created.status, 200);
     let catalog = created.catalog,
       p = catalog.products[0];
-    assert.equal(p.productCode, "0100000001");
+    assert.equal(p.productCode, "1000100");
     const slug = p.publicSlug,
       code = p.publicCardCode;
     catalog = (
@@ -105,7 +105,7 @@ test("products can be created and published without variants; named and legacy l
         .status,
       200,
     );
-    assert.equal(p.productCode, "0100000001");
+    assert.equal(p.productCode, "1000100");
     const duplicated = await call("/products", "POST", {
       expectedRevision: catalog.revision,
       product: duplicateProduct(p),
@@ -113,12 +113,13 @@ test("products can be created and published without variants; named and legacy l
     assert.equal(duplicated.status, 200);
     const copy = duplicated.catalog.products.find((item) => item.id !== p.id);
     assert.equal(copy.name, "Yeni isim (Kopya)");
-    assert.equal(copy.productCode, "0100000002");
+    assert.equal(copy.productCode, "1000101");
     assert.notEqual(copy.sku, p.sku);
     assert.notEqual(copy.publicCardCode, p.publicCardCode);
     assert.notEqual(copy.publicSlug, p.publicSlug);
     assert.equal(copy.publicCardEnabled, false);
     assert.equal(copy.status, "Taslak");
+    assert.deepEqual(copy.variants, []);
     assert.deepEqual(
       duplicated.catalog.products.find((item) => item.id === p.id),
       p,

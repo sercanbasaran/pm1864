@@ -51,7 +51,7 @@ export default function CategoryFields({ product, categories, onChange }) {
           value={c?.parentId === parent ? c.id : ""}
           onChange={(e) => choose(e.target.value)}
         >
-          <option value="">Alt kategori yok (000)</option>
+          <option value="">Alt kategori yok (00)</option>
           {children.map((child) => (
             <option
               key={child.id}
@@ -69,7 +69,7 @@ export default function CategoryFields({ product, categories, onChange }) {
         {parent && !children.length && (
           <small className="input-help">
             Ürün doğrudan ana kategoriye eklenir. Ürün kodunda alt kategori
-            bölümü 000 olur.
+            bölümü 00 olur.
           </small>
         )}
       </div>

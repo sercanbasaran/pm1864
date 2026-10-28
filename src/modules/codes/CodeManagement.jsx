@@ -95,15 +95,15 @@ export default function CodeManagement({ user }) {
           Kodlama kuralları
         </h3>
         <p>
-          Ana kategori (4 rakam) · Alt kategori (3 rakam) · Ürün (3 rakam) ·
+          Ana kategori (2 rakam) · Alt kategori (2 rakam) · Ürün (3 rakam) ·
           Varyant (2 rakam).
         </p>
         <p>
-          Varyant SKU örneği: <code>0100.101001.01</code>. Ürün SKU örneği:{" "}
-          <code>0100.101001</code>.
+          Varyant SKU örneği: <code>1010.10001</code>. Ürün SKU örneği:{" "}
+          <code>1010.100</code>.
         </p>
         <p>
-          Ürün numaraları kategori kod grubu içinde 001–999; varyant numaraları
+          Ürün numaraları kategori kod grubu içinde 100–999; varyant numaraları
           ürün içinde 01–99 aralığında üretilir. Kodlar sunucuda atanır. Silinen
           varyant numaraları tekrar kullanılmaz. İsim veya kategori değişikliği
           mevcut SKU'yu değiştirmez.

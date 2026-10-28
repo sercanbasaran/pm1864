@@ -12,14 +12,14 @@ async function fixture(role='admin'){
  return {app,call};
 }
 const variant=(size='S')=>({size,typeId:'type-item',weight:500,price:100.25,slices:12});
-async function sub(f,root,name='Fıstıklı',code='101'){const c=(await f.call('/catalog')).catalog;const r=await f.call('/categories','POST',{expectedRevision:c.revision,category:{name,code,slug:root.id+'-'+code,parentId:root.id,active:true}});assert.equal(r.status,200);return r.catalog.categories.at(-1)}
+async function sub(f,root,name='Fıstıklı',code='10'){const c=(await f.call('/catalog')).catalog;const r=await f.call('/categories','POST',{expectedRevision:c.revision,category:{name,code,slug:root.id+'-'+code,parentId:root.id,active:true}});assert.equal(r.status,200);return r.catalog.categories.at(-1)}
 async function save(f,categoryId,variants=[variant()],product){const c=(await f.call('/catalog')).catalog;return f.call('/products'+(product?'/'+product.id:''),product?'PUT':'POST',{expectedRevision:c.revision,product:{name:'Kare Baklava',status:'Aktif',categoryId,variants,...product}})}
 test('products belong to child ids; sibling names may repeat across roots; reparent and rename preserve identities',async()=>{
- const f=await fixture();try{let c=(await f.call('/catalog')).catalog;const root=c.categories[0],other=c.categories[1],a=await sub(f,root),b=await sub(f,other,'Fıstıklı','201');
+ const f=await fixture();try{let c=(await f.call('/catalog')).catalog;const root=c.categories[0],other=c.categories[1],a=await sub(f,root),b=await sub(f,other,'Fıstıklı','11');
  let r=await save(f,a.id);assert.equal(r.status,200);const p=r.catalog.products[0];assert.equal(p.categoryId,a.id);assert.equal(categoryPath(categoryOf(p,r.catalog.categories),r.catalog.categories),'Baklavalar / Fıstıklı');assert.equal(categoryMatches(p,root.id,r.catalog.categories),true);assert.equal(categoryMatches(p,b.id,r.catalog.categories),false);
  r=await f.call('/categories/'+a.id,'PUT',{expectedRevision:r.catalog.revision,category:{...a,name:'Özel Fıstıklı',parentId:other.id}});assert.equal(r.status,200);assert.equal(r.catalog.products[0].categoryId,p.categoryId);assert.equal(r.catalog.products[0].sku,p.sku);assert.equal(categoryMatches(r.catalog.products[0],other.id,r.catalog.categories),true);
  assert.equal((await save(f,root.id)).status,200);assert.equal((await save(f,'missing')).status,422);
- c=(await f.call('/catalog')).catalog;assert.equal((await f.call('/categories','POST',{expectedRevision:c.revision,category:{name:'Üçüncü',code:'301',slug:'third',parentId:a.id,active:true}})).status,422);
+ c=(await f.call('/catalog')).catalog;assert.equal((await f.call('/categories','POST',{expectedRevision:c.revision,category:{name:'Üçüncü',code:'12',slug:'third',parentId:a.id,active:true}})).status,422);
  assert.equal((await f.call('/categories/'+a.id,'PUT',{expectedRevision:c.revision,category:{...a,parentId:''}})).status,422);
  }finally{await f.app.close()}
 });
@@ -34,13 +34,13 @@ test('variant ids and SKUs survive rename/reorder; deleted suffixes are never re
  }finally{await f.app.close()}
 });
 test('existing catalog migrates transactionally once, updating SKU format while retaining account data and product ids',async()=>{
- const db=await openDatabase({SQLITE_PATH:':memory:'});try{await db.query('CREATE TABLE app_catalog (id INTEGER PRIMARY KEY,revision INTEGER NOT NULL,document TEXT NOT NULL)');const old={categories:[{id:'root',name:'Baklavalar',code:'100',slug:'baklavalar',parentId:'',active:true}],products:[{id:7,name:'Legacy',sku:'HM-100-0007',category:'Baklavalar',version:3,status:'Aktif',variants:[variant()]}],logs:[],settings:{skuPrefix:'HM'},nextProductId:8};await db.query('INSERT INTO app_catalog VALUES (1,4,?)',[JSON.stringify(old)]);
- const app=await createApp({env:{ADMIN_EMAIL:'test@example.test',ADMIN_PASSWORD_HASH:hash},database:db});const c=await app.service.read();assert.equal(c.revision,5);assert.equal(c.products[0].id,7);assert.equal(c.products[0].sku,"0100.101001");assert.equal(c.products[0].publicCardCode,"P000007");assert.equal(categoryPath(categoryOf(c.products[0],c.categories),c.categories),'Baklavalar / Genel');assert.ok(c.products[0].variants[0].id);assert.match(c.products[0].variants[0].sku,/\.01$/);const second=await createApp({env:{},database:db});assert.deepEqual(await second.service.read(),c);assert.equal((await second.users.list()).users.length,1);
+ const db=await openDatabase({SQLITE_PATH:':memory:'});try{await db.query('CREATE TABLE app_catalog (id INTEGER PRIMARY KEY,revision INTEGER NOT NULL,document TEXT NOT NULL)');const old={categories:[{id:'root',name:'Baklavalar',code:'10',slug:'baklavalar',parentId:'',active:true}],products:[{id:7,name:'Legacy',sku:'HM-100-0007',category:'Baklavalar',version:3,status:'Aktif',variants:[variant()]}],logs:[],settings:{skuPrefix:'HM'},nextProductId:8};await db.query('INSERT INTO app_catalog VALUES (1,4,?)',[JSON.stringify(old)]);
+ const app=await createApp({env:{ADMIN_EMAIL:'test@example.test',ADMIN_PASSWORD_HASH:hash},database:db});const c=await app.service.read();assert.equal(c.revision,5);assert.equal(c.products[0].id,7);assert.equal(c.products[0].sku,"1010.100");assert.equal(c.products[0].publicCardCode,"P000007");assert.equal(categoryPath(categoryOf(c.products[0],c.categories),c.categories),'Baklavalar / Genel');assert.ok(c.products[0].variants[0].id);assert.match(c.products[0].variants[0].sku,/^\d{4}\.\d{3}01$/);const second=await createApp({env:{},database:db});assert.deepEqual(await second.service.read(),c);assert.equal((await second.users.list()).users.length,1);
  }finally{await db.close()}
 });
 test('viewers cannot create categories or mutate variant collections',async()=>{const f=await fixture('viewer');try{assert.equal((await f.call('/categories','POST',{})).status,403);assert.equal((await f.call('/products/1','PUT',{product:{variants:[variant()]}})).status,403)}finally{await f.app.close()}});
 test('deep legacy category paths flatten without dropping the product or changing its category id',async()=>{
- const {upgradeHierarchy}=await import('../src/hierarchy.js');const doc={categories:[{id:'r',name:'Baklava',code:'100',slug:'baklava',active:true,parentId:''},{id:'a',name:'Fıstıklı',code:'101',slug:'fistikli',active:true,parentId:'r'},{id:'b',name:'Özel',code:'102',slug:'ozel',active:true,parentId:'a'}],products:[{id:1,sku:'HM-100-0001',category:'Özel',variants:[variant()]}]};upgradeHierarchy(doc);assert.equal(doc.categories[2].parentId,'r');assert.equal(doc.categories[2].name,'Fıstıklı / Özel');assert.equal(doc.products[0].categoryId,'b');const before=JSON.stringify(doc);upgradeHierarchy(doc);assert.equal(JSON.stringify(doc),before);
+ const {upgradeHierarchy}=await import('../src/hierarchy.js');const doc={categories:[{id:'r',name:'Baklava',code:'10',slug:'baklava',active:true,parentId:''},{id:'a',name:'Fıstıklı',code:'10',slug:'fistikli',active:true,parentId:'r'},{id:'b',name:'Özel',code:'102',slug:'ozel',active:true,parentId:'a'}],products:[{id:1,sku:'HM-100-0001',category:'Özel',variants:[variant()]}]};upgradeHierarchy(doc);assert.equal(doc.categories[2].parentId,'r');assert.equal(doc.categories[2].name,'Fıstıklı / Özel');assert.equal(doc.products[0].categoryId,'b');const before=JSON.stringify(doc);upgradeHierarchy(doc);assert.equal(JSON.stringify(doc),before);
 });
 test('variant weight, sales unit and packaging persist and invalid metadata is rejected',async()=>{
  const f=await fixture();try{
@@ -80,11 +80,11 @@ test('direct root products keep their category, use 000 and have independent chi
  const f=await fixture();try{
  const root=(await f.call('/catalog')).catalog.categories[0];
  let r=await save(f,root.id);assert.equal(r.status,200);
- const p=r.catalog.products[0];assert.equal(p.categoryId,root.id);assert.equal(p.sku,'0100.000001');assert.equal(p.variants[0].sku,'0100.000001.01');
+ const p=r.catalog.products[0];assert.equal(p.categoryId,root.id);assert.equal(p.sku,'1000.100');assert.equal(p.variants[0].sku,'1000.10001');
  assert.equal(r.catalog.categories.some(c=>c.parentId===root.id),false);
- r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'0100.000002');
- const child=await sub(f,root);r=await save(f,child.id);assert.equal(r.catalog.products[0].sku,'0100.101001');
- r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'0100.000003');
+ r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'1000.101');
+ const child=await sub(f,root);r=await save(f,child.id);assert.equal(r.catalog.products[0].sku,'1010.100');
+ r=await save(f,root.id);assert.equal(r.catalog.products[0].sku,'1000.102');
  assert.equal(r.catalog.products.find(x=>x.id===p.id).categoryId,root.id);
  r=await f.call('/categories/'+root.id,'PUT',{expectedRevision:r.catalog.revision,category:{...root,active:false}});
  assert.equal(r.status,200);assert.equal((await save(f,root.id)).status,422);

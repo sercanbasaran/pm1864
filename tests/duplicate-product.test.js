@@ -53,12 +53,10 @@ test("duplication copies editable content without identities, publication or sha
     "nextVariantNumber",
   ])
     assert.equal(Object.hasOwn(copy, key), false, key);
-  assert.equal(copy.variants[0].id, undefined);
-  assert.equal(copy.variants[0].sku, undefined);
-  assert.equal(copy.variants[0].price, 150);
+  assert.deepEqual(copy.variants, []);
   assert.equal(copy.ingredients, source.ingredients);
   copy.images[0].id = "different";
-  copy.variants[0].price = 200;
+  copy.variants.push({size: "Yeni varyant", price: 200});
   copy.salesAvailability.store = false;
   assert.deepEqual(source, before);
   assert.ok(

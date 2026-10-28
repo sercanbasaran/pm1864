@@ -45,9 +45,9 @@ test("code management displays dotted SKU and three-digit product code without a
   );
   await settle();
   const table = document.querySelector("table");
-  expect(table.textContent).toContain("001");
-  expect(table.textContent).toContain("0100.000001");
-  expect(table.textContent).toContain("0100.000001.01");
+  expect(table.textContent).toContain("1000100");
+  expect(table.textContent).toContain("1000.100");
+  expect(table.textContent).toContain("1000.10001");
   expect(table.textContent).not.toContain("HM");
   expect(
     document.querySelector('sl-input[label="Yeni ürünler için SKU öneki"]'),
@@ -65,11 +65,11 @@ test("variant editor and public card show the same prefix-free SKU while QR addr
     />,
   );
   await settle();
-  expect(document.body.textContent).toContain("0100.000001.01");
+  expect(document.body.textContent).toContain("1000.10001");
   expect(document.body.textContent).not.toContain("HM0100.");
   const card = productCardData(product, catalog.categories);
-  expect(card.productCode).toBe("001");
-  expect(card.sku).toBe("0100.000001");
-  expect(card.variants[0].sku).toBe("0100.000001.01");
-  expect(productCardPath(product)).toBe("/p/P000001");
+  expect(card.productCode).toBe("1000100");
+  expect(card.sku).toBe("1000.100");
+  expect(card.variants[0].sku).toBe("1000.10001");
+  expect(productCardPath(product)).toBe("/p/test-baklava-1000100");
 });

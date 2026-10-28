@@ -1,3 +1,4 @@
+import { fillMissing, matchingProduct } from "../transfer/fill-missing.js";
 import React, { useState } from "react";
 import { readTransferFile, downloadTransfer, formatLabel } from "../transfer/transfer.js";
 import Modal from "../../components/ui/Modal.jsx";
@@ -33,11 +34,12 @@ const number = (value) =>
           .replace(",", "."),
       );
 export default function ProductImport({ onClose, format = "xls" }) {
-  const { categories, variantTypes, products, mutate, notify } = useCatalog();
+  const { categories, variantTypes, products, revision, mutate, notify } = useCatalog();
   const [rows, setRows] = useState([]),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false),
-    [result, setResult] = useState(null);
+    [result, setResult] = useState(null),
+    [previewRevision, setPreviewRevision] = useState(null);
   async function template() {
     try { await downloadTransfer(productTransferColumns, [], format, "urun-ice-aktarma-sablonu", "Ürünler"); }
     catch { setError("Şablon hazırlanamadı. Yeniden deneyin."); }
@@ -56,7 +58,13 @@ export default function ProductImport({ onClose, format = "xls" }) {
       const seen = new Set(
         products.map((p) => p.name.trim().toLocaleLowerCase("tr-TR")),
       );
+      const seenIds = new Set();
+      const seenCodes = new Set();
       const parsed = data.map((row, index) => {
+        const inputCode = String(row["Ürün kodu"] || "").trim();
+        const repeatedCode = inputCode && seenCodes.has(inputCode);
+        if (inputCode) seenCodes.add(inputCode);
+        const existing = matchingProduct(products, inputCode);
         const code = String(row["Kategori kodu"] || "").trim();
         const matches = categories.filter((c) => {
           const parent = categories.find((p) => p.id === c.parentId);
@@ -66,29 +74,29 @@ export default function ProductImport({ onClose, format = "xls" }) {
             : String(c.code || "") === code;
         });
         const category = matches.length === 1 ? matches[0] : null;
-        const unit = String(row["Birim"] || "").trim();
+        const unit = existing?.unitPricing?.unit || String(row["Birim"] || "").trim();
         const hasPrice =
           String(row["Birim fiyat"] || "").trim() ||
           unit ||
           String(row["Birim gramaj (g)"] || "").trim();
-        const product = {
-          isNew: true,
+        let product = {
+          isNew: !existing,
           name: String(row["Ürün adı"] || "").trim(),
           categoryId: category?.id || "",
           category: category?.name || "",
           description: String(row["Kısa açıklama"] || "").trim(),
-          status: String(row["Durum"] || "Taslak").trim(),
+          status: String(row["Durum"] || (existing ? "" : "Taslak")).trim(),
           variants: [],
           unitPricing: hasPrice
             ? {
                 unit,
-                price: number(row["Birim fiyat"]),
+                price: String(row["Birim fiyat"] ?? "").trim() ? number(row["Birim fiyat"]) : null,
                 weight:
                   unit === "Kilogram"
                     ? 1000
                     : unit === "Gram"
                       ? 1
-                      : number(row["Birim gramaj (g)"]),
+                      : String(row["Birim gramaj (g)"] ?? "").trim() ? number(row["Birim gramaj (g)"]) : null,
               }
             : null,
         };
@@ -105,21 +113,24 @@ export default function ProductImport({ onClose, format = "xls" }) {
         const channelValues = channelEntries.filter(([label]) => String(row[label] ?? "").trim() !== "");
         if (channelValues.length) product.salesAvailability = Object.fromEntries(channelValues.map(([label, key]) => [key, String(row[label]).trim() === "Açık"]));
         const invalidChannel = channelValues.some(([label]) => !["Açık", "Kapalı"].includes(String(row[label]).trim()));
+        if (existing) { const { isNew, variants, ...incoming } = product; product = fillMissing(existing, incoming); }
         const normalized = product.name.toLocaleLowerCase("tr-TR");
-        let issue = !category
+        let issue = repeatedCode || (existing && seenIds.has(existing.id)) ? "Bu ürün kodu dosyada tekrarlanıyor." : !existing && !category
           ? "Kategori kodu bulunamadı veya birden fazla kategoriyle eşleşiyor."
           : !["Aktif", "Taslak"].includes(product.status)
             ? "Durum Aktif veya Taslak olmalı."
             : invalidChannel
               ? "Satış kanalı Açık veya Kapalı olmalı."
-            : seen.has(normalized)
+            : !existing && seen.has(normalized)
               ? "Bu isimde bir ürün zaten var veya dosyada tekrar ediyor."
               : validateProduct(product, categories, variantTypes)?.message ||
                 "";
+        if (existing) seenIds.add(existing.id);
         if (normalized) seen.add(normalized);
-        return { line: index + 2, product, issue };
+        return { line: index + 2, product, issue, action: existing ? "Eksikleri tamamla" : "Yeni kayıt" };
       });
       setRows(parsed);
+      setPreviewRevision(revision);
     } catch (e) {
       setError(e.message || "Dosya okunamadı.");
     }
@@ -128,12 +139,13 @@ export default function ProductImport({ onClose, format = "xls" }) {
   }
   async function save() {
     if (!rows.length || rows.some((r) => r.issue)) return;
+    if (previewRevision !== revision) { setError("Katalog değişti. Dosyayı yeniden yükleyerek önizlemeyi yenileyin."); return; }
     setSaving(true);
     setError("");
     let count = 0;
     for (const row of rows) {
       try {
-        await mutate("/products", { product: row.product }, "POST");
+        await mutate(row.product.id ? `/products/${row.product.id}` : "/products", { product: row.product }, row.product.id ? "PUT" : "POST");
         count++;
       } catch (e) {
         setResult({
@@ -158,10 +170,10 @@ export default function ProductImport({ onClose, format = "xls" }) {
       wide
     >
       <p>
-        Şablonu indirip ürünleri doldurun. Ana kategori için 4 haneli kodu, alt
-        kategori için ana kategori kodu ve 3 haneli alt kategori kodunu birlikte
-        yazın (ör. 0100010). Kod hücrelerini metin biçiminde tutun. Yeni ürün
-        kodları sistem tarafından oluşturulur.
+        Şablonu indirip ürünleri doldurun. Ana kategori için 2 haneli kodu, alt
+        kategori için ana kategori kodu ve 2 haneli alt kategori kodunu birlikte
+        yazın (ör. 1010). Kod hücrelerini metin biçiminde tutun. Yeni ürün
+        kodları sistem tarafından oluşturulur. Ürün kodu eşleşirse yalnızca eksik alanlar tamamlanır; dolu değerler korunur.
       </p>
       <Button type="button" onClick={template}>
         {formatLabel(format)} şablonunu indir
@@ -195,6 +207,7 @@ export default function ProductImport({ onClose, format = "xls" }) {
                 <tr>
                   <th>Satır</th>
                   <th>Ürün</th>
+                  <th>İşlem</th>
                   <th>Kontrol</th>
                 </tr>
               </thead>
@@ -203,6 +216,7 @@ export default function ProductImport({ onClose, format = "xls" }) {
                   <tr key={r.line}>
                     <td>{r.line}</td>
                     <td>{r.product.name || "—"}</td>
+                    <td>{r.action}</td>
                     <td>{r.issue || "Hazır"}</td>
                   </tr>
                 ))}

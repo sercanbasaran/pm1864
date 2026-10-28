@@ -40,7 +40,7 @@ export function defaultSubcategory(doc, root) {
     child = {
       id: `default-${root.id}`,
       name: "Genel",
-      code: nextSubcategoryCode(doc.categories, root.id),
+      code: doc.schemaVersion !== 2 ? Array.from({length:90}, (_,i) => String(i+10)).find(code => !doc.categories.some(c => c.parentId === root.id && c.code === code)) || "" : nextSubcategoryCode(doc.categories, root.id),
       slug: slugify(root.slug + "-genel"),
       description: "Önceki ürün kayıtlarının korunduğu alt kategori.",
       parentId: root.id,
@@ -99,7 +99,7 @@ export function upgradeHierarchy(doc) {
     let next = Math.max(
       Number(p.nextVariantNumber) || 1,
       ...p.variants.map(
-        (v) => Number(v.sku?.match(/(?:-V|\.)(\d+)$/)?.[1] || 0) + 1,
+        (v) => Number((doc.skuSchemaVersion === 3 ? v.sku?.match(/^\d{4}\.\d{3}(\d{2})$/) : v.sku?.match(/(?:-V|\.)(\d+)$/))?.[1] || 0) + 1,
       ),
     );
     const used = new Set(p.variants.map((v) => v.sku).filter(Boolean));

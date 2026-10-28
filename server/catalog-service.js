@@ -68,10 +68,10 @@ export const seedCatalog = () => ({
     ["Kadayıflar", "300"],
     ["Çikolata & Draje", "400"],
     ["Kahve & Çay", "800"],
-  ].map(([name, code]) => ({
+  ].map(([name, code], index) => ({
     id: "cat-" + code,
     name,
-    code: code.padStart(4, "0"),
+    code: String(index + 10),
     slug: slugify(name),
     description: "",
     parentId: "",
@@ -742,9 +742,10 @@ export function createCatalogService(db) {
         return {
           ...v,
           id: previous?.id || randomUUID(),
-          sku: previous?.sku || `${p.sku}.${String(next++).padStart(2, "0")}`,
+          sku: previous?.sku || `${p.sku}${String(next++).padStart(2, "0")}`,
         };
       });
+      p.legacyProductCodes = old?.legacyProductCodes || [];
       p.publicCardEnabled = old?.publicCardEnabled === true;
       p.nextVariantNumber = next;
       p.version = (old?.version || 0) + 1;
@@ -987,6 +988,7 @@ export function createCatalogService(db) {
     const product = catalog.products.find(
       (p) =>
         productCardCode(p) === code ||
+        p.legacyProductCodes?.includes(code) ||
         p.publicSlug === code ||
         p.slugHistory?.includes(code),
     );
@@ -1032,7 +1034,7 @@ export function createCatalogService(db) {
   }
   async function publishedProduct(code) {
     const catalog = await read(),
-      product = catalog.products.find((p) => productCardCode(p) === code);
+      product = catalog.products.find((p) => productCardCode(p) === code || p.legacyProductCodes?.includes(code));
     if (
       !product ||
       product.publicCardEnabled !== true ||
@@ -1047,7 +1049,7 @@ export function createCatalogService(db) {
   }
   async function publicCard(code) {
     const catalog = await read(),
-      product = catalog.products.find((p) => productCardCode(p) === code);
+      product = catalog.products.find((p) => productCardCode(p) === code || p.legacyProductCodes?.includes(code));
     if (
       !product ||
       product.publicCardEnabled !== true ||

@@ -32,7 +32,7 @@ export function categoryQuality(category, categories, products) {
     description: !category.description?.trim(),
     identity:
       !category.name?.trim() ||
-      !(category.parentId ? /^\d{3}$/ : /^\d{4}$/).test(category.code || "") ||
+      !/^[1-9]\d$/.test(category.code || "") ||
       !category.slug?.trim() ||
       (!!category.parentId &&
         !categories.some((c) => c.id === category.parentId)),

@@ -7,23 +7,7 @@ export function duplicateProduct(source) {
     name: `${source.name.slice(0, 152).trimEnd()} (Kopya)`,
     status: "Taslak",
     publicCardEnabled: false,
-    variants: (source.variants || []).map((variant) =>
-      Object.fromEntries(
-        [
-          "size",
-          "typeId",
-          "price",
-          "weight",
-          "salesAvailability",
-          "unit",
-          "packaging",
-          "slices",
-          "active",
-        ]
-          .filter((key) => variant[key] !== undefined)
-          .map((key) => [key, structuredClone(variant[key])]),
-      ),
-    ),
+    variants: [],
   };
   for (const key of [
     "categoryId",

@@ -55,35 +55,35 @@ async function fixture() {
   };
   return { app, call, create };
 }
-test("SKU schema has fixed widths and database-only prefix with separate product namespaces", async () => {
+test("SKU schema has fixed widths and storage-independent format with separate product namespaces", async () => {
   const f = await fixture();
   try {
     let r = await f.create();
     assert.equal(r.status, 200);
     const first = r.catalog.products[0];
-    assert.equal(first.productCode, "0100000001");
-    assert.equal(first.sku, "0100.000001");
-    assert.equal(first.variants[0].sku, "0100.000001.01");
-    assert.equal(first.variants[1].sku, "0100.000001.02");
+    assert.equal(first.productCode, "1000100");
+    assert.equal(first.sku, "1000.100");
+    assert.equal(first.variants[0].sku, "1000.10001");
+    assert.equal(first.variants[1].sku, "1000.10002");
     r = await f.create();
-    assert.equal(r.catalog.products[0].sku, "0100.000002");
+    assert.equal(r.catalog.products[0].sku, "1000.101");
     r = await f.create("Lokumlar");
-    assert.equal(r.catalog.products[0].sku, "0200.000001");
-    assert.equal(r.catalog.products[0].productCode, "0200000001");
+    assert.equal(r.catalog.products[0].sku, "1100.100");
+    assert.equal(r.catalog.products[0].productCode, "1100100");
     const doc = JSON.parse(
       (await f.app.db.query("SELECT document FROM app_catalog WHERE id=1"))
         .rows[0].document,
     );
     assert.equal(
       doc.products.find((p) => p.id === first.id).sku,
-      "HM0100.000001",
+      "1000.100",
     );
     assert.equal(
       doc.products.find((p) => p.id === first.id).variants[0].sku,
-      "HM0100.000001.01",
+      "1000.10001",
     );
     assert.equal(JSON.stringify(r.catalog.products).includes("HM0100."), false);
-    assert.equal(productCardPath(first), "/p/test-baklavalar-0100000001");
+    assert.equal(productCardPath(first), "/p/test-baklavalar-1000100");
     const enabled = await f.call("/products/" + first.id + "/card", "PATCH", {
       expectedRevision: r.catalog.revision,
       enabled: true,
@@ -91,8 +91,8 @@ test("SKU schema has fixed widths and database-only prefix with separate product
     assert.equal(enabled.status, 200);
     const card = await f.call("/public/products/P000001");
     assert.equal(card.status, 200);
-    assert.equal(card.product.sku, "0100.000001");
-    assert.equal(card.product.variants[0].sku, "0100.000001.01");
+    assert.equal(card.product.sku, "1000.100");
+    assert.equal(card.product.variants[0].sku, "1000.10001");
   } finally {
     await f.app.close();
   }
@@ -115,9 +115,9 @@ test("reorder, rename, category edit and variant deletion preserve identities an
     });
     p = r.catalog.products[0];
     assert.equal(p.variants[0].sku, second.sku);
-    assert.equal(p.variants[1].sku, "0100.000001.03");
+    assert.equal(p.variants[1].sku, "1000.10003");
     assert.notEqual(p.variants[1].id, first.id);
-    assert.equal(p.sku, "0100.000001");
+    assert.equal(p.sku, "1000.100");
     assert.equal(productCardCode(p), "P000001");
     const c = r.catalog.categories.find((c) => c.id === p.categoryId);
     r = await f.call("/categories/" + c.id, "PUT", {
@@ -137,7 +137,7 @@ test("product and variant capacity limits reject atomically and stale writes do 
       (await f.app.db.query("SELECT document FROM app_catalog WHERE id=1"))
         .rows[0].document,
     );
-    doc.nextProductNumbers["0100.000"] = 1000;
+    doc.nextProductNumbers["1000"] = 1000;
     doc.products[0].nextVariantNumber = 100;
     await f.app.db.query("UPDATE app_catalog SET document=? WHERE id=1", [
       JSON.stringify(doc),
@@ -203,12 +203,12 @@ test("legacy migration is atomic and idempotent, keeps QR routes and retains an 
     const p = doc.products[0];
     assert.equal(p.id, 7);
     assert.equal(p.version, 9);
-    assert.equal(p.sku, "HM0100.101001");
+    assert.equal(p.sku, "1010.100");
     assert.equal(p.variants[0].id, "stable");
     assert.equal(p.variants[0].price, 100);
-    assert.equal(p.variants[0].sku, "HM0100.101001.01");
+    assert.equal(p.variants[0].sku, "1010.10001");
     assert.equal(productCardCode(p), "P000007");
-    assert.equal(doc.skuMigrationBackup.products[0].sku, "HM-100-0007");
+    assert.equal(doc.skuV3MigrationBackup.products[0].sku, "HM-100-0007");
     const before = JSON.stringify(doc);
     assert.equal(upgradeSku(doc), false);
     assert.equal(JSON.stringify(doc), before);
@@ -227,13 +227,13 @@ test("display formatter removes only the storage prefix; three digit category co
   assert.equal(displaySku("001.002003.04"), "001.002003.04");
   const doc = {
     categories: [
-      { id: "r", code: "0001" },
-      { id: "c", code: "002", parentId: "r" },
+      { id: "r", code: "10" },
+      { id: "c", code: "10", parentId: "r" },
     ],
     products: [],
   };
   assert.deepEqual(allocateProductCode(doc, doc.categories[1]), {
-    productCode: "0001002001",
-    sku: "HM0001.002001",
+    productCode: "1010100",
+    sku: "1010.100",
   });
 });

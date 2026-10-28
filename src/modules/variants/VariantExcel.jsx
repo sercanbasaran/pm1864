@@ -1,3 +1,5 @@
+import { fillMissing, isMissing, matchingProduct, normalizedCode } from "../transfer/fill-missing.js";
+import { productInformationFields } from "../../product-information.js";
 import React, { useState } from "react";
 import Modal from "../../components/ui/Modal.jsx";
 import { Button } from "../../components/ui/Controls.jsx";
@@ -8,19 +10,20 @@ import { calculateVariant, defaultConsumables } from "../../variant-composition.
 import { validateProduct } from "../../catalog.js";
 import { defaultPackagingItems, isBoxVariant, isPortionVariant } from "../packaging/packaging-data.js";
 
-const columns = ["Ürün kodu", "Varyant adı", "Varyant tipi", "Ürünler ve miktarlar", "Ambalaj / servis", "Kutu tipi", "Satış fiyatı", "Durum"];
+const columns = ["Ürün kodu", "Varyant adı", "Varyant tipi", "Ürünler ve miktarlar", "Ambalaj / servis", "Kutu tipi", "Satış fiyatı", "Durum", "Varyant kodu", ...productInformationFields.map(field => field.label)];
 const n = value => Number(String(value ?? "").trim().replace(",", "."));
 export async function exportVariants(rows, types, products, boxes, format) {
   const data = rows.map(({p, v}) => [
     p.productCode, v.size, types.find(t => t.id === v.typeId)?.name || "",
     (v.items || [{productId: v.sourceProductId ?? p.id, quantity: v.quantity ?? 1}]).map(item => `${products.find(product => product.id === item.productId)?.productCode || ""}:${item.quantity}`).join(";"),
-    v.packaging || "", boxes.find(box => box.id === v.packagingId)?.name || "", v.price, v.active !== false ? "Aktif" : "Pasif"
+    v.packaging || "", boxes.find(box => box.id === v.packagingId)?.name || "", v.price, v.active !== false ? "Aktif" : "Pasif", v.sku || "", ...productInformationFields.map(field => v.information?.[field.key] || "")
   ]);
   await downloadTransfer(columns, data, format, "varyantlar", "Varyantlar");
 }
 export default function VariantExcel({ onClose, format = "xls", manualOnly = false, sourceVariant, sourceProduct }) {
-  const { products, categories, variantTypes, packagingItems = defaultPackagingItems(), consumables = defaultConsumables(), mutate, notify } = useCatalog();
+  const { products, categories, variantTypes, packagingItems = defaultPackagingItems(), consumables = defaultConsumables(), revision, mutate, notify } = useCatalog();
   const [rows, setRows] = useState([]), [error, setError] = useState(""), [working, setWorking] = useState(false), [result, setResult] = useState("");
+  const [previewRevision, setPreviewRevision] = useState(null);
   const [manual, setManual] = useState(() => [sourceVariant ? {
     "Ürün kodu": sourceProduct.productCode, "Varyant adı": `${sourceVariant.size.slice(0, 39)} Kopya`,
     "Varyant tipi": variantTypes.find(t => t.id === sourceVariant.typeId)?.name || "",
@@ -48,12 +51,57 @@ export default function VariantExcel({ onClose, format = "xls", manualOnly = fal
   function parseRows(data, lineOffset = 2) {
       setError(""); setResult("");
       const groups = new Map();
+      const seenCodes = new Set();
       const parsed = data.map((row, index) => {
-        let issue = "", product, variant;
+        let issue = "", product, variant, updating = false;
         try {
           const code = String(row["Ürün kodu"] || "").trim();
-          product = products.find(p => String(p.productCode) === code);
+          const variantCode = manualOnly ? "" : normalizedCode(row["Varyant kodu"] || row["Varyant SKU"]);
+          const matches = variantCode ? products.flatMap(p => p.variants.filter(v => normalizedCode(v.sku) === variantCode).map(v => ({p, v}))) : [];
+          if (matches.length > 1) throw Error("Varyant kodu birden fazla kayıtla eşleşiyor.");
+          if (variantCode && seenCodes.has(variantCode)) throw Error("Varyant kodu dosyada tekrarlanıyor.");
+          if (variantCode) seenCodes.add(variantCode);
+          const match = matches[0];
+          product = match?.p || matchingProduct(products, code);
           if (!product) throw Error("Ürün kodu bulunamadı.");
+          if (match && code && matchingProduct(products, code)?.id !== product.id) throw Error("Ürün ve varyant kodları aynı kayda ait değil.");
+          if (match) {
+            updating = true;
+            const incoming = {};
+            for (const [column,key] of [["Varyant adı","size"],["Ambalaj / servis","packaging"]]) if (String(row[column] || "").trim()) incoming[key] = String(row[column]).trim();
+            if (row["Varyant tipi"] && isMissing(match.v.typeId)) {
+              const type = variantTypes.find(t => t.name.toLocaleLowerCase("tr-TR") === String(row["Varyant tipi"]).trim().toLocaleLowerCase("tr-TR"));
+              if (!type) throw Error("Varyant tipi bulunamadı."); incoming.typeId = type.id;
+            }
+            if (String(row["Satış fiyatı"] ?? "").trim()) incoming.price = n(row["Satış fiyatı"]);
+            if (String(row["Kutu tipi"] || "").trim() && isMissing(match.v.packagingId)) {
+              const box = packagingItems.find(b => b.active && b.name === String(row["Kutu tipi"]).trim());
+              if (!box) throw Error("Aktif kutu tipi bulunamadı.");
+              incoming.packagingId = box.id; incoming.packaging = box.material === "Karton" ? "Karton kutu" : "Metal kutu";
+            }
+            variant = fillMissing(match.v, incoming);
+            if (variant.sourceProductId !== undefined) {
+              // The API recalculates compositions. Keep a populated sale price
+              // even when the source product pricing has changed since the save.
+              if (isMissing(match.v.price) && incoming.price !== undefined && isMissing(match.v.priceOverride)) variant.priceOverride = incoming.price;
+              const calculated = calculateVariant(variant, products, consumables);
+              if (!isMissing(match.v.price) && calculated.price !== match.v.price) variant.priceOverride = match.v.price;
+              if (!isMissing(match.v.weight) && calculated.weight !== match.v.weight) throw Error("Hesaplanan gramaj mevcut dolu değerden farklı. Varyantı düzenleme ekranından kontrol edin.");
+            }
+            const info = {};
+            for (const field of productInformationFields) if (isMissing(match.v.information?.[field.key]) && String(row[field.label] || "").trim()) info[field.key] = String(row[field.label]).trim();
+            if (Object.keys(info).length) {
+              if (variant.sourceProductId === undefined) throw Error("İçerik bilgisi için önce varyantın ürün bağlantısını düzenleme ekranında tamamlayın.");
+              variant.informationOverrides = fillMissing(variant.informationOverrides || {}, info);
+            }
+            const previous = groups.get(product.id) || [];
+            const edits = [...previous, variant];
+            const updated = product.variants.map(v => edits.find(edit => edit.id === v.id) || v);
+            const invalid = validateProduct({...product, variants:[...updated,...edits.filter(v => !v.id)]}, categories, variantTypes);
+            if (invalid) throw Error(invalid.message);
+            groups.set(product.id, edits);
+            return {line:index + lineOffset, product, variant, issue:"", action:"Eksikleri tamamla"};
+          }
           const typeName = String(row["Varyant tipi"] || "").trim();
           const type = variantTypes.find(t => t.name.toLocaleLowerCase("tr-TR") === typeName.toLocaleLowerCase("tr-TR"));
           if (!type) throw Error("Varyant tipi bulunamadı.");
@@ -73,31 +121,33 @@ export default function VariantExcel({ onClose, format = "xls", manualOnly = fal
           const price = String(row["Satış fiyatı"] ?? "").trim();
           const status = String(row["Durum"] || "Aktif").trim();
           if (!["Aktif", "Pasif"].includes(status)) throw Error("Durum Aktif veya Pasif olmalı.");
-          variant = calculateVariant({ ...newVariant(), ...(sourceVariant ? { images: sourceVariant.images || [], consumables: sourceVariant.consumables || [] } : {}), size: name, typeId: type.id, sourceProductId: items[0].productId, items, packaging, ...(box ? {packagingId: box.id} : {}), priceOverride: price ? n(price) : null, active: status === "Aktif" }, products, consumables);
+          variant = calculateVariant({ ...newVariant(), ...(sourceVariant ? { images: sourceVariant.images || [], consumables: sourceVariant.consumables || [] } : {}), size: name, typeId: type.id, sourceProductId: items[0].productId, items, packaging, ...(box ? {packagingId: box.id} : {}), priceOverride: price ? n(price) : null, active: status === "Aktif", informationOverrides: Object.fromEntries(productInformationFields.filter(field => String(row[field.label] || "").trim()).map(field => [field.key, String(row[field.label]).trim()])) }, products, consumables);
           const previous = groups.get(product.id) || [];
           const names = [...product.variants, ...previous].map(v => v.size.toLocaleLowerCase("tr-TR"));
           if (names.includes(name.toLocaleLowerCase("tr-TR"))) throw Error("Aynı isimde varyant zaten var veya dosyada tekrarlanıyor.");
-          const invalid = validateProduct({...product, variants: [...product.variants, ...previous, variant]}, categories, variantTypes);
+          const invalid = validateProduct({...product, variants: [...product.variants.map(v => previous.find(edit => edit.id === v.id) || v), ...previous.filter(v => !v.id), variant]}, categories, variantTypes);
           if (invalid) throw Error(invalid.message);
           groups.set(product.id, [...previous, variant]);
         } catch (e) { issue = e.message; }
-        return { line: index + lineOffset, product, variant, issue };
+        return { line: index + lineOffset, product, variant, issue, action: updating ? "Eksikleri tamamla" : "Yeni kayıt" };
       });
       setRows(parsed);
+      setPreviewRevision(revision);
   }
   async function save() {
     if (!rows.length || rows.some(r => r.issue)) return;
+    if (previewRevision !== revision) { setError("Katalog değişti. Önizlemeyi yeniden oluşturun."); return; }
     setWorking(true); setError(""); let count = 0;
     const ids = [...new Set(rows.map(r => r.product.id))];
     for (const id of ids) {
       const product = products.find(p => p.id === id), additions = rows.filter(r => r.product.id === id);
-      try { await mutate(`/products/${id}`, {product: {...product, variants: [...product.variants, ...additions.map(r => r.variant)]}}, "PUT"); count += additions.length; }
+      try { const edits = additions.map(r => r.variant); const variants = [...product.variants.map(v => edits.find(edit => edit.id === v.id) || v), ...edits.filter(v => !v.id)]; await mutate(`/products/${id}`, {product: {...product, variants}}, "PUT"); count += additions.length; }
       catch (e) { setRows(rows.filter(r => !ids.slice(0, ids.indexOf(id)).includes(r.product.id))); setResult(`${count} varyant kaydedildi; ${product.name}: ${e.message}`); setWorking(false); return; }
     }
     setRows([]); setResult(`${count} varyant ${manualOnly ? "oluşturuldu" : "içe aktarıldı"}.`); notify(`${count} varyant ${manualOnly ? "oluşturuldu" : "içe aktarıldı"}.`); setWorking(false); if (manualOnly) onClose();
   }
   return <Modal title="Çoklu varyant ekle" onClose={onClose} busy={working} wide className="variant-bulk-dialog">
-    {!manualOnly && <p>Her satır yeni bir varyant oluşturur. Ürün kodlarını metin olarak yazın. Birden fazla ürün için <strong>ürün kodu:miktar;ürün kodu:miktar</strong> kullanın. Kutu varyantlarında aktif kutu tipi adını girin; boş satış fiyatı otomatik hesaplanır.</p>}
+    {!manualOnly && <p>Varyant kodu eşleşirse yalnızca eksik alanlar tamamlanır. Eşleşmeyen kayıt yeni varyant olarak eklenir; yeni kodu sistem atar. Ürün kodlarını metin olarak yazın. Birden fazla ürün için <strong>ürün kodu:miktar;ürün kodu:miktar</strong> kullanın. Kutu varyantlarında aktif kutu tipi adını girin; boş satış fiyatı otomatik hesaplanır.</p>}
     {manualOnly && <section className="bulk-variant-editor" aria-label="Çoğaltılacak varyantlar">
       <div className="bulk-variant-intro"><h3>Varyantları düzenleyin</h3><p>Her kart bir yeni varyant oluşturur. Satış fiyatını boş bırakırsanız ürün fiyatından hesaplanır.</p></div>
       {manual.map((row, index) => {
@@ -128,6 +178,6 @@ export default function VariantExcel({ onClose, format = "xls", manualOnly = fal
     {!manualOnly && <><Button type="button" onClick={() => downloadTransfer(columns, [], format, "varyant-sablonu", "Varyantlar").catch(() => setError("Şablon hazırlanamadı."))}>{formatLabel(format)} şablonunu indir</Button>
     <p><label>{formatLabel(format)} dosyası seçin <input type="file" accept={format === "xls" ? ".xls,.xlsx" : `.${format}`} onChange={read} disabled={working} /></label></p></>}
     {error && <p role="alert">{error}</p>}{result && <p role="status">{result}</p>}
-    {!!rows.length && <><p>{rows.length} satır · {rows.filter(r => r.issue).length} hatalı</p><div className="table-scroll" style={{maxHeight:"20rem", overflow:"auto"}}><table><thead><tr><th>Satır</th><th>Ürün</th><th>Varyant</th><th>Kontrol</th></tr></thead><tbody>{rows.map(r => <tr key={r.line}><td>{r.line}</td><td>{r.product?.name || "—"}</td><td>{r.variant?.size || "—"}</td><td>{r.issue || "Hazır"}</td></tr>)}</tbody></table></div><p>Hatalı satırları düzeltip yeniden kontrol edin. Her ürün ayrı kaydedilir.</p><Button type="button" variant="primary" disabled={working || rows.some(r => r.issue)} onClick={save}>{manualOnly ? "Varyantları oluştur" : "Varyantları içe aktar"}</Button></>}
+    {!!rows.length && <><p>{rows.length} satır · {rows.filter(r => r.issue).length} hatalı</p><div className="table-scroll" style={{maxHeight:"20rem", overflow:"auto"}}><table><thead><tr><th>Satır</th><th>Ürün</th><th>Varyant</th><th>İşlem</th><th>Kontrol</th></tr></thead><tbody>{rows.map(r => <tr key={r.line}><td>{r.line}</td><td>{r.product?.name || "—"}</td><td>{r.variant?.size || "—"}</td><td>{r.action}</td><td>{r.issue || "Hazır"}</td></tr>)}</tbody></table></div><p>Hatalı satırları düzeltip yeniden kontrol edin. Her ürün ayrı kaydedilir.</p><Button type="button" variant="primary" disabled={working || rows.some(r => r.issue)} onClick={save}>{manualOnly ? "Varyantları oluştur" : "Varyantları içe aktar"}</Button></>}
   </Modal>;
 }

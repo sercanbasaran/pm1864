@@ -40,7 +40,7 @@ async function fixture() {
       expectedRevision: catalog.revision,
       category: {
         name: "Özel Fıstıklı",
-        code: "101",
+        code: "10",
         slug: "ozel-fistikli",
         parentId: root.id,
         active: true,
@@ -124,7 +124,7 @@ test("promotion is atomic, preserves identity/products/counters/URLs and allocat
       },
     });
     assert.equal(next.status, 200);
-    assert.equal(next.catalog.products[0].productCode, code + "000001");
+    assert.equal(next.catalog.products[0].productCode, code + "00100");
     assert.equal(
       next.catalog.products.find((p) => p.id === old.products[0].id).publicSlug,
       old.products[0].publicSlug,
@@ -225,14 +225,14 @@ test("preview preserves inherited inactivity and rejects exhausted code range", 
   const root = {
     id: "root",
     name: "Root",
-    code: "0100",
+    code: "10",
     slug: "root",
     active: false,
   };
   const child = {
     id: "child",
     name: "Child",
-    code: "101",
+    code: "10",
     slug: "child",
     active: true,
     parentId: "root",

@@ -122,7 +122,7 @@ export async function createApp({ env = process.env, database } = {}) {
         return json({ product: page });
       }
       const publicRoute = route.match(
-        /^\/api\/public\/products\/(P[0-9]{6,})(\/image)?$/,
+        /^\/api\/public\/products\/((?:P[0-9]{6,}|[0-9]{7}|[0-9]{10}))(\/image)?$/,
       );
       if (publicRoute && method === "GET") {
         if (!publicRoute[2])

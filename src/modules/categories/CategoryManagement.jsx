@@ -579,25 +579,25 @@ export default function CategoryManager({
                       label="Kategori kodu"
                       aria-label="Kategori kodu"
                       required
-                      pattern={draft.parentId ? "[0-9]{3}" : "[0-9]{4}"}
+                      pattern="[1-9][0-9]"
                       readOnly={!draft.isNew}
                       disabled={!draft.isNew}
-                      maxLength={draft.parentId ? 3 : 4}
+                      maxLength={2}
                       value={draft.code}
                       onChange={(e) =>
                         setDraft({
                           ...draft,
                           code: e.target.value
                             .replace(/\D/g, "")
-                            .slice(0, draft.parentId ? 3 : 4),
+                            .slice(0, 2),
                         })
                       }
                     />
                     <small className="input-help">
                       {draft.isNew
                         ? draft.parentId
-                          ? "Üç haneli kod, ana kategori kodunun son üç hanesinden sonraki ilk boş değer olarak önerilir."
-                          : "Dört haneli kod otomatik önerilir: 0100, 0200, …, 1000, 1100. Kayıttan sonra değiştirilemez."
+                          ? "İki haneli alt kategori kodu, her ana kategoride 10’dan başlayarak önerilir."
+                          : "İki haneli kod otomatik önerilir: 10, 11, 12, …, 99. Kayıttan sonra değiştirilemez."
                         : "Ürün kodlarını korumak için kayıt sonrası sabittir."}
                     </small>
                   </div>

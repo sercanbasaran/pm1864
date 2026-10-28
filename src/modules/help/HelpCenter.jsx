@@ -41,7 +41,7 @@ export default function HelpCenter({ user, onNavigate }) {
       "Kayıtları dışa aktarma",
       "Ürün yönetimi",
       "catalog.read",
-      "Ürün ve varyant listelerinde içe ve dışa aktarma menülerinden JSON, CSV, XML veya Excel biçimini seçin. Dışa aktarma geçerli filtrelerle eşleşen kayıtları içerir; içe aktarma yeni kayıt oluşturur. Fiyat, kod ve işlem geçmişi listelerinde de dışa aktarma seçenekleri bulunur.",
+      "Ürün ve varyant listelerinde içe ve dışa aktarma menülerinden JSON, CSV, XML veya Excel biçimini seçin. Dışa aktarma geçerli filtrelerle eşleşen kayıtları içerir; içe aktarmada kod eşleşirse yalnızca eksik bilgiler tamamlanır; eşleşmeyen satırlar yeni kayıt oluşturur. Fiyat, kod ve işlem geçmişi listelerinde de dışa aktarma seçenekleri bulunur.",
     ],
     [
       "Yapılan değişiklikleri izleme",
@@ -59,7 +59,7 @@ export default function HelpCenter({ user, onNavigate }) {
       "Ürün kodları ve SKU",
       "Ürün kodu ve SKU yönetimi",
       "catalog.read",
-      "Ürün kodlarını ve ürün / varyant SKU’larını arayın veya dışa aktarın. Varyant SKU biçimi 0000.000000.00; sıralama ana kategori, alt kategori, ürün ve varyant şeklindedir. Kodlar otomatik atanır; uygulamada marka öneki gösterilmez. İsim veya kategori değişikliği mevcut SKU’yu değiştirmez.",
+      "Ürün kodlarını ve ürün / varyant SKU’larını arayın veya dışa aktarın. Varyant SKU biçimi 1010.10001; sıralama ana kategori, alt kategori, ürün ve varyant şeklindedir. Kodlar otomatik atanır; uygulamada marka öneki gösterilmez. İsim veya kategori değişikliği mevcut SKU’yu değiştirmez.",
     ],
     [
       "Görsel kütüphanesi",

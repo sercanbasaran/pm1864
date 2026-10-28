@@ -40,7 +40,7 @@ test('category flags persist; parent changes govern product/variant sales withou
     let catalog=(await f.call('/catalog')).catalog;
     let root=catalog.categories[0];
     let r=await f.save({...root,salesAvailability:{...all,online:false}});assert.equal(r.status,200);
-    r=await f.save({name:'Test alt',slug:'test-alt',code:'101',parentId:root.id,active:true,salesAvailability:all},true);assert.equal(r.status,200);
+    r=await f.save({name:'Test alt',slug:'test-alt',code:'10',parentId:root.id,active:true,salesAvailability:all},true);assert.equal(r.status,200);
     const child=r.catalog.categories.find(c=>c.slug==='test-alt');
     assert.equal(child.effectiveSales.online,false);
     r=await f.call('/products','POST',{expectedRevision:r.catalog.revision,product:{name:'Test product',categoryId:child.id,status:'Aktif',salesAvailability:all,variants:[{size:'S',typeId:'type-item',weight:500,price:100,salesAvailability:all}]}});
