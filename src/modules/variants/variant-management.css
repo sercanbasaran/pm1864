@@ -200,3 +200,16 @@
 .variant-delete-actions { display:flex; justify-content:flex-end; gap:.75rem; margin-top:1rem; }
 
 sl-dialog.variant-bulk-dialog { --width: calc(100vw - 2rem); }
+.bulk-variant-editor { display: grid; gap: 1rem; }
+.bulk-variant-intro h3, .bulk-variant-intro p { margin: 0 0 .4rem; }
+.bulk-variant-intro p, .bulk-variant-note { color: var(--sl-color-neutral-600); font-size: .875rem; }
+.bulk-variant-card { min-width: 0; padding: 1rem; border: 1px solid var(--sl-color-neutral-200); border-radius: var(--sl-border-radius-medium); background: var(--sl-color-neutral-0); }
+.bulk-variant-card-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.bulk-variant-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+.bulk-variant-field { display: grid; align-content: start; gap: .35rem; min-width: 0; font-size: .875rem; font-weight: 600; }
+.bulk-variant-field input, .bulk-variant-field select { width: 100%; min-width: 0; min-height: 2.5rem; box-sizing: border-box; padding: .5rem .65rem; border: 1px solid var(--sl-color-neutral-300); border-radius: var(--sl-border-radius-medium); color: var(--sl-color-neutral-900); background: var(--sl-color-neutral-0); font: inherit; font-weight: 400; }
+.bulk-variant-field input:focus-visible, .bulk-variant-field select:focus-visible { outline: 2px solid var(--sl-color-primary-600); outline-offset: 1px; }
+.bulk-variant-error { color: var(--sl-color-danger-700); margin-bottom: 0; }
+.bulk-variant-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+@media (max-width: 1000px) { .bulk-variant-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .bulk-variant-grid { grid-template-columns: 1fr; } .bulk-variant-actions > sl-button { flex: 1; } }

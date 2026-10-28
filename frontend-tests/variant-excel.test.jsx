@@ -10,10 +10,10 @@ const snapshot = {revision:0, categories:[category], products:[product], variant
 afterEach(cleanup);
 test('manual variant rows are checked and changing an input clears the preview', async () => {
  render(<CatalogProvider snapshot={snapshot} notify={vi.fn()}><VariantExcel manualOnly onClose={vi.fn()} /></CatalogProvider>); await settle();
- for (const [label,value] of [['Ürün kodu','0100000001'],['Varyant adı','Üçlü'],['Varyant tipi','Porsiyon'],['Ürünler ve miktarlar','0100000001:3']]) fireEvent.change(document.querySelector(`input[aria-label="1. satır ${label}"]`),{target:{value}});
- fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.includes('Satırları kontrol et'))); await settle();
+ for (const [label,value] of [['Ürün kodu','0100000001'],['Varyant adı','Üçlü'],['Varyant tipi','Porsiyon'],['Ürün miktarı','3']]) fireEvent.change(document.querySelector(`[aria-label="1. satır ${label}"]`),{target:{value}});
+ fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.includes('Varyantları kontrol et'))); await settle();
  expect(document.body.textContent).toContain('1 satır · 0 hatalı');
- expect(document.body.textContent).toContain('Varyantları içe aktar');
+ expect(document.body.textContent).toContain('Varyantları oluştur');
  fireEvent.change(document.querySelector('input[aria-label="1. satır Varyant adı"]'),{target:{value:'Dörtlü'}});
- expect(document.body.textContent).not.toContain('Varyantları içe aktar');
+ expect(document.body.textContent).not.toContain('Varyantları oluştur');
 });
