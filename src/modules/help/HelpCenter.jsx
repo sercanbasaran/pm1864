@@ -41,7 +41,7 @@ export default function HelpCenter({ user, onNavigate }) {
       "Kayıtları dışa aktarma",
       "Ürün yönetimi",
       "catalog.read",
-      "Katalogdaki Dışa aktar düğmesi seçili filtrelerle eşleşen tüm ürünlerin varyantlarını CSV olarak indirir. Fiyat yönetimi ve işlem geçmişinde ayrı dışa aktarma seçenekleri bulunur.",
+      "Ürün ve varyant listelerinde içe ve dışa aktarma menülerinden JSON, CSV, XML veya Excel biçimini seçin. Dışa aktarma geçerli filtrelerle eşleşen kayıtları içerir; içe aktarma yeni kayıt oluşturur. Fiyat, kod ve işlem geçmişi listelerinde de dışa aktarma seçenekleri bulunur.",
     ],
     [
       "Yapılan değişiklikleri izleme",

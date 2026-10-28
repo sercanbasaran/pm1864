@@ -18,10 +18,14 @@ async function show(canWrite = true, products = [product]) {
 test("varyant çoğaltma listede ve döşemede seçilen varyantı açar", async () => {
  const duplicate = await show();
  fireEvent.click(document.querySelector('.variant-desktop-table sl-button[aria-label="Baklava Porsiyon varyantını çoğalt"]'));
+ await settle();
+ fireEvent.click([...document.querySelectorAll('sl-dialog sl-button')].find(b => b.textContent.includes('Tek varyant çoğalt')));
  expect(duplicate).toHaveBeenCalledWith(product, variant);
  fireEvent.click(document.querySelector('sl-button[aria-label="Döşeme görünümü"]'));
  await settle();
  fireEvent.click(document.querySelector('.variant-view-grid sl-button[aria-label="Baklava Porsiyon varyantını çoğalt"]'));
+ await settle();
+ fireEvent.click([...document.querySelectorAll('sl-dialog sl-button')].find(b => b.textContent.includes('Tek varyant çoğalt')));
  expect(duplicate).toHaveBeenCalledTimes(2);
 });
 test("kopya bağımsız kimlik ve benzersiz isim ile oluşturulur", () => {

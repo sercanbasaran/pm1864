@@ -1,3 +1,5 @@
+import FormatMenu from "../transfer/FormatMenu.jsx";
+import { downloadTransfer } from "../transfer/transfer.js";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Modal from "../../components/ui/Modal.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -22,7 +24,7 @@ import {
   PencilSimple,
   Tag,
 } from "@phosphor-icons/react";
-import { money, dateTime, downloadCSV } from "../../catalog-tools.js";
+import { money, dateTime } from "../../catalog-tools.js";
 export default function PriceManager({
   products,
   categories,
@@ -35,7 +37,8 @@ export default function PriceManager({
     [category, setCategory] = useState(""),
     [status, setStatus] = useState(""),
     [draft, setDraft] = useState(null),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [exportError, setExportError] = useState("");
   const visible = products.filter(
     (p) =>
       categoryMatches(p, category, categories) &&
@@ -106,31 +109,11 @@ export default function PriceManager({
           </p>
         </div>
         <div className="overview-actions">
-          <Button
-            className="btn"
-            onClick={() =>
-              downloadCSV(
-                [
-                  [
-                    "Ürün",
-                    "SKU",
-                    "Kategori",
-                    "Varyant",
-                    "Gramaj",
-                    "Fiyat (TRY)",
-                    "Durum",
-                  ],
-                  ...rows,
-                ],
-                "HM1864_Fiyat_Listesi.csv",
-              )
-            }
-          >
-            Fiyat listesini indir
-          </Button>
+          <FormatMenu direction="export" disabled={!rows.length} onSelect={format => { setExportError(""); downloadTransfer(["Ürün", "SKU", "Kategori", "Varyant", "Gramaj", "Fiyat (TRY)", "Durum"], rows, format, "fiyat-listesi", "Fiyatlar").catch(() => setExportError("Dışa aktarma dosyası hazırlanamadı.")); }} />
           {bulkAction}
         </div>
       </div>
+      {exportError && <p role="alert">{exportError}</p>}
       <div className="module-toolbar">
         <div className="search">
           <Input

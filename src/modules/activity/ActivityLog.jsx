@@ -1,18 +1,20 @@
+import FormatMenu from "../transfer/FormatMenu.jsx";
+import { downloadTransfer } from "../transfer/transfer.js";
 import Card from "../../components/ui/Card.jsx";
 import { Button, Input, Select } from "../../components/ui/Controls.jsx";
 import React, { useState } from "react";
 import {
   MagnifyingGlass,
   ClockCounterClockwise,
-  DownloadSimple,
 } from "@phosphor-icons/react";
-import { dateTime, downloadCSV } from "../../catalog-tools.js";
+import { dateTime } from "../../catalog-tools.js";
 export default function ActivityLog({ logs }) {
   const [query, setQuery] = useState(""),
     [actor, setActor] = useState(""),
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
-    [page, setPage] = useState(1);
+    [page, setPage] = useState(1),
+    [exportError, setExportError] = useState("");
   const actors = [...new Set(logs.map((l) => l.actor).filter(Boolean))];
   const filtered = logs.filter((l) => {
     const day = new Date(l.time).toLocaleDateString("sv-SE", {
@@ -43,27 +45,9 @@ export default function ActivityLog({ logs }) {
             Katalog ve hesap işlemlerinin son 1.000 kaydı saklanır.
           </p>
         </div>
-        <Button
-          className="btn"
-          onClick={() =>
-            downloadCSV(
-              [
-                ["Tarih", "İşlem", "Açıklama", "Kullanıcı"],
-                ...filtered.map((l) => [
-                  dateTime(l.time),
-                  l.title,
-                  l.detail,
-                  l.actor,
-                ]),
-              ],
-              "HM1864_Islem_Gecmisi.csv",
-            )
-          }
-        >
-          <DownloadSimple size={16} />
-          Dışa aktar
-        </Button>
+        <FormatMenu direction="export" disabled={!filtered.length} onSelect={format => { setExportError(""); downloadTransfer(["Tarih", "İşlem", "Açıklama", "Kullanıcı"], filtered.map(l => [dateTime(l.time), l.title, l.detail, l.actor]), format, "islem-gecmisi", "İşlem geçmişi").catch(() => setExportError("Dışa aktarma dosyası hazırlanamadı.")); }} />
       </div>
+      {exportError && <p role="alert">{exportError}</p>}
       <div className="module-toolbar">
         <div className="search">
           <Input

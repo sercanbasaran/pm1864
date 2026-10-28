@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { readProductWorkbook } from "./read-product-workbook.js";
+import { readTransferFile, downloadTransfer, formatLabel } from "../transfer/transfer.js";
 import Modal from "../../components/ui/Modal.jsx";
 import { Button } from "../../components/ui/Controls.jsx";
 import { validateProduct } from "../../catalog.js";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 
-const columns = [
+export const productTransferColumns = [
   "Ürün adı",
   "Kategori kodu",
   "Kısa açıklama",
@@ -19,6 +19,10 @@ const columns = [
   "Servis önerisi",
   "Saklama koşulları",
   "Uzun süreli muhafaza",
+  "Ürün kodu",
+  "Mağaza",
+  "E-Mağaza",
+  "Sipariş Platformları",
 ];
 const number = (value) =>
   typeof value === "number"
@@ -28,24 +32,15 @@ const number = (value) =>
           .trim()
           .replace(",", "."),
       );
-export default function ProductImport({ onClose }) {
+export default function ProductImport({ onClose, format = "xls" }) {
   const { categories, variantTypes, products, mutate, notify } = useCatalog();
   const [rows, setRows] = useState([]),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false),
     [result, setResult] = useState(null);
   async function template() {
-    try {
-      const XLSX = await import("xlsx");
-      const book = XLSX.utils.book_new();
-      const sheet = XLSX.utils.aoa_to_sheet([columns]);
-      for (let i = 2; i <= 501; i++) sheet[`B${i}`] = { t: "s", v: "", z: "@" };
-      sheet["!cols"] = columns.map(() => ({ wch: 24 }));
-      XLSX.utils.book_append_sheet(book, sheet, "Ürünler");
-      XLSX.writeFile(book, "urun-ice-aktarma-sablonu.xlsx");
-    } catch {
-      setError("Şablon hazırlanamadı. Yeniden deneyin.");
-    }
+    try { await downloadTransfer(productTransferColumns, [], format, "urun-ice-aktarma-sablonu", "Ürünler"); }
+    catch { setError("Şablon hazırlanamadı. Yeniden deneyin."); }
   }
   async function read(event) {
     setRows([]);
@@ -57,7 +52,7 @@ export default function ProductImport({ onClose }) {
     try {
       if (file.size > 5 * 1024 * 1024)
         throw new Error("Dosya en fazla 5 MB olabilir.");
-      const data = await readProductWorkbook(await file.arrayBuffer());
+      const data = await readTransferFile(file, format);
       const seen = new Set(
         products.map((p) => p.name.trim().toLocaleLowerCase("tr-TR")),
       );
@@ -106,11 +101,17 @@ export default function ProductImport({ onClose }) {
           ["Uzun süreli muhafaza", "longTermStorage"],
         ])
           product[key] = String(row[column] || "").trim();
+        const channelEntries = [["Mağaza", "store"], ["E-Mağaza", "online"], ["Sipariş Platformları", "foodDelivery"]];
+        const channelValues = channelEntries.filter(([label]) => String(row[label] ?? "").trim() !== "");
+        if (channelValues.length) product.salesAvailability = Object.fromEntries(channelValues.map(([label, key]) => [key, String(row[label]).trim() === "Açık"]));
+        const invalidChannel = channelValues.some(([label]) => !["Açık", "Kapalı"].includes(String(row[label]).trim()));
         const normalized = product.name.toLocaleLowerCase("tr-TR");
         let issue = !category
           ? "Kategori kodu bulunamadı veya birden fazla kategoriyle eşleşiyor."
           : !["Aktif", "Taslak"].includes(product.status)
             ? "Durum Aktif veya Taslak olmalı."
+            : invalidChannel
+              ? "Satış kanalı Açık veya Kapalı olmalı."
             : seen.has(normalized)
               ? "Bu isimde bir ürün zaten var veya dosyada tekrar ediyor."
               : validateProduct(product, categories, variantTypes)?.message ||
@@ -151,7 +152,7 @@ export default function ProductImport({ onClose }) {
   }
   return (
     <Modal
-      title="Excel ile ürün içe aktar"
+      title={`${formatLabel(format)} ile ürün içe aktar`}
       onClose={onClose}
       busy={saving}
       wide
@@ -163,14 +164,14 @@ export default function ProductImport({ onClose }) {
         kodları sistem tarafından oluşturulur.
       </p>
       <Button type="button" onClick={template}>
-        Excel şablonunu indir
+        {formatLabel(format)} şablonunu indir
       </Button>
       <p>
         <label>
-          Excel dosyası seçin (.xlsx, .xls){" "}
+          {formatLabel(format)} dosyası seçin{" "}
           <input
             type="file"
-            accept=".xlsx,.xls"
+            accept={format === "xls" ? ".xls,.xlsx" : `.${format}`}
             onChange={read}
             disabled={saving}
           />

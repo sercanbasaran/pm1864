@@ -1,7 +1,9 @@
+import FormatMenu from "../transfer/FormatMenu.jsx";
+import { downloadTransfer } from "../transfer/transfer.js";
 import BulkCreateProducts from "./BulkCreateProducts.jsx";
 import BulkProducts from "./BulkProducts.jsx";
 import TableText from "../../components/ui/TableText.jsx";
-import ProductImport from "./ProductImport.jsx";
+import ProductImport, { productTransferColumns } from "./ProductImport.jsx";
 import "./product-management.css";
 import ProductQualitySummary from "./ProductQualitySummary.jsx";
 import {
@@ -9,11 +11,10 @@ import {
   missingProductInformation,
 } from "./product-quality.js";
 import UnitPricing from "./UnitPricing.jsx";
-import { variantTypeName } from "../../variant-types.js";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import Card from "../../components/ui/Card.jsx";
-import { salesChannels, effectiveSales } from "../../sales-availability.js";
+import { salesChannels } from "../../sales-availability.js";
 import {
   Button,
   Input,
@@ -31,8 +32,6 @@ import {
   MagnifyingGlass,
   List,
   GridFour,
-  DownloadSimple,
-  UploadSimple,
   Tag,
   PencilSimple,
   QrCode,
@@ -47,7 +46,6 @@ import {
   categoryPath,
   categoryMatches,
 } from "../../hierarchy.js";
-import { money, downloadCSV } from "../../catalog-tools.js";
 import ProductImage from "../../components/ui/ProductImage.jsx";
 import StatusBadge from "../../components/ui/StatusBadge.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
@@ -62,7 +60,7 @@ export default function ProductManagement({
   onCard,
   onCreateVariant,
 }) {
-  const { products, categories, variantTypes, busy } = useCatalog(),
+  const { products, categories, variantTypes, busy, notify } = useCatalog(),
     [query, setQuery] = useState(""),
     [category, setCategory] = useState(""),
     [status, setStatus] = useState(""),
@@ -73,7 +71,7 @@ export default function ProductManagement({
     [pageSize, setPageSize] = useState(10),
     [selected, setSelected] = useState([]),
     [filters, setFilters] = useState(false),
-    [importOpen, setImportOpen] = useState(false),
+    [importOpen, setImportOpen] = useState(""),
     [bulkProductsOpen, setBulkProductsOpen] = useState(false),
     [bulkCreateOpen, setBulkCreateOpen] = useState(false),
     search = useRef(null);
@@ -153,52 +151,16 @@ export default function ProductManagement({
       ids.includes(id) ? ids.filter((v) => v !== id) : [...ids, id],
     );
   }
-  function exportRows() {
-    downloadCSV(
-      [
-        [
-          "Ürün",
-          "Ürün kodu",
-          "Ana kategori / Alt kategori",
-          "Birim fiyat TRY",
-          "Ürün birimi",
-          "Birim gramajı (g)",
-          "Varyant",
-          "Varyant tipi",
-          "Dilim adedi",
-          "Gramaj (g)",
-          "Birim",
-          "Ambalaj",
-          "Varyant fiyatı TRY",
-          "Durum",
-          ...salesChannels.map((c) => c.label),
-        ],
-        ...visible.flatMap((p) =>
-          (p.variants.length ? p.variants : [null]).map((v) => [
-            p.name,
-            p.productCode,
-            categoryPath(categoryOf(p, categories), categories),
-            p.unitPricing?.price ?? "",
-            p.unitPricing?.unit ?? "",
-            p.unitPricing?.weight ?? "",
-            v?.size || "",
-            v ? variantTypeName(v, variantTypes) : "",
-            v?.slices ?? "",
-            v?.weight ?? "",
-            v ? v.unit || "Adet" : "",
-            v?.packaging || "",
-            v?.price ?? "",
-            p.status,
-            ...salesChannels.map((c) =>
-              effectiveSales(p, v || undefined, categories)[c.key]
-                ? "Açık"
-                : "Kapalı",
-            ),
-          ]),
-        ),
-      ],
-      "HM1864_Urunler.csv",
-    );
+  async function exportRows(format) {
+    const rows = visible.map(p => {
+      const category = categoryOf(p, categories);
+      const root = rootOf(category, categories);
+      const code = category?.parentId ? `${root?.code || ""}${category.code || ""}` : category?.code || "";
+      const sales = p.salesAvailability || {};
+      return [p.name, code, p.description || "", p.status, p.unitPricing?.unit || "", p.unitPricing?.price ?? "", p.unitPricing?.weight ?? "", p.ingredients || "", p.allergens || "", p.nutrition || "", p.servingSuggestion || "", p.storageConditions || "", p.longTermStorage || "", p.productCode || "", ...salesChannels.map(c => sales[c.key] ? "Açık" : "Kapalı")];
+    });
+    try { await downloadTransfer(productTransferColumns, rows, format, "urunler", "Ürünler"); }
+    catch { notify("Dışa aktarma dosyası hazırlanamadı."); }
   }
   const addAction = write ? (
     <Button
@@ -259,11 +221,8 @@ export default function ProductManagement({
           </div>
           <div className="product-catalog-actions">
             {write && <Button type="button" onClick={() => setBulkCreateOpen(true)}>Çoklu ürün ekle</Button>}
-            {write && <Button type="button" onClick={() => setImportOpen(true)}><UploadSimple size={16} /> Excel içe aktar</Button>}
-            <Button type="button" onClick={exportRows}>
-              <DownloadSimple size={16} />
-              Dışa aktar
-            </Button>
+            {write && <FormatMenu direction="import" onSelect={setImportOpen} />}
+            <FormatMenu direction="export" disabled={!visible.length} onSelect={exportRows} />
           </div>
         </div>
         <div className="toolbar">
@@ -586,7 +545,7 @@ export default function ProductManagement({
       </Card>
       {bulkCreateOpen && <BulkCreateProducts onClose={() => setBulkCreateOpen(false)} />}
       {bulkProductsOpen && <BulkProducts ids={selected} canEditProducts={write} canEditPrices={price} onClose={() => setBulkProductsOpen(false)} onDone={() => { setBulkProductsOpen(false); setSelected([]); }} />}
-      {importOpen && <ProductImport onClose={() => setImportOpen(false)} />}
+      {importOpen && <ProductImport format={importOpen} onClose={() => setImportOpen("")} />}
     </section>
   );
 }

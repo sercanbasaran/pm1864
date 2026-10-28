@@ -9,7 +9,7 @@ const product = { id:1, name:'Baklava', productCode:'0100000001', categoryId:'a'
 const snapshot = {revision:0, categories:[category], products:[product], variantTypes:[{id:'type-portion',name:'Porsiyon'}], consumables:[]};
 afterEach(cleanup);
 test('manual variant rows are checked and changing an input clears the preview', async () => {
- render(<CatalogProvider snapshot={snapshot} notify={vi.fn()}><VariantExcel onClose={vi.fn()} /></CatalogProvider>); await settle();
+ render(<CatalogProvider snapshot={snapshot} notify={vi.fn()}><VariantExcel manualOnly onClose={vi.fn()} /></CatalogProvider>); await settle();
  for (const [label,value] of [['Ürün kodu','0100000001'],['Varyant adı','Üçlü'],['Varyant tipi','Porsiyon'],['Ürünler ve miktarlar','0100000001:3']]) fireEvent.change(document.querySelector(`input[aria-label="1. satır ${label}"]`),{target:{value}});
  fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.includes('Satırları kontrol et'))); await settle();
  expect(document.body.textContent).toContain('1 satır · 0 hatalı');

@@ -1,3 +1,5 @@
+import FormatMenu from "../transfer/FormatMenu.jsx";
+import { downloadTransfer } from "../transfer/transfer.js";
 import Card from "../../components/ui/Card.jsx";
 import {
   Button,
@@ -13,13 +15,11 @@ import React, { useState } from "react";
 import {
   MagnifyingGlass,
   Barcode,
-  DownloadSimple,
 } from "@phosphor-icons/react";
 import { useCatalog } from "../../app/CatalogContext.jsx";
-import { downloadCSV } from "../../catalog-tools.js";
 import { categoryOf, categoryPath } from "../../hierarchy.js";
 export default function CodeManagement({ user }) {
-  const { products, categories } = useCatalog(),
+  const { products, categories, notify } = useCatalog(),
     [query, setQuery] = useState("");
   const rows = products.filter((p) =>
     `${p.productCode} ${p.sku} ${p.name} ${p.variants.map((v) => v.sku).join(" ")}`
@@ -36,37 +36,7 @@ export default function CodeManagement({ user }) {
             ve her varyantın SKU'su ayrı, kalıcı kodlardır.
           </p>
         </div>
-        <Button
-          className="btn"
-          onClick={() =>
-            downloadCSV(
-              [
-                [
-                  "Ürün kodu",
-                  "Ürün",
-                  "Kategori",
-                  "Ürün SKU",
-                  "Varyant",
-                  "Varyant SKU",
-                ],
-                ...rows.flatMap((p) =>
-                  p.variants.map((v) => [
-                    p.productCode,
-                    p.name,
-                    categoryPath(categoryOf(p, categories), categories),
-                    p.sku,
-                    v.size,
-                    v.sku,
-                  ]),
-                ),
-              ],
-              "HM1864_Kodlar.csv",
-            )
-          }
-        >
-          <DownloadSimple size={16} />
-          Kodları indir
-        </Button>
+        <FormatMenu direction="export" disabled={!rows.length} onSelect={format => downloadTransfer(["Ürün kodu", "Ürün", "Kategori", "Ürün SKU", "Varyant", "Varyant SKU"], rows.flatMap(p => p.variants.length ? p.variants.map(v => [p.productCode, p.name, categoryPath(categoryOf(p, categories), categories), p.sku, v.size, v.sku]) : [[p.productCode, p.name, categoryPath(categoryOf(p, categories), categories), p.sku, "", ""]]), format, "kodlar", "Kodlar").catch(() => notify("Dışa aktarma dosyası hazırlanamadı."))} />
       </div>
       <div className="module-toolbar">
         <div className="search">

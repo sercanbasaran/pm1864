@@ -1,3 +1,4 @@
+import FormatMenu from "../transfer/FormatMenu.jsx";
 import VariantExcel, { exportVariants } from "./VariantExcel.jsx";
 import { defaultPackagingItems } from "../packaging/packaging-data.js";
 import TableText from "../../components/ui/TableText.jsx";
@@ -14,7 +15,6 @@ import Modal from "../../components/ui/Modal.jsx";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Card from "../../components/ui/Card.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
-import { salesChannels, effectiveSales } from "../../sales-availability.js";
 import {
   Button,
   Input,
@@ -35,12 +35,11 @@ import {
   Copy,
   Trash,
   QrCode,
-  DownloadSimple,
   List,
   GridFour,
 } from "@phosphor-icons/react";
 import { roots, categoryOf, rootOf, categoryPath } from "../../hierarchy.js";
-import { money, downloadCSV } from "../../catalog-tools.js";
+import { money } from "../../catalog-tools.js";
 export default function VariantManager({
   products,
   categories,
@@ -52,7 +51,8 @@ export default function VariantManager({
   relatedProducts,
 }) {
   const { variantTypes = [], packagingItems = defaultPackagingItems(), mutate, notify, busy } = useCatalog();
-  const [importOpen, setImportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState("");
+  const [duplicateTarget, setDuplicateTarget] = useState(null), [multiDuplicate, setMultiDuplicate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null), [deleteError, setDeleteError] = useState("");
   async function deleteSelected() {
     if (!deleteTarget || busy) return;
@@ -150,7 +150,9 @@ export default function VariantManager({
         ]}
       />
 
-      {importOpen && <VariantExcel onClose={() => setImportOpen(false)} />}
+      {duplicateTarget && !multiDuplicate && <Modal title="Varyant çoğalt" onClose={() => setDuplicateTarget(null)}><p>{duplicateTarget.v.size} varyantını nasıl çoğaltmak istersiniz?</p><Button type="button" onClick={() => { const target = duplicateTarget; setDuplicateTarget(null); onDuplicate(target.p, target.v); }}>Tek varyant çoğalt</Button> <Button type="button" variant="primary" onClick={() => setMultiDuplicate(true)}>Çoklu varyant çoğalt</Button></Modal>}
+      {duplicateTarget && multiDuplicate && <VariantExcel manualOnly sourceVariant={duplicateTarget.v} sourceProduct={duplicateTarget.p} onClose={() => { setDuplicateTarget(null); setMultiDuplicate(false); }} />}
+      {importOpen && <VariantExcel format={importOpen === "manual" ? "xls" : importOpen} manualOnly={importOpen === "manual"} onClose={() => setImportOpen("")} />}
       <VariantQualitySummary rows={qualityRows} products={sources} types={variantTypes} selected={quality} onSelect={value => {setQuality(value); setPage(1);}} />
           <Card className="panel variant-manager">
             <div className="panel-title">
@@ -163,10 +165,8 @@ export default function VariantManager({
               </div>
               <div className="variant-header-actions">
                 {addAction}
-                {canWrite && <Button type="button" onClick={() => setImportOpen(true)}>Çoklu varyant ekle / Excel içe aktar</Button>}
-                <Button type="button" disabled={!rows.length} onClick={() => exportVariants(rows, variantTypes, sources, packagingItems).catch(() => notify("Excel dosyası hazırlanamadı."))}>
-                  <DownloadSimple size={16} /> Excel dışa aktar
-                </Button>
+                {canWrite && <FormatMenu direction="import" onSelect={setImportOpen} />}
+                <FormatMenu direction="export" disabled={!rows.length} onSelect={format => exportVariants(rows, variantTypes, sources, packagingItems, format).catch(() => notify("Dışa aktarma dosyası hazırlanamadı."))} />
               </div>
             </div>
             <div className="variant-list-toolbar">
@@ -311,7 +311,7 @@ export default function VariantManager({
                       </TableCell>
                       <TableCell>
                         <div className="variant-row-actions">
-                        {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title={p.variants.length >= 50 ? "Bir üründe en fazla 50 varyant olabilir" : "Varyantı çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /></Button>}
+                        {canWrite && <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyantını çoğalt"} title={p.variants.length >= 50 ? "Bir üründe en fazla 50 varyant olabilir" : "Varyantı çoğalt"} disabled={p.variants.length >= 50} onClick={() => setDuplicateTarget({p, v})}><Copy size={16} /></Button>}
                         <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + " varyant kartı ve QR"} title="Varyant kartı ve QR" onClick={() => onCard(p, v)}><QrCode size={18} /></Button>
                         <Button type="button" className="icon-btn" aria-label={p.name + " " + v.size + (canWrite ? " düzenle" : " görüntüle")} title={canWrite ? "Düzenle" : "Görüntüle"} onClick={() => onEdit(p, false, v.id)}><PencilSimple size={18} /></Button>
                         {canWrite && <Button type="button" className="icon-btn" aria-label={v.size + " varyantını sil"} title="Varyantı sil" onClick={() => confirmDelete(v)}><Trash size={18} /></Button>}
@@ -366,7 +366,7 @@ export default function VariantManager({
                     </div>
                   </dl>
                   <div className="variant-card-actions">
-                  {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => onDuplicate(p, v)}><Copy size={16} /> Varyantı çoğalt</Button>}
+                  {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => setDuplicateTarget({p, v})}><Copy size={16} /> Varyantı çoğalt</Button>}
                   <Button type="button" aria-label={p.name + " " + v.size + " varyant kartı ve QR"} onClick={() => onCard(p, v)}><QrCode size={16} /> Varyant kartı ve QR</Button>
                   <Button type="button" onClick={() => onEdit(p, false, v.id)}>
                     {canWrite ? "Düzenle" : "Görüntüle"}
