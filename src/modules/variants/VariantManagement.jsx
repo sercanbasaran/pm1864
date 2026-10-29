@@ -1,3 +1,5 @@
+import ProductImage from "../../components/ui/ProductImage.jsx";
+import {selectedVariantImage} from "./variant-image.js";
 import ProductIdentity from "../../components/ui/ProductIdentity.jsx";
 import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
@@ -181,8 +183,8 @@ export default function VariantManager({
               <Select label="Durum filtresi" aria-label="Varyant durum filtresi" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}><option value="">Tüm durumlar</option><option value="active">Aktif</option><option value="inactive">Pasif</option></Select>
               <Select label="Varyant sıralaması" aria-label="Varyant sıralaması" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}><option value="updated">Son güncellenen</option><option value="name">Varyant adı A–Z</option><option value="price-asc">Fiyat: düşükten yükseğe</option><option value="price-desc">Fiyat: yüksekten düşüğe</option></Select>
               <Button type="button" aria-expanded={filtersOpen} aria-controls="variant-filter-panel" onClick={() => setFiltersOpen(!filtersOpen)}>{filtersOpen ? "Filtreleri Kapat" : "Filtreleri Aç"}</Button>
-              <Button type="button" className="icon-btn" aria-label="Liste görünümü" aria-pressed={view === "list" ? "true" : "false"} onClick={() => { setView("list"); try { sessionStorage.setItem("variant-list-view", "list"); } catch {} }}><List size={18} /></Button>
-              <Button type="button" className="icon-btn" aria-label="Döşeme görünümü" aria-pressed={view === "grid" ? "true" : "false"} onClick={() => { setView("grid"); try { sessionStorage.setItem("variant-list-view", "grid"); } catch {} }}><GridFour size={18} /></Button>
+              <Button type="button" className="icon-btn" aria-label="Liste görünümü" aria-pressed={view === "list" ? "true" : "false"} variant={view === "list" ? "primary" : "default"} onClick={() => { setView("list"); try { sessionStorage.setItem("variant-list-view", "list"); } catch {} }}><List size={18} /></Button>
+              <Button type="button" className="icon-btn" aria-label="Döşeme görünümü" aria-pressed={view === "grid" ? "true" : "false"} variant={view === "grid" ? "primary" : "default"} onClick={() => { setView("grid"); try { sessionStorage.setItem("variant-list-view", "grid"); } catch {} }}><GridFour size={18} /></Button>
             </div>
             <div id="variant-filter-panel" className="variant-filters" hidden={!filtersOpen}>
               <div className="variant-filter-grid">
@@ -299,7 +301,7 @@ export default function VariantManager({
                     <TableRow key={v.id}>
                       <TableCell>
                         <SlTooltip placement="top" content={[v.size, `Tür: ${variantTypeName(v, variantTypes)}`, members.length ? `Ürünler: ${members.map(item => item.name).join(", ")}` : "", v.weight ? `≈ ${v.weight} g` : "", `Fiyat: ${money(v.price)}`, v.active !== false ? "Aktif" : "Pasif"].filter(Boolean).join(" · ")}>
-                        <ProductIdentity product={{name:v.size,customImage:v.images?.[0]?.url || ""}} className="variant-identity" textClassName="variant-cell-main" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
+                        <ProductIdentity product={{name:v.size,customImage:selectedVariantImage(v)}} className="variant-identity" textClassName="variant-cell-main" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
                           <strong><TableText value={v.size} /></strong><small><TableText value={`${v.sku || "—"} · ${variantTypeName(v, variantTypes)}`} /></small>
                         </ProductIdentity>
                         </SlTooltip>
@@ -345,52 +347,33 @@ export default function VariantManager({
             )}
             <div className={"variant-mobile-cards " + (view === "grid" ? "variant-view-grid" : "")}>
               {shown.map(({ p, v, members }) => (
-                <article key={v.id}>
-                  <div>
-                    <strong>{v.size}</strong>
-                    <SlBadge
-                      variant={v.active !== false ? "success" : "neutral"}
-                    >
-                      {v.active !== false ? "Aktif" : "Pasif"}
-                    </SlBadge>
+                <article className="variant-summary-card" key={v.id}>
+                  <button type="button" className="variant-card-image-link" aria-label={v.size + " detayını aç"} onClick={() => onEdit(p, false, v.id)}>
+                    <ProductImage product={{name:v.size,customImage:selectedVariantImage(v)}} size="tile" />
+                  </button>
+                  <div className="variant-card-tags"><SlTag size="small">{v.sku || "—"}</SlTag><SlTag size="small">{variantTypeName(v,variantTypes)}</SlTag></div>
+                  <div className="variant-card-heading">
+                    <h3 title={v.size}>{v.size}</h3>
+                    <SlBadge variant={v.active !== false ? "success" : "neutral"}>{v.active !== false ? "Aktif" : "Pasif"}</SlBadge>
                   </div>
-                  <p className="variant-card-product">{members.map((item) => item.name).join(" · ") || "Ürün bulunamadı"}</p>
-                  <small className="variant-card-meta">{v.sku || "—"}</small>
-                  <small className="variant-card-type">{variantTypeName(v, variantTypes)}</small>
-                  {v.items?.length > 1 && <small className="variant-card-meta">{v.items.map(item => { const source = sources.find(product => product.id === item.productId); return `${source?.name || "Ürün"}: ${item.quantity} ${source?.unitPricing?.unit || "birim"}`; }).join(" · ")}</small>}
-                  <dl>
-                    <div>
-                      <dt>Miktar</dt>
-                      <dd>
-                        {v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Gramaj</dt>
-                      <dd>≈ {v.weight} g</dd>
-                    </div>
-                    <div>
-                      <dt>Satış fiyatı</dt>
-                      <dd>{money(v.price)}</dd>
-                    </div>
-                    <div>
-                      <dt>Ambalaj / servis</dt>
-                      <dd>{v.packagingName || v.packaging || "—"}</dd>
-                    </div>
+                  {members.length > 1 && <p className="variant-card-product" title={members.map(item=>item.name).join(" · ")}>{members.length} ürün · {members.map(item=>item.name).join(" · ")}</p>}
+                  <dl className="variant-card-facts">
+                    <div><dt>Miktar</dt><dd>{v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}</dd></div>
+                    <div><dt>Net gramaj</dt><dd>≈ {new Intl.NumberFormat("tr-TR").format(v.weight)} g</dd></div>
+                    <div className="variant-card-packaging"><dt>Ambalaj / servis</dt><dd>{v.packagingName || v.packaging || "—"}</dd></div>
                   </dl>
+                  <div className="variant-card-price"><small>Satış fiyatı</small><strong>{money(v.price)}</strong><small>Hesaplanan fiyat: {money(v.calculatedPrice ?? v.price)}</small></div>
                   <div className="variant-card-actions">
-                  {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => setDuplicateTarget({p, v})}><Copy size={16} /> Varyantı çoğalt</Button>}
-                  <Button type="button" aria-label={p.name + " " + v.size + " varyant kartı ve QR"} onClick={() => onCard(p, v)}><QrCode size={16} /> Varyant kartı ve QR</Button>
-                  <Button type="button" onClick={() => onEdit(p, false, v.id)}>
-                    {canWrite ? "Düzenle" : "Görüntüle"}
-                  </Button>
-                  {canWrite && <Button type="button" aria-label={v.size + " varyantını sil"} onClick={() => confirmDelete(v)}><Trash size={16} /> Varyantı sil</Button>}
+                    {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => setDuplicateTarget({p,v})}><Copy size={16} />Çoğalt</Button>}
+                    <Button type="button" aria-label={p.name + " " + v.size + " varyant kartı ve QR"} onClick={() => onCard(p,v)}><QrCode size={16} />Kart ve QR</Button>
+                    <Button type="button" onClick={() => onEdit(p,false,v.id)}>{canWrite ? "Düzenle" : "Görüntüle"}</Button>
+                    {canWrite && <Button type="button" aria-label={v.size + " varyantını sil"} onClick={() => confirmDelete(v)}><Trash size={16} />Sil</Button>}
                   </div>
                 </article>
               ))}
             </div>
             <div className="variant-list-footer">
-              <Select aria-label="Sayfa başına varyant" value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+              <Select hideLabel aria-label="Sayfa başına varyant" value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
                 {[10, 25, 50, 100].map(size => <option key={size} value={String(size)}>{size}</option>)}
               </Select>
               <Pagination total={rows.length} page={current} pageSize={pageSize} onChange={setPage} />

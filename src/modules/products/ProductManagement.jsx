@@ -278,7 +278,8 @@ export default function ProductManagement({
             <Button
               className="icon-btn"
               aria-label="Liste görünümü"
-              aria-pressed={view === "list"}
+              aria-pressed={view === "list" ? "true" : "false"}
+              variant={view === "list" ? "primary" : "default"}
               onClick={() => setView("list")}
             >
               <List size={18} />
@@ -286,7 +287,8 @@ export default function ProductManagement({
             <Button
               className="icon-btn"
               aria-label="Kart görünümü"
-              aria-pressed={view === "grid"}
+              aria-pressed={view === "grid" ? "true" : "false"}
+              variant={view === "grid" ? "primary" : "default"}
               onClick={() => setView("grid")}
             >
               <GridFour size={18} />

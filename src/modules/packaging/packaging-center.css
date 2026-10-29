@@ -5,12 +5,12 @@
 .packaging-image-upload img { width: 180px; height: 180px; object-fit: contain; object-position: center; border-radius: var(--sl-border-radius-medium); background: var(--sl-color-neutral-50); }
 .packaging-image-upload input { max-width: 100%; }
 .packaging-image-upload small { color: var(--sl-color-neutral-600); }
-.packaging-thumbnail { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; object-position: center; border-radius: var(--sl-border-radius-medium); background: var(--sl-color-neutral-50); }
+.packaging-thumbnail { width: 64px; height: 64px; flex-shrink: 0; object-fit: cover; object-position: center; border-radius: var(--sl-border-radius-medium); background: var(--sl-color-neutral-50); }
 .packaging-list article > .packaging-item-info { display: flex; flex: 1; flex-direction: column; gap: .3rem; min-width: 140px; overflow-wrap: anywhere; }
 .packaging-select { min-width: 0; }
-.packaging-option-image { width: 40px; height: 40px; object-fit: contain; object-position: center; border-radius: var(--sl-border-radius-medium); }
+.packaging-option-image { width: 40px; height: 40px; object-fit: cover; object-position: center; border-radius: var(--sl-border-radius-medium); }
 .packaging-selected-preview { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: .75rem; padding: .75rem; border: 1px solid var(--sl-color-neutral-200); border-radius: var(--sl-border-radius-medium); }
-.packaging-selected-preview img { width: 88px; height: 88px; object-fit: contain; object-position: center; border-radius: var(--sl-border-radius-medium); }
+.packaging-selected-preview img { width: 88px; height: 88px; object-fit: cover; object-position: center; border-radius: var(--sl-border-radius-medium); }
 .packaging-selected-preview > div { flex: 1; min-width: 140px; overflow-wrap: anywhere; }
 .packaging-selected-preview small { display: block; color: var(--sl-color-neutral-600); margin-top: .3rem; }
 .packaging-volume-summary { display: grid; gap: .4rem; padding: 1rem; border: 1px solid var(--sl-color-neutral-200); border-radius: var(--sl-border-radius-medium); background: var(--sl-color-neutral-50); }

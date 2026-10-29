@@ -1,3 +1,4 @@
+import {imageResponse} from "./image-response.js";
 import {createDerivatives} from "./image-derivatives.js";
 import { decodeImageUpload } from "./media-service.js";
 import { randomUUID } from "node:crypto";
@@ -369,7 +370,9 @@ export function createUserService(db, env) {
       );
     });
   }
-  async function avatarContent(actor, size = '') {
+  async function avatarContent(actor, size = '', request) {
+    const url=request && new URL(request.url);
+    const versioned=!!url?.searchParams.get('v') && !!url?.searchParams.get('user');
     if (size && size !== 'thumb') throw new ApiError(422,"Geçersiz profil görseli boyutu.");
     if (size === 'thumb') {
       let cached=(await db.query("SELECT t.data FROM app_user_avatar_thumbnails t JOIN app_users u ON u.id=t.user_id WHERE t.user_id=? AND t.version=u.avatar_version",[actor.id])).rows[0];
@@ -381,7 +384,7 @@ export function createUserService(db, env) {
           cached=derivative;
         }catch {}
       }
-      if(cached)return new Response(Buffer.from(cached.data,'base64'),{headers:{'Content-Type':'image/webp','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
+      if(cached)return imageResponse(Buffer.from(cached.data,'base64'),'image/webp',request,{versioned});
     }
     const row = (
       await db.query(
@@ -390,14 +393,8 @@ export function createUserService(db, env) {
       )
     ).rows[0];
     if (!row) throw new ApiError(404, "Profil fotoğrafı bulunamadı.");
-    return new Response(Buffer.from(row.data, "base64"), {
-      headers: {
-        "Content-Type": row.mime_type,
-        "Cache-Control": "private, no-store",
-        "X-Content-Type-Options": "nosniff",
-        "Content-Security-Policy": "default-src 'none'; sandbox",
-      },
-    });
+    return imageResponse(Buffer.from(row.data,"base64"),row.mime_type,request,{versioned});
+
   }
   return {
     initialize,

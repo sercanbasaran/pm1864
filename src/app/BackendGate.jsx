@@ -1,3 +1,4 @@
+import {setImageCacheUser} from "../image-cache-scope.js";
 import BrandLogo from "../components/ui/BrandLogo.jsx";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import { Button, Input } from "../components/ui/Controls.jsx";
@@ -21,6 +22,7 @@ export default function BackendGate({ children }) {
     [setup, setSetup] = useState(false),
     [busy, setBusy] = useState(false);
   async function accept(next) {
+    setImageCacheUser(next.id);
     if (next.mustChangePassword) {
       setUser(next);
       setCatalog(null);
@@ -37,6 +39,7 @@ export default function BackendGate({ children }) {
     try {
       await accept((await request("/session")).user);
     } catch (e) {
+      setImageCacheUser(null);
       setUser(null);
       setCatalog(null);
       if (e.status !== 401) setError(e.message);
@@ -48,6 +51,7 @@ export default function BackendGate({ children }) {
   useEffect(() => {
     check();
     const expired = () => {
+      setImageCacheUser(null);
       setUser(null);
       setCatalog(null);
       setError(
@@ -78,6 +82,7 @@ export default function BackendGate({ children }) {
   async function logout() {
     try {
       await request("/logout", { method: "POST", body: {} });
+      setImageCacheUser(null);
       setUser(null);
       setCatalog(null);
     } catch (e) {

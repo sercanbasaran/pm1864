@@ -278,7 +278,7 @@ export async function createApp({ env = process.env, database } = {}) {
             url.searchParams.get("user") !== user.id
           )
             throw new ApiError(404, "Profil fotoğrafı bulunamadı.");
-          return await users.avatarContent(user, url.searchParams.get("size") || "");
+          return await users.avatarContent(user, url.searchParams.get("size") || "", request);
         }
         if (method === "PUT" || method === "DELETE")
           return json({

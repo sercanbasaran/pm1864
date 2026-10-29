@@ -1,6 +1,7 @@
+import {imageResponse} from "./image-response.js";
 import {createDerivatives} from "./image-derivatives.js";
 import {imageProfiles} from "../src/image-sizes.js";
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { audit } from "./audit.js";
 import { ApiError } from "./errors.js";
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -214,17 +215,8 @@ export function createMediaService(db) {
     if(!row)row=(await db.query("SELECT mime_type,data FROM app_media WHERE id=?",[id])).rows[0];
     if(!row)throw new ApiError(404,"Medya bulunamadı.");
     const bytes=Buffer.from(row.data,'base64');
-    const etag='"'+createHash('sha256').update(bytes).digest('hex')+'"';
-    const headers={
-      'Content-Type':derivative?'image/webp':row.mime_type,
-      'Cache-Control':derivative?'private, max-age=0, must-revalidate':'private, no-store',
-      'X-Content-Type-Options':'nosniff',
-      'Content-Security-Policy':"default-src 'none'; sandbox",
-      'ETag':etag,
-      'Vary':'Cookie',
-    };
-    if(derivative && request?.headers.get('if-none-match')===etag)return new Response(null,{status:304,headers});
-    return new Response(bytes,{headers});
+    return imageResponse(bytes,derivative?'image/webp':row.mime_type,request);
+
   }
   return { list, upload, rename, remove, content, backfill };
 

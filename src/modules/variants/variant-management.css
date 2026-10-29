@@ -131,7 +131,7 @@
 .variant-module .variant-view-hidden { display:none !important; }
 .variant-module .variant-mobile-cards.variant-view-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem; }
 .variant-module .variant-view-grid article { padding:1rem; border:1px solid var(--sl-color-neutral-200); border-radius:.5rem; min-width:0; overflow-wrap:anywhere; }
-.variant-module .variant-view-grid article > div { display:flex; justify-content:space-between; gap:.5rem; }
+
 .variant-module .variant-view-grid dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; }
 .variant-module .variant-view-grid dt { font-size:.8rem; color:var(--sl-color-neutral-600); }
 .variant-module .variant-view-grid dd { margin:.25rem 0 0; }
@@ -175,7 +175,7 @@
 .variant-module .variant-view-grid .variant-card-meta,
 .variant-module .variant-view-grid .variant-card-type { color: var(--sl-color-neutral-600); }
 .variant-module .variant-view-grid dl { margin: .5rem 0; }
-.variant-module .variant-view-grid .variant-card-actions { display: flex; flex-direction: column; gap: .5rem; margin-top: auto; }
+
 .variant-module .variant-card-actions sl-button,
 .variant-module .variant-card-actions sl-button::part(base) { width: 100%; }
 .variant-module .variant-manager .empty { text-align: center; padding: 2rem 1rem; }
@@ -208,3 +208,29 @@ sl-dialog.variant-bulk-dialog { --width: calc(100vw - 2rem); }
 .bulk-variant-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
 @media (max-width: 1000px) { .bulk-variant-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .bulk-variant-grid { grid-template-columns: 1fr; } .bulk-variant-actions > sl-button { flex: 1; } }
+
+/* Tile cards share image, identity, facts, price and action positions. */
+.variant-module .variant-view-grid { align-items: stretch; }
+.variant-module .variant-view-grid .variant-summary-card { display: flex; flex-direction: column; gap: .75rem; padding: 1rem; background: var(--sl-color-neutral-0); }
+.variant-card-image-link { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--sl-border-radius-medium); overflow: hidden; background: var(--sl-color-neutral-50); cursor: pointer; }
+.variant-card-image-link:focus-visible { outline: 2px solid var(--sl-color-primary-600); outline-offset: 3px; }
+.variant-card-image-link .product-image { display: flex; width: 100%; height: 220px; }
+.variant-card-image-link .product-image img { object-fit: cover; object-position: center; }
+.variant-card-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.variant-card-tags sl-tag { max-width: 100%; }
+.variant-card-heading { display: flex; align-items: flex-start; gap: .75rem; }
+.variant-card-heading h3 { flex: 1; min-width: 0; margin: 0; font-size: 1rem; line-height: 1.4; min-height: 2.8em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.variant-card-heading sl-badge { flex: none; align-self: flex-start; }
+.variant-module .variant-view-grid .variant-card-product { font-size: .8rem; color: var(--sl-color-neutral-600); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.variant-module .variant-view-grid .variant-card-facts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .75rem; margin: 0; }
+.variant-card-facts dd { font-size: .875rem; font-weight: 600; }
+.variant-card-facts .variant-card-packaging { grid-column: 1 / -1; }
+.variant-card-packaging dd { min-height: 2.8em; line-height: 1.4; }
+.variant-card-price { display: flex; flex-direction: column; gap: .25rem; padding-top: .75rem; margin-top: auto; border-top: 1px solid var(--sl-color-neutral-200); }
+.variant-card-price > strong { font-size: 1.2rem; }
+.variant-card-price > small { font-size: .8rem; color: var(--sl-color-neutral-600); }
+.variant-module .variant-view-grid .variant-card-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; }
+.variant-card-actions sl-button { min-width: 0; }
+.variant-card-actions .control-content { gap: .3rem; }
+
+.variant-module .variant-mobile-cards.variant-view-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,280px),1fr)); }

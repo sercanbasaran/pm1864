@@ -189,7 +189,7 @@ export const Textarea = forwardRef(function Textarea(
 const encode = (value) =>
   value === "" ? "__empty__" : encodeURIComponent(String(value));
 export const Select = forwardRef(function Select(
-  { onChange, children, value = "", className = "", label, ...props },
+  { onChange, children, value = "", className = "", label, hideLabel = false, ...props },
   ref,
 ) {
   const control = useControl(ref, props["aria-label"] || label, props.disabled),
@@ -207,7 +207,7 @@ export const Select = forwardRef(function Select(
       {...props}
       {...control}
       className={className}
-      label={label || props["aria-label"]}
+      label={hideLabel ? undefined : label || props["aria-label"]}
       value={
         props.multiple
           ? (Array.isArray(value) ? value : value ? [value] : []).map(encode)

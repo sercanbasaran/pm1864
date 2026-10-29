@@ -23,7 +23,7 @@
 .variant-photo-options img {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .variant-editor-context { margin: 0 0 .5rem; color: var(--sl-color-neutral-700); }
@@ -99,7 +99,7 @@
 .variant-picker-identity .product-image,
 .variant-selected-identity .product-image { width:64px; height:64px; aspect-ratio:1; flex:0 0 64px; border-radius:.375rem; overflow:hidden; }
 .variant-picker-identity .product-image img,
-.variant-selected-identity .product-image img { width:100%; height:100%; object-fit:contain; }
+.variant-selected-identity .product-image img { width:100%; height:100%; object-fit:cover; }
 .variant-product-transfer .image-placeholder small { display:none; }
 .product-wizard-navigation { border: 0; padding: 0; }
 .product-wizard-review h3 { margin: 0 0 .5rem; }
