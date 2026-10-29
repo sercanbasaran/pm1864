@@ -5,7 +5,7 @@ import { hashPassword } from "../server/security.js";
 const password = "Category-page-test-1864",
   hash = await hashPassword(password);
 const image =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6B9sAAAAASUVORK5CYII=";
+  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWP4v4/rPwgzwBgAZVILGYGCVCcAAAAASUVORK5CYII=";
 test("category pages default to private, allow authenticated catalog users, publish only safe fields and revoke image access", async () => {
   const app = await createApp({
     env: {

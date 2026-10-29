@@ -1,3 +1,4 @@
+import ProductIdentity from "../../components/ui/ProductIdentity.jsx";
 import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
 import { money } from "../../catalog-tools.js";
@@ -421,18 +422,10 @@ export default function ProductManagement({
                     </TableCell>
                     <TableCell>
                       <SlTooltip placement="top" content={[p.name, categoryPath(categoryOf(p, categories), categories), p.productCode ? `Kod: ${p.productCode}` : "", p.unitPricing?.price ? `Birim fiyat: ${money(p.unitPricing.price)} / ${p.unitPricing.unit}` : "", `${p.variants.length} varyant`, p.status].filter(Boolean).join(" · ")}>
-                      <Button
-                        className="product-cell"
-                        onClick={() => onEdit(p)}
-                      >
-                        <ProductImage product={p} />
-                        <div>
-                          <strong><TableText value={p.name} /></strong>
-                          <small>
-                            {p.productCode} · {p.variants.length} varyant
-                          </small>
-                        </div>
-                      </Button>
+                      <ProductIdentity product={p} onClick={() => onEdit(p)}>
+                        <strong><TableText value={p.name} /></strong>
+                        <small>{p.productCode} · {p.variants.length} varyant</small>
+                      </ProductIdentity>
                       </SlTooltip>
                     </TableCell>
                     <TableCell>
@@ -491,7 +484,7 @@ export default function ProductManagement({
               <Card className="product-summary-card" key={p.id}>
                 {(price || write) && <div className="product-grid-selection"><Input type="checkbox" aria-label={p.name + " seç"} checked={selected.includes(p.id)} onChange={() => toggle(p.id)} /></div>}
                 <button type="button" className="product-summary-image-link" aria-label={p.name + " detayını aç"} onClick={() => onEdit(p)}>
-                  <ProductImage product={p} />
+                  <ProductImage product={p} size="tile" />
                 </button>
                 <StatusBadge status={p.status} />
                 <div className="product-summary-meta"><SlTag size="small">{p.productCode}</SlTag><SlTag size="small">{p.variants.length} varyant</SlTag></div>

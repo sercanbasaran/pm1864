@@ -1,0 +1,79 @@
+/* Shoelace's label is inside its shadow root; host-only flex rules cannot align it. */
+sl-button.product-cell {
+  display: block;
+  width: 18rem;
+  max-width: 100%;
+  border: 0;
+  border-radius: var(--sl-border-radius-medium);
+}
+sl-button.product-cell::part(base) {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-height: 88px;
+  padding: 11px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--sl-color-neutral-200);
+  border-radius: var(--sl-border-radius-medium);
+  background: var(--sl-color-neutral-0);
+  text-align: start;
+}
+sl-button.product-cell:hover::part(base) { background: var(--sl-color-neutral-50); }
+sl-button.product-cell::part(label) {
+  display: block;
+  flex: 1 1 0%;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+sl-button.product-cell .control-content {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  justify-content: stretch;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  text-align: start;
+}
+sl-button.product-cell .product-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  overflow: hidden;
+  border-radius: var(--sl-border-radius-medium);
+}
+sl-button.product-cell .product-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: inherit;
+}
+sl-button.product-cell .product-cell-text {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+}
+sl-button.product-cell .product-cell-text strong,
+sl-button.product-cell .product-cell-text small {
+  display: block;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+sl-button.product-cell .image-placeholder { width: 100%; height: 100%; align-content: center; }
+sl-button.product-cell .image-placeholder small { display: none; }

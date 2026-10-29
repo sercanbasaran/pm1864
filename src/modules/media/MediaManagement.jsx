@@ -1,3 +1,4 @@
+import {imageUrl} from "../../image-sizes.js";
 import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Card from "../../components/ui/Card.jsx";
@@ -43,6 +44,24 @@ export default function MediaManagement({ user }) {
   useEffect(() => {
     load();
   }, []);
+  const [thumbnailProgress,setThumbnailProgress] = useState('');
+  const stopThumbnails = useRef(false);
+  useEffect(()=>()=>{stopThumbnails.current=true;},[]);
+  async function buildThumbnails() {
+    if(busy || !write)return;
+    stopThumbnails.current=false;setBusy(true);setError('');
+    let cursor='',processed=0,failed=[];
+    try {
+      while(!stopThumbnails.current) {
+        const result=await request('/media/thumbnails',{method:'POST',body:{cursor}});
+        processed+=result.processed;failed.push(...result.failures);cursor=result.cursor;
+        if(stopThumbnails.current)break;
+        setThumbnailProgress(`${processed} görsel hazırlandı${failed.length ? ` · ${failed.length} görsel işlenemedi` : ''}`);
+        if(result.done) {notify('Thumbnail hazırlama tamamlandı.');break;}
+      }
+      if(failed.length)setError(`İşlenemeyen görseller: ${failed.map(item=>item.name).join(', ')}. Orijinaller korundu.`);
+    }catch(e){setError(e.message);}finally{setBusy(false);}
+  }
   async function uploadFiles(files) {
     if (!files.length || busy || !write) return;
     setBusy(true);
@@ -123,6 +142,8 @@ export default function MediaManagement({ user }) {
             <ArrowsClockwise size={16} />
             Yenile
           </Button>
+          {write && <Button type="button" disabled={busy || loading} onClick={buildThumbnails}>Eski görselleri optimize et</Button>}
+          {write && busy && thumbnailProgress && <Button type="button" onClick={()=>{stopThumbnails.current=true;setThumbnailProgress("Mevcut grup tamamlanınca durdurulacak.");}}>Durdur</Button>}
           {write && (
             <>
               <Input
@@ -140,6 +161,7 @@ export default function MediaManagement({ user }) {
           )}
         </div>
       </div>
+      {thumbnailProgress && <p role="status">{thumbnailProgress}</p>}
       {error && !dialog && (
         <SlAlert open variant="danger" className="form-error">
           {error}
@@ -176,7 +198,7 @@ export default function MediaManagement({ user }) {
                   rel="noreferrer"
                   aria-label={a.name + " görselini aç"}
                 >
-                  <img src={a.url} alt={a.name} loading="lazy" />
+                  <img src={imageUrl(a.url,"tile")} alt={a.name} width={480} height={480} loading="lazy" decoding="async" />
                 </a>
                 <strong title={a.name}>{a.name}</strong>
                 <small>

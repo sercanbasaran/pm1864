@@ -109,6 +109,7 @@ export async function migrate(db, seed) {
     await tx.query(
       "CREATE TABLE IF NOT EXISTS app_media (id TEXT PRIMARY KEY,name TEXT NOT NULL,mime_type TEXT NOT NULL,size INTEGER NOT NULL,data TEXT NOT NULL,version INTEGER NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)",
     );
+    await tx.query("CREATE TABLE IF NOT EXISTS app_media_derivatives (media_id TEXT NOT NULL REFERENCES app_media(id) ON DELETE CASCADE, profile TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, size INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY(media_id,profile))");
     await tx.query(
       "CREATE TABLE IF NOT EXISTS app_users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT NOT NULL, password_hash TEXT NOT NULL, active INTEGER NOT NULL, must_change_password INTEGER NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
     );
@@ -141,6 +142,7 @@ export async function migrate(db, seed) {
     await tx.query(
       "CREATE TABLE IF NOT EXISTS app_user_avatars (user_id TEXT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,mime_type TEXT NOT NULL,data TEXT NOT NULL)",
     );
+    await tx.query("CREATE TABLE IF NOT EXISTS app_user_avatar_thumbnails (user_id TEXT PRIMARY KEY REFERENCES app_user_avatars(user_id) ON DELETE CASCADE, version INTEGER NOT NULL, data TEXT NOT NULL)");
     await tx.query(
       "INSERT INTO app_catalog (id, revision, document) VALUES (1, 0, ?) ON CONFLICT (id) DO NOTHING",
       [JSON.stringify({ ...seed, schemaVersion: 2 })],

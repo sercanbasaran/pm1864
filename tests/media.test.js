@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createApp} from '../server/app.js';
 import {hashPassword} from '../server/security.js';
-const password='Media-test-only-1864',hash=await hashPassword(password),data='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6B9sAAAAASUVORK5CYII=';
+const password='Media-test-only-1864',hash=await hashPassword(password),data='iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWP4v4/rPwgzwBgAZVILGYGCVCcAAAAASUVORK5CYII=';
 async function fixture(){const app=await createApp({env:{SQLITE_PATH:':memory:',ADMIN_EMAIL:'media@example.test',ADMIN_PASSWORD_HASH:hash}});let cookie='';async function raw(path,method='GET',body){const r=await app.handle(new Request('http://test.local/api'+path,{method,headers:{origin:'http://test.local',cookie,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}));if(r.headers.has('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return r}async function call(...args){const r=await raw(...args);return {status:r.status,...await r.json()}}await call('/login','POST',{email:'media@example.test',password});return {app,call,raw,clear:()=>cookie=''}}
 const upload=f=>f.call('/media','POST',{name:'baklava.png',mimeType:'image/png',data});
 test('authenticated media upload, metadata, raw content and rename persist without exposing file data in catalog/list',async()=>{

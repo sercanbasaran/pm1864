@@ -4,7 +4,7 @@ import {createApp} from '../server/app.js';
 import {hashPassword} from '../server/security.js';
 import {migrate} from '../server/db.js';
 import {seedCatalog} from '../server/catalog-service.js';
-const password='Avatar-test-only-1864',hash=await hashPassword(password),data='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6B9sAAAAASUVORK5CYII=';
+const password='Avatar-test-only-1864',hash=await hashPassword(password),data='iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWP4v4/rPwgzwBgAZVILGYGCVCcAAAAASUVORK5CYII=';
 function client(app){let cookie='';async function raw(path,method='GET',body,origin='https://test.local'){const r=await app.handle(new Request('https://test.local/api'+path,{method,headers:{origin,cookie,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}));if(r.headers.has('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return r}async function call(...args){const r=await raw(...args);return {status:r.status,...await r.json()}}return {raw,call}}
 async function fixture(){const app=await createApp({env:{SQLITE_PATH:':memory:',ADMIN_EMAIL:'admin@example.test',ADMIN_PASSWORD_HASH:hash}}),admin=client(app);const {user}=await admin.call('/login','POST',{email:'admin@example.test',password});return {app,admin,user}}
 test('profile photo upload, replacement and removal persist without exposing image data or changing product media',async()=>{

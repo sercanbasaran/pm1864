@@ -131,17 +131,6 @@
   justify-content: flex-end;
   font-size: 0.875rem;
 }
-.product-module .product-cell::part(base) {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-.product-module .product-cell:hover::part(base) {
-  background: var(--sl-color-neutral-50);
-}
-.product-module .product-cell::part(label) {
-  padding-inline: 0;
-}
 @media (max-width: 767px) {
   .product-module .product-list-footer .records-pagination {
     flex-basis: 100%;

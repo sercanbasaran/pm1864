@@ -16,6 +16,10 @@ test("ambalaj tanımları listelenir, yönetilir ve kullanılan kutu korunur",as
  r=await call(`/packaging/${box.id}`,'PUT',{expectedRevision:catalog.revision,...box,allowedCategoryIds:['missing']});assert.equal(r.status,422);
  r=await call(`/packaging/${box.id}`,'PUT',{expectedRevision:catalog.revision,...box,allowedCategoryIds:[p.categoryId]});assert.equal(r.status,200);catalog=r.catalog;box.allowedCategoryIds=[p.categoryId];
  r=await call(`/products/${p.id}`,'PUT',{expectedRevision:catalog.revision,product:{...p,variants:[{size:'Kutu',typeId:type.id,sourceProductId:p.id,quantity:1,packagingId:box.id,packaging:'Metal kutu',consumables:[],images:[],price:100,weight:40}]}});assert.equal(r.status,200);catalog=r.catalog;assert.equal(catalog.products.find(x=>x.id===p.id).variants[0].packagingName,'Özel kutu');
+ const savedVariantProduct=catalog.products.find(x=>x.id===p.id);
+ r=await call(`/packaging/${box.id}`,'PUT',{expectedRevision:catalog.revision,...box,excludedProductIds:[p.id]});assert.equal(r.status,200);catalog=r.catalog;assert.deepEqual(catalog.packagingItems.find(x=>x.id===box.id).excludedProductIds,[p.id]);
+ r=await call(`/products/${p.id}`,'PUT',{expectedRevision:catalog.revision,product:savedVariantProduct});assert.equal(r.status,422);
+ r=await call(`/packaging/${box.id}`,'PUT',{expectedRevision:catalog.revision,...box,excludedProductIds:[]});assert.equal(r.status,200);catalog=r.catalog;
  r=await call(`/packaging/${box.id}`,'DELETE',{expectedRevision:catalog.revision});assert.equal(r.status,422);
  r=await call(`/packaging/${box.id}`,'PUT',{expectedRevision:catalog.revision,...box,active:false});assert.equal(r.status,200);catalog=r.catalog;
  const saved=catalog.products.find(x=>x.id===p.id);r=await call(`/products/${p.id}`,'PUT',{expectedRevision:catalog.revision,product:{...saved,description:'Güncellendi'}});assert.equal(r.status,200);
@@ -28,7 +32,7 @@ test('packaging images persist, reject missing media and protect attached assets
  const call=async(path,method='GET',body)=>{const r=await app.handle(new Request('https://test.example/api'+path,{method,headers:{origin:'https://test.example',cookie,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}));if(r.headers.has('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return {status:r.status,...await r.json()};};
  try {
  await call('/login','POST',{email,password});
- const upload=await call('/media','POST',{name:'box.png',mimeType:'image/png',data:Buffer.from([137,80,78,71,13,10,26,10]).toString('base64')});assert.equal(upload.status,201);
+ const upload=await call('/media','POST',{name:'box.png',mimeType:'image/png',data:"iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWP4v4/rPwgzwBgAZVILGYGCVCcAAAAASUVORK5CYII="});assert.equal(upload.status,201);
  let catalog=(await call('/catalog')).catalog;
  const body={name:'Görselli kutu',material:'Metal',mediaId:upload.asset.id,imageUrl:'https://untrusted.example/image'};
  let result=await call('/packaging','POST',{...body,expectedRevision:catalog.revision});assert.equal(result.status,200);catalog=result.catalog;

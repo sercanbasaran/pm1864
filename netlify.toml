@@ -8,7 +8,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["pg", "postgres"]
+  external_node_modules = ["pg", "postgres", "sharp"]
 
 [[headers]]
   for = "/api/*"
@@ -37,3 +37,6 @@
   from = "/v/*"
   to = "/index.html"
   status = 200
+
+[images]
+  remote_images = ["https://hm1864[.]netlify[.]app/.*"]

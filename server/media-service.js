@@ -1,4 +1,6 @@
-import { randomUUID } from "node:crypto";
+import {createDerivatives} from "./image-derivatives.js";
+import {imageProfiles} from "../src/image-sizes.js";
+import { createHash, randomUUID } from "node:crypto";
 import { audit } from "./audit.js";
 import { ApiError } from "./errors.js";
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -48,6 +50,32 @@ export function decodeImageUpload(body) {
   return data;
 }
 export function createMediaService(db) {
+  const pending = new Map();
+  async function storeDerivatives(tx,id,variants) {
+    for(const v of variants)await tx.query("INSERT INTO app_media_derivatives (media_id,profile,width,height,size,data) VALUES (?,?,?,?,?,?) ON CONFLICT(media_id,profile) DO NOTHING",[id,v.profile,v.width,v.height,v.size,v.data]);
+  }
+  async function ensureDerivatives(id) {
+    if(pending.has(id))return pending.get(id);
+    const job=(async()=>{
+      const row=(await db.query("SELECT data FROM app_media WHERE id=?",[id])).rows[0];
+      if(!row)throw new ApiError(404,"Görsel bulunamadı.");
+      let variants;
+      try { variants=await createDerivatives(Buffer.from(row.data,'base64')); }
+      catch {throw new ApiError(422,"Görsel çözümlenemedi veya 40 megapiksel sınırını aşıyor.");}
+      await db.transaction(async tx=>{if((await tx.query("SELECT id FROM app_media WHERE id=?",[id])).rows.length)await storeDerivatives(tx,id,variants);});
+    })();
+    pending.set(id,job);
+    try {await job;}finally{pending.delete(id);}
+  }
+  async function backfill(body) {
+    const cursor=body.cursor || '';
+    if(typeof cursor!=='string'||cursor.length>100||!/^[-a-zA-Z0-9]*$/.test(cursor))throw new ApiError(422,"Geçersiz görsel sırası.");
+    const rows=(await db.query("SELECT id,name FROM app_media WHERE id>? AND (SELECT COUNT(*) FROM app_media_derivatives WHERE media_id=app_media.id)<3 ORDER BY id LIMIT 6",[cursor])).rows;
+    const batch=rows.slice(0,5), failures=[];
+    for(const row of batch)try {await ensureDerivatives(row.id);}catch {failures.push({id:row.id,name:row.name});}
+    return {processed:batch.length-failures.length,failures,cursor:batch.at(-1)?.id || cursor,done:rows.length<=5};
+  }
+
   const lock = async (tx) => {
     const row = (
       await tx.query(
@@ -79,6 +107,9 @@ export function createMediaService(db) {
     if (!name || name.length > 160)
       throw new ApiError(422, "Dosya adı 1–160 karakter olmalıdır.");
     const data = decodeImageUpload(body);
+    let variants;
+    try { variants=await createDerivatives(data); }
+    catch {throw new ApiError(422,"Görsel çözümlenemedi veya 40 megapiksel sınırını aşıyor. Başka bir görsel yükleyin.");}
     return db.transaction(async (tx) => {
       const context = await lock(tx),
         id = randomUUID(),
@@ -87,6 +118,7 @@ export function createMediaService(db) {
         "INSERT INTO app_media (id,name,mime_type,size,data,version,created_at,updated_at) VALUES (?,?,?,?,?,1,?,?)",
         [id, name, mime, data.length, body.data, now, now],
       );
+      await storeDerivatives(tx,id,variants);
       await record(tx, context, "Medya yüklendi", name, actor);
       return {
         asset: {
@@ -167,19 +199,33 @@ export function createMediaService(db) {
       return { ok: true };
     });
   }
-  async function content(id) {
-    const row = (
-      await db.query("SELECT mime_type,data FROM app_media WHERE id=?", [id])
-    ).rows[0];
-    if (!row) throw new ApiError(404, "Medya bulunamadı.");
-    return new Response(Buffer.from(row.data, "base64"), {
-      headers: {
-        "Content-Type": row.mime_type,
-        "Cache-Control": "private, no-store",
-        "X-Content-Type-Options": "nosniff",
-        "Content-Security-Policy": "default-src 'none'; sandbox",
-      },
-    });
+  async function content(id, profile = '', request) {
+    if(profile && !Object.hasOwn(imageProfiles,profile))throw new ApiError(422,"Geçersiz görsel boyutu.");
+    let row;
+    if(profile) {
+      row=(await db.query("SELECT data FROM app_media_derivatives WHERE media_id=? AND profile=?",[id,profile])).rows[0];
+      if(!row) {
+        try {await ensureDerivatives(id);}
+        catch(e) {if(e.status===404)throw e; /* A damaged legacy original remains available. */}
+        row=(await db.query("SELECT data FROM app_media_derivatives WHERE media_id=? AND profile=?",[id,profile])).rows[0];
+      }
+    }
+    const derivative=!!row;
+    if(!row)row=(await db.query("SELECT mime_type,data FROM app_media WHERE id=?",[id])).rows[0];
+    if(!row)throw new ApiError(404,"Medya bulunamadı.");
+    const bytes=Buffer.from(row.data,'base64');
+    const etag='"'+createHash('sha256').update(bytes).digest('hex')+'"';
+    const headers={
+      'Content-Type':derivative?'image/webp':row.mime_type,
+      'Cache-Control':derivative?'private, max-age=0, must-revalidate':'private, no-store',
+      'X-Content-Type-Options':'nosniff',
+      'Content-Security-Policy':"default-src 'none'; sandbox",
+      'ETag':etag,
+      'Vary':'Cookie',
+    };
+    if(derivative && request?.headers.get('if-none-match')===etag)return new Response(null,{status:304,headers});
+    return new Response(bytes,{headers});
   }
-  return { list, upload, rename, remove, content };
+  return { list, upload, rename, remove, content, backfill };
+
 }

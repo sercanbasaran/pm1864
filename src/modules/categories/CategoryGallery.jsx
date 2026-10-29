@@ -1,3 +1,4 @@
+import {imageUrl} from "../../image-sizes.js";
 import { Plus } from "@phosphor-icons/react";
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui/Controls.jsx";
@@ -109,7 +110,8 @@ export default function CategoryGallery({
             {images.map((image, n) => (
               <img
                 key={image.id}
-                src={image.url || `/api/media/${image.id}/content`}
+                src={imageUrl(image.url || `/api/media/${image.id}/content`, "detail")}
+                width={1200} height={1200} loading={n === current ? "eager" : "lazy"} decoding="async"
                 alt={`${label} görseli ${n + 1}`}
               />
             ))}

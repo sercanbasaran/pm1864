@@ -97,7 +97,7 @@ export async function createApp({ env = process.env, database } = {}) {
           allowed,
           categoryRoute[2],
         );
-        if (categoryRoute[2]) return media.content(page);
+        if (categoryRoute[2]) return media.content(page, url.searchParams.get("size") || "", request);
         return json({ category: page });
       }
       const productPageRoute = route.match(
@@ -112,7 +112,7 @@ export async function createApp({ env = process.env, database } = {}) {
           allowed,
           productPageRoute[2],
         );
-        if (productPageRoute[2]) return media.content(page);
+        if (productPageRoute[2]) return media.content(page, url.searchParams.get("size") || "", request);
         return json({ product: page });
       }
       const variantPageRoute = route.match(/^\/api\/variant-pages\/([a-zA-Z0-9-]+)(?:\/images\/([a-zA-Z0-9-]+))?$/);
@@ -120,7 +120,7 @@ export async function createApp({ env = process.env, database } = {}) {
         const user = await session(request);
         const allowed = !!user && !user.mustChangePassword && can(user, "catalog.read");
         const page = await service.variantPage(variantPageRoute[1], allowed, variantPageRoute[2]);
-        if (variantPageRoute[2]) return media.content(page);
+        if (variantPageRoute[2]) return media.content(page, url.searchParams.get("size") || "", request);
         return json({ product: page });
       }
       const publicRoute = route.match(
@@ -132,7 +132,7 @@ export async function createApp({ env = process.env, database } = {}) {
         const product = await service.publishedProduct(publicRoute[1]);
         if (!product.mediaId)
           throw new ApiError(404, "Görsel bulunamadı.", "NOT_FOUND");
-        return await media.content(product.mediaId);
+        return await media.content(product.mediaId, url.searchParams.get("size") || "", request);
       }
       if (route.startsWith("/api/public/") && method === "GET")
         throw new ApiError(
@@ -220,6 +220,10 @@ export async function createApp({ env = process.env, database } = {}) {
         requirePermission("users.manage");
         return json({ user: await users.save(body, null, user) }, 201);
       }
+      if (route === "/api/media/thumbnails" && method === "POST") {
+        requirePermission("media.write");
+        return json(await media.backfill(body));
+      }
       if (route === "/api/media" && method === "GET") {
         requirePermission("catalog.read");
         return json(await media.list());
@@ -235,7 +239,7 @@ export async function createApp({ env = process.env, database } = {}) {
         const id = assetRoute[1];
         if (assetRoute[2] && method === "GET") {
           requirePermission("catalog.read");
-          return await media.content(id);
+          return await media.content(id, url.searchParams.get("size") || "", request);
         }
         if (!assetRoute[2] && method === "PATCH") {
           requirePermission("media.write");
@@ -274,7 +278,7 @@ export async function createApp({ env = process.env, database } = {}) {
             url.searchParams.get("user") !== user.id
           )
             throw new ApiError(404, "Profil fotoğrafı bulunamadı.");
-          return await users.avatarContent(user);
+          return await users.avatarContent(user, url.searchParams.get("size") || "");
         }
         if (method === "PUT" || method === "DELETE")
           return json({

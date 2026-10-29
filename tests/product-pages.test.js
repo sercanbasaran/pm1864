@@ -5,7 +5,7 @@ import { hashPassword } from "../server/security.js";
 const password = "Product-gallery-test-1864",
   hash = await hashPassword(password);
 const image =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6B9sAAAAASUVORK5CYII=";
+  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWP4v4/rPwgzwBgAZVILGYGCVCcAAAAASUVORK5CYII=";
 test("product gallery persists, maintains its cover, protects media and gates pages and every image by publication", async () => {
   const app = await createApp({
     env: {

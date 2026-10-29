@@ -1,3 +1,4 @@
+import {createDerivatives} from "./image-derivatives.js";
 import { decodeImageUpload } from "./media-service.js";
 import { randomUUID } from "node:crypto";
 import { roles, roleFor, can } from "../src/permissions.js";
@@ -321,7 +322,12 @@ export function createUserService(db, env) {
     });
   }
   async function avatar(body, actor, remove = false) {
-    if (!remove) decodeImageUpload(body);
+    let thumbnail;
+    if (!remove) {
+      const data=decodeImageUpload(body);
+      try {thumbnail=(await createDerivatives(data,['thumb']))[0];}
+      catch {throw new ApiError(422,"Profil görseli çözümlenemedi veya 40 megapiksel sınırını aşıyor.");}
+    }
     return db.transaction(async (tx) => {
       await lock(tx);
       const old = (
@@ -350,6 +356,7 @@ export function createUserService(db, env) {
         "UPDATE app_users SET avatar_version=?,version=?,updated_at=? WHERE id=?",
         [remove ? 0 : version, version, new Date().toISOString(), old.id],
       );
+      if (!remove) await tx.query("INSERT INTO app_user_avatar_thumbnails (user_id,version,data) VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE SET version=excluded.version,data=excluded.data",[old.id,version,thumbnail.data]);
       await record(
         tx,
         remove ? "Profil fotoğrafı kaldırıldı" : "Profil fotoğrafı güncellendi",
@@ -362,7 +369,20 @@ export function createUserService(db, env) {
       );
     });
   }
-  async function avatarContent(actor) {
+  async function avatarContent(actor, size = '') {
+    if (size && size !== 'thumb') throw new ApiError(422,"Geçersiz profil görseli boyutu.");
+    if (size === 'thumb') {
+      let cached=(await db.query("SELECT t.data FROM app_user_avatar_thumbnails t JOIN app_users u ON u.id=t.user_id WHERE t.user_id=? AND t.version=u.avatar_version",[actor.id])).rows[0];
+      if(!cached) {
+        const original=(await db.query("SELECT a.data,u.avatar_version FROM app_user_avatars a JOIN app_users u ON u.id=a.user_id WHERE a.user_id=?",[actor.id])).rows[0];
+        if(original)try {
+          const derivative=(await createDerivatives(Buffer.from(original.data,'base64'),['thumb']))[0];
+          await db.query("INSERT INTO app_user_avatar_thumbnails (user_id,version,data) SELECT id,?,? FROM app_users WHERE id=? AND avatar_version=? ON CONFLICT(user_id) DO UPDATE SET version=excluded.version,data=excluded.data",[original.avatar_version,derivative.data,actor.id,original.avatar_version]);
+          cached=derivative;
+        }catch {}
+      }
+      if(cached)return new Response(Buffer.from(cached.data,'base64'),{headers:{'Content-Type':'image/webp','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
+    }
     const row = (
       await db.query(
         "SELECT mime_type,data FROM app_user_avatars WHERE user_id=?",

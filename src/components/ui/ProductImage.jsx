@@ -1,13 +1,16 @@
+import {imageUrl,imageProfiles} from "../../image-sizes.js";
 import React, { useState, useEffect } from "react";
 import { Package } from "@phosphor-icons/react";
-export default function ProductImage({ product: p }) {
+export default function ProductImage({ product: p, size = "thumb", eager = false }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [p.customImage]);
   return (
     <div className="product-image">
       {p.customImage && !failed ? (
         <img
-          src={p.customImage}
+          src={imageUrl(p.customImage,size)}
+          width={imageProfiles[size]} height={imageProfiles[size]}
+          loading={eager ? "eager" : "lazy"} decoding="async"
           alt={p.name || "Ürün görseli"}
           onError={() => setFailed(true)}
         />

@@ -1,3 +1,4 @@
+import ProductIdentity from "../../components/ui/ProductIdentity.jsx";
 import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
 import FormatMenu from "../transfer/FormatMenu.jsx";
@@ -16,7 +17,6 @@ import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import Modal from "../../components/ui/Modal.jsx";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Card from "../../components/ui/Card.jsx";
-import ProductImage from "../../components/ui/ProductImage.jsx";
 import {
   Button,
   Input,
@@ -299,10 +299,9 @@ export default function VariantManager({
                     <TableRow key={v.id}>
                       <TableCell>
                         <SlTooltip placement="top" content={[v.size, `Tür: ${variantTypeName(v, variantTypes)}`, members.length ? `Ürünler: ${members.map(item => item.name).join(", ")}` : "", v.weight ? `≈ ${v.weight} g` : "", `Fiyat: ${money(v.price)}`, v.active !== false ? "Aktif" : "Pasif"].filter(Boolean).join(" · ")}>
-                        <Button type="button" className="product-cell variant-identity" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
-                          <ProductImage product={{ name: v.size, customImage: v.images?.[0]?.url || "" }} />
-                          <div className="variant-cell-main"><strong><TableText value={v.size} /></strong><small><TableText value={`${v.sku || "—"} · ${variantTypeName(v, variantTypes)}`} /></small></div>
-                        </Button>
+                        <ProductIdentity product={{name:v.size,customImage:v.images?.[0]?.url || ""}} className="variant-identity" textClassName="variant-cell-main" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
+                          <strong><TableText value={v.size} /></strong><small><TableText value={`${v.sku || "—"} · ${variantTypeName(v, variantTypes)}`} /></small>
+                        </ProductIdentity>
                         </SlTooltip>
                       </TableCell>
                       <TableCell>

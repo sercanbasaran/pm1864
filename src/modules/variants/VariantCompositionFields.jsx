@@ -1,3 +1,4 @@
+import {imageUrl} from "../../image-sizes.js";
 import PackagingSelect from "../packaging/PackagingSelect.jsx";
 import {packagingAllowsProduct, packagingApprovalIssue} from "../packaging/packaging-approval.js";
 import "./variant-composition.css";
@@ -468,7 +469,7 @@ export default function VariantCompositionFields({
               )
               .map((image) => (
                 <label key={image.id}>
-                  <img src={image.url} alt="Ürün görseli" />
+                  <img src={imageUrl(image.url,"thumb")} alt="Ürün görseli" width={100} height={100} loading="lazy" decoding="async" />
                   <input
                     type="checkbox"
                     checked={(v.images || []).some((x) => x.id === image.id)}

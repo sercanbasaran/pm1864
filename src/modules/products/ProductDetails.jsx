@@ -60,7 +60,7 @@ export default function ProductDetails({ product: source, localizationUrl, navig
               editable={false}
             />
           ) : (
-            <ProductImage product={product} />
+            <ProductImage product={product} size="detail" eager />
           )}
           <div>
             <small className="product-detail-category">

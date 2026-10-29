@@ -36,7 +36,7 @@ test('packaging image drop uploads, refreshes revision and saves the image refer
  const name=[...document.querySelectorAll('sl-input')].find(i=>i.label==='Ambalaj adı');name.value='Görselli kutu';fireEvent(name,new CustomEvent('sl-input',{bubbles:true}));
  fireEvent.drop(document.querySelector('.packaging-image-upload'),{dataTransfer:{types:['Files'],files:[new File(['image'],'box.png',{type:'image/png'})]}});
  await new Promise(resolve=>setTimeout(resolve,150));await settle();
- expect(document.querySelector('.packaging-image-upload img')?.getAttribute('src')).toBe(asset.url);
+ expect(document.querySelector('.packaging-image-upload img')?.getAttribute('src')).toBe(asset.url+'?size=tile');
  fireEvent.submit(document.querySelector('.packaging-form'));await settle();
  const saved=calls.find(c=>c.url==='/api/packaging');expect(saved.body.mediaId).toBe(asset.id);expect(saved.body.expectedRevision).toBe(2);
  }finally{fetchMock.mockRestore();}
@@ -57,9 +57,9 @@ test('box selection shows uploaded photos and category approval enables its prod
  const boxes=defaultPackagingItems().map(box=>({...box,mediaId:'box-image',allowedCategoryIds:['a']}));
  render(<CatalogProvider snapshot={{...snapshot,packagingItems:boxes}} notify={vi.fn()}><VariantCreatePage onClose={vi.fn()}/></CatalogProvider>);await settle();
  const type=[...document.querySelectorAll('sl-select')].find(s=>s.label==='Varyant türü');type.value='type-box';fireEvent(type,new CustomEvent('sl-change',{bubbles:true}));await settle();
- const box=[...document.querySelectorAll('sl-select')].find(s=>s.label==='Kutu tipi');expect(box.querySelector('img')?.getAttribute('src')).toBe('/api/media/box-image/content');
+ const box=[...document.querySelectorAll('sl-select')].find(s=>s.label==='Kutu tipi');expect(box.querySelector('img')?.getAttribute('src')).toBe('/api/media/box-image/content?size=thumb');
  box.value='packaging-default-1';fireEvent(box,new CustomEvent('sl-change',{bubbles:true}));await settle();
- expect(document.querySelector('.packaging-selected-preview img')?.getAttribute('src')).toBe('/api/media/box-image/content');
+ expect(document.querySelector('.packaging-selected-preview img')?.getAttribute('src')).toBe('/api/media/box-image/content?size=tile');
  const name=[...document.querySelectorAll('sl-input')].find(s=>s.label==='Varyant adı');name.value='Kategori onaylı';fireEvent(name,new CustomEvent('sl-input',{bubbles:true}));await settle();
  fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.trim()==='Devam et'));await settle();
  expect(document.querySelector('sl-button[aria-label="Baklava seç"]').disabled).toBe(false);
@@ -74,4 +74,13 @@ test('internal volume updates immediately and disappears when a dimension is cle
  await settle();expect(document.querySelector('.packaging-volume-summary output').textContent).toBe('≈ 1.000 cm³ · 1 L');
  const height=[...document.querySelectorAll('sl-input')].find(i=>i.label==='Yükseklik (mm)');height.value='';fireEvent(height,new CustomEvent('sl-input',{bubbles:true}));await settle();
  expect(document.querySelector('.packaging-volume-summary output').textContent).toContain('iç ölçüleri girin');
+});
+
+test('selecting a category fills its products and permits removing and restoring one',async()=>{
+ render(<CatalogProvider snapshot={snapshot} notify={vi.fn()}><PackagingCenter canWrite /></CatalogProvider>);await settle();
+ fireEvent.click([...document.querySelectorAll('sl-button')].find(b=>b.textContent.includes('Yeni ambalaj')));await settle();
+ const category=[...document.querySelectorAll('sl-select')].find(s=>s.label==='İzin verilen kategoriler');category.value=['a'];fireEvent(category,new CustomEvent('sl-change',{bubbles:true}));await settle();
+ const products=[...document.querySelectorAll('sl-select')].find(s=>s.label==='İçerisine eklenebilecek ürünler');expect(products.value).toEqual(['1']);
+ products.value=[];fireEvent(products,new CustomEvent('sl-change',{bubbles:true}));await settle();expect(products.value).toEqual([]);expect(category.value).toEqual(['a']);
+ products.value=['1'];fireEvent(products,new CustomEvent('sl-change',{bubbles:true}));await settle();expect(products.value).toEqual(['1']);
 });

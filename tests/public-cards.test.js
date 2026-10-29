@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createApp} from '../server/app.js';
 import {hashPassword} from '../server/security.js';
 const password='Public-card-test-only-1864',hash=await hashPassword(password);
-const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6B9sAAAAASUVORK5CYII=';
+const image='iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWP4v4/rPwgzwBgAZVILGYGCVCcAAAAASUVORK5CYII=';
 async function fixture(){
  const app=await createApp({env:{SQLITE_PATH:':memory:',ADMIN_EMAIL:'cards@example.test',ADMIN_PASSWORD_HASH:hash}});let cookie='';
  async function raw(path,method='GET',body,anonymous=false){

@@ -421,10 +421,12 @@ export function createCatalogService(db) {
       if (!Array.isArray(allowedProductIds) || allowedProductIds.length > doc.products.length || new Set(allowedProductIds.map(String)).size !== allowedProductIds.length || allowedProductIds.some(id => !doc.products.some(p => p.id === id))) throw new ApiError(422, "Geçerli izin verilen ürünleri seçin.");
       const allowedCategoryIds = body.allowedCategoryIds === undefined ? old?.allowedCategoryIds || [] : body.allowedCategoryIds;
       if (!Array.isArray(allowedCategoryIds) || allowedCategoryIds.length > doc.categories.length || new Set(allowedCategoryIds).size !== allowedCategoryIds.length || allowedCategoryIds.some(id => !doc.categories.some(c => c.id === id))) throw new ApiError(422, "Geçerli izin verilen kategorileri seçin.");
+      const excludedProductIds = body.excludedProductIds === undefined ? old?.excludedProductIds || [] : body.excludedProductIds;
+      if (!Array.isArray(excludedProductIds) || excludedProductIds.length > doc.products.length || new Set(excludedProductIds.map(String)).size !== excludedProductIds.length || excludedProductIds.some(id => !doc.products.some(p => p.id === id))) throw new ApiError(422, "Geçerli hariç tutulan ürünleri seçin.");
       const mediaId = body.mediaId === undefined ? old?.mediaId || "" : body.mediaId;
       if (typeof mediaId !== "string" || mediaId.length > 100) throw new ApiError(422, "Geçerli ambalaj görseli seçin.");
       if (mediaId && !(await tx.query("SELECT id FROM app_media WHERE id=?", [mediaId])).rows.length) throw new ApiError(422, "Ambalaj görseli bulunamadı.");
-      const item = { id: old?.id || randomUUID(), name, code, material, shape, ...dimensions, description: text(body.description, 4000), active: body.active ?? true, allowedProductIds, allowedCategoryIds, mediaId, imageUrl: mediaId ? "/api/media/" + encodeURIComponent(mediaId) + "/content" : "" };
+      const item = { id: old?.id || randomUUID(), name, code, material, shape, ...dimensions, description: text(body.description, 4000), active: body.active ?? true, allowedProductIds, allowedCategoryIds, excludedProductIds, mediaId, imageUrl: mediaId ? "/api/media/" + encodeURIComponent(mediaId) + "/content" : "" };
       if (old) doc.packagingItems = doc.packagingItems.map(value => value.id === id ? item : value); else doc.packagingItems.push(item);
       audit(doc, old ? "Ambalaj güncellendi" : "Ambalaj eklendi", name, actor);
     });
