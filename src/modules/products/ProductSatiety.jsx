@@ -4,6 +4,7 @@ import {
   satietyEntries,
   resolvedSatiety,
   defaultSatietyProducts,
+  satietyIconUrl,
 } from "../../satiety.js";
 import SatietyIndicator from "./SatietyIndicator.jsx";
 export default function ProductSatiety({
@@ -28,6 +29,7 @@ export default function ProductSatiety({
             key={e.ingredientId}
             value={{ type: e.icon, level: e.level }}
             label={e.name}
+            iconUrl={e.iconUrl}
           />
         ))}
       </div>
@@ -62,6 +64,7 @@ export default function ProductSatiety({
             <SatietyIndicator
               value={{ type: d?.icon || "general", level: e.level }}
               label={d?.name || "İçerik"}
+              iconUrl={satietyIconUrl(d)}
               editing
               showTypeSelector={false}
               radioName={"satiety-" + e.ingredientId}

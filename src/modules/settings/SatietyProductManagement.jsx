@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import { Plus, PencilSimple } from "@phosphor-icons/react";
 import Card from "../../components/ui/Card.jsx";
@@ -18,9 +18,18 @@ import {
   satietyTypes,
   satietyEntries,
   defaultSatietyProducts,
+  satietyIconUrl,
 } from "../../satiety.js";
 import SatietyIndicator from "../products/SatietyIndicator.jsx";
-const empty = () => ({ name: "", icon: "general", active: true });
+import { uploadFile } from "../media/media-api.js";
+import useImageDrop from "../../components/ui/useImageDrop.js";
+import { imageUrl } from "../../image-sizes.js";
+const empty = () => ({
+  name: "",
+  icon: "general",
+  iconMediaId: "",
+  active: true,
+});
 export default function SatietyProductManagement({ canWrite }) {
   const {
     satietyProducts = defaultSatietyProducts(),
@@ -28,16 +37,40 @@ export default function SatietyProductManagement({ canWrite }) {
     busy,
     mutate,
     notify,
+    refresh,
   } = useCatalog();
   const [draft, setDraft] = useState(empty),
     [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInput = useRef(null),
+    uploadLock = useRef(false);
+  const blocked = busy || uploading;
+  async function upload(files) {
+    if (!canWrite || busy || uploadLock.current || !files.length) return;
+    uploadLock.current = true;
+    setUploading(true);
+    setError("");
+    try {
+      if (files.length !== 1) throw new Error("Tek bir renkli simge yükleyin.");
+      const { asset } = await uploadFile(files[0]);
+      await refresh();
+      setDraft((current) => ({ ...current, iconMediaId: asset.id }));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      uploadLock.current = false;
+      setUploading(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  }
+  const { dragging, dropProps } = useImageDrop(upload, blocked || !canWrite);
   function reset() {
     setDraft(empty());
     setError("");
   }
   async function save(e) {
     e.preventDefault();
-    if (busy || !canWrite) return;
+    if (busy || uploadLock.current || !canWrite) return;
     setError("");
     try {
       await mutate(
@@ -69,13 +102,13 @@ export default function SatietyProductManagement({ canWrite }) {
             placeholder="Örn. Çikolata, Çilek, Vişne"
             maxLength={60}
             required
-            disabled={busy}
+            disabled={blocked}
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
           />
           <Select
-            label="Simge"
-            disabled={busy}
+            label="Hazır simge (yedek)"
+            disabled={blocked}
             value={draft.icon}
             onChange={(e) => setDraft({ ...draft, icon: e.target.value })}
           >
@@ -87,7 +120,7 @@ export default function SatietyProductManagement({ canWrite }) {
           </Select>
           <Select
             label="Tanım durumu"
-            disabled={busy}
+            disabled={blocked}
             value={draft.active ? "active" : "inactive"}
             onChange={(e) =>
               setDraft({ ...draft, active: e.target.value === "active" })
@@ -96,17 +129,72 @@ export default function SatietyProductManagement({ canWrite }) {
             <option value="active">Aktif</option>
             <option value="inactive">Pasif</option>
           </Select>
+          <section
+            className={`satiety-icon-upload image-drop-target${dragging ? " is-dragging" : ""}`}
+            {...dropProps}
+            aria-label="Doygunluk simgesi yükleme"
+            aria-busy={uploading}
+          >
+            <h3>Renkli simge yükle</h3>
+            <p>
+              Önerilen ölçü ve çözünürlük: 512 × 512 piksel, kare (1:1). DPI
+              şartı yoktur. Şeffaf arka planlı PNG veya WEBP önerilir; JPEG ve
+              GIF de desteklenir. En fazla 2 MB. GIF dosyalarının ilk karesi
+              kullanılır.
+            </p>
+            <p>
+              Yalnızca renkli görsel yükleyin. Seçilmeyen seviyeler sistem
+              tarafından gri tonlamalı gösterilir. Yüklenen görsel hazır
+              simgenin yerine kullanılır.
+            </p>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              aria-label="Renkli doygunluk simgesi seç"
+              disabled={blocked}
+              onChange={(e) => upload(Array.from(e.target.files || []))}
+            />
+            <small role="status">
+              {uploading
+                ? "Simge yükleniyor…"
+                : "Simgeyi buraya sürükleyin veya dosya seçin."}
+            </small>
+            <SatietyIndicator
+              value={{ type: draft.icon, level: 3 }}
+              label={draft.name || "Simge önizlemesi"}
+              iconUrl={
+                draft.iconMediaId
+                  ? imageUrl(
+                      `/api/media/${encodeURIComponent(draft.iconMediaId)}/content`,
+                      "thumb",
+                    )
+                  : ""
+              }
+            />
+            {draft.iconMediaId && (
+              <Button
+                type="button"
+                disabled={blocked}
+                onClick={() =>
+                  setDraft((current) => ({ ...current, iconMediaId: "" }))
+                }
+              >
+                Yüklenen simgeyi kaldır
+              </Button>
+            )}
+          </section>
           <div className="satiety-definition-actions">
             <Button
               type="submit"
               variant="primary"
-              disabled={busy || !draft.name.trim()}
+              disabled={blocked || !draft.name.trim()}
             >
               {draft.id ? <PencilSimple size={17} /> : <Plus size={17} />}
               {draft.id ? "Tanımı kaydet" : "Doygunluk ürünü ekle"}
             </Button>
             {draft.id && (
-              <Button type="button" disabled={busy} onClick={reset}>
+              <Button type="button" disabled={blocked} onClick={reset}>
                 Vazgeç
               </Button>
             )}
@@ -143,6 +231,7 @@ export default function SatietyProductManagement({ canWrite }) {
                     value={{ type: d.icon, level: 1 }}
                     label={d.name}
                     compact
+                    iconUrl={satietyIconUrl(d)}
                   />
                 </TableCell>
                 <TableCell>{d.active ? "Aktif" : "Pasif"}</TableCell>
@@ -161,7 +250,7 @@ export default function SatietyProductManagement({ canWrite }) {
                     <Button
                       type="button"
                       size="small"
-                      disabled={busy}
+                      disabled={blocked}
                       aria-label={d.name + " doygunluk ürününü düzenle"}
                       onClick={() => {
                         setDraft({ ...d });

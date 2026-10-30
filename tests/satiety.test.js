@@ -243,3 +243,113 @@ test("fruit definitions upgrade existing catalogs without duplicates or changing
     );
   }
 });
+
+test("uploaded satiety icons persist, render publicly as thumbnails and protect linked media", async () => {
+  const password = "Icon-test-only-1864";
+  const app = await createApp({
+    env: {
+      SQLITE_PATH: ":memory:",
+      ADMIN_EMAIL: "icons@example.test",
+      ADMIN_PASSWORD_HASH: await hashPassword(password),
+    },
+  });
+  let cookie = "";
+  async function raw(path, method = "GET", body) {
+    return app.handle(
+      new Request("https://icons.test/api" + path, {
+        method,
+        headers: {
+          origin: "https://icons.test",
+          cookie,
+          ...(body ? { "content-type": "application/json" } : {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      }),
+    );
+  }
+  async function call(...args) {
+    const response = await raw(...args);
+    return { status: response.status, ...(await response.json()) };
+  }
+  try {
+    const login = await raw("/login", "POST", {
+      email: "icons@example.test",
+      password,
+    });
+    cookie = login.headers.get("set-cookie").split(";")[0];
+    const { asset } = await call("/media", "POST", {
+      name: "icon.png",
+      mimeType: "image/png",
+      data: "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWP4v4/rPwgzwBgAZVILGYGCVCcAAAAASUVORK5CYII=",
+    });
+    let catalog = (await call("/catalog")).catalog;
+    assert.equal(
+      (
+        await call("/satiety-products/banana", "PUT", {
+          expectedRevision: catalog.revision,
+          name: "Muz",
+          icon: "banana",
+          iconMediaId: "missing",
+        })
+      ).status,
+      422,
+    );
+    catalog = (
+      await call("/satiety-products/banana", "PUT", {
+        expectedRevision: catalog.revision,
+        name: "Muz",
+        icon: "banana",
+        iconMediaId: asset.id,
+      })
+    ).catalog;
+    assert.equal(
+      catalog.satietyProducts.find((d) => d.id === "banana").iconMediaId,
+      asset.id,
+    );
+    const resolved = resolvedSatiety(
+      [{ ingredientId: "banana", level: 3 }],
+      catalog.satietyProducts,
+    );
+    assert.equal(resolved[0].iconUrl, "/api/satiety-icons/" + asset.id);
+    assert.equal(
+      (await call("/media/" + asset.id, "DELETE", { expectedVersion: 1 }))
+        .status,
+      409,
+    );
+    const savedCookie = cookie;
+    cookie = "";
+    const image = await raw(resolved[0].iconUrl.replace("/api", ""));
+    assert.equal(image.status, 200);
+    assert.equal(image.headers.get("content-type"), "image/webp");
+    assert.equal((await raw("/media/" + asset.id + "/content")).status, 401);
+    assert.equal((await raw("/satiety-icons/missing")).status, 404);
+    cookie = savedCookie;
+    catalog = (
+      await call("/satiety-products/banana", "PUT", {
+        expectedRevision: catalog.revision,
+        name: "Muz",
+        icon: "banana",
+      })
+    ).catalog;
+    assert.equal(
+      catalog.satietyProducts.find((d) => d.id === "banana").iconMediaId,
+      asset.id,
+    );
+    catalog = (
+      await call("/satiety-products/banana", "PUT", {
+        expectedRevision: catalog.revision,
+        name: "Muz",
+        icon: "banana",
+        iconMediaId: "",
+      })
+    ).catalog;
+    assert.equal((await raw("/satiety-icons/" + asset.id)).status, 404);
+    assert.equal(
+      (await call("/media/" + asset.id, "DELETE", { expectedVersion: 1 }))
+        .status,
+      200,
+    );
+  } finally {
+    await app.close();
+  }
+});

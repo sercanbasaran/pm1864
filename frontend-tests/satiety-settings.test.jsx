@@ -90,3 +90,62 @@ test("definitions are visible without management controls and live under system 
   ).toContain("satiety-products");
   expect(moduleFor("satiety-products").label).toBe("Doygunluk Ürünleri");
 });
+
+test("upload refreshes the catalog revision, previews the icon and saves its media link", async () => {
+  const fetch = vi.fn(async (url, options) => {
+    if (url === "/api/media")
+      return new Response(
+        JSON.stringify({
+          asset: {
+            id: "uploaded-icon",
+            url: "/api/media/uploaded-icon/content",
+          },
+        }),
+        { status: 201 },
+      );
+    if (url === "/api/catalog")
+      return new Response(
+        JSON.stringify({ catalog: { ...snapshot, revision: 1 } }),
+      );
+    if (url === "/api/satiety-products")
+      return new Response(
+        JSON.stringify({ catalog: { ...snapshot, revision: 2 } }),
+      );
+    return new Response("<svg/>");
+  });
+  vi.stubGlobal("fetch", fetch);
+  render(
+    <CatalogProvider snapshot={snapshot} notify={vi.fn()}>
+      <SatietyProductManagement canWrite />
+    </CatalogProvider>,
+  );
+  await settle();
+  const name = document.querySelector("sl-input");
+  name.value = "Meyve";
+  fireEvent(name, new CustomEvent("sl-input", { bubbles: true }));
+  fireEvent.change(document.querySelector('input[type="file"]'), {
+    target: { files: [new File(["image"], "icon.png", { type: "image/png" })] },
+  });
+  await waitFor(() =>
+    expect(document.querySelectorAll('img[src*="uploaded-icon"]')).toHaveLength(
+      5,
+    ),
+  );
+  await settle();
+  fireEvent.submit(document.querySelector("form"));
+  await waitFor(() =>
+    expect(
+      fetch.mock.calls.some(([url]) => url === "/api/satiety-products"),
+    ).toBe(true),
+  );
+  const saved = fetch.mock.calls.find(
+    ([url]) => url === "/api/satiety-products",
+  );
+  expect(JSON.parse(saved[1].body)).toMatchObject({
+    name: "Meyve",
+    iconMediaId: "uploaded-icon",
+    expectedRevision: 1,
+  });
+  expect(document.body.textContent).toContain("512 × 512");
+  expect(document.body.textContent).toContain("gri tonlamalı");
+});

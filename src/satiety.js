@@ -129,7 +129,20 @@ export function resolvedSatiety(value, definitions = defaultSatietyProducts()) {
       Number.isInteger(entry.level) &&
       entry.level >= 1 &&
       entry.level <= 5
-      ? [{ ingredientId: d.id, name: d.name, icon: d.icon, level: entry.level }]
+      ? [
+          {
+            ingredientId: d.id,
+            name: d.name,
+            icon: d.icon,
+            ...(d.iconMediaId ? { iconUrl: satietyIconUrl(d) } : {}),
+            level: entry.level,
+          },
+        ]
       : [];
   });
+}
+export function satietyIconUrl(definition) {
+  return definition?.iconMediaId
+    ? "/api/satiety-icons/" + encodeURIComponent(definition.iconMediaId)
+    : "";
 }

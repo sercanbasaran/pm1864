@@ -290,7 +290,7 @@ export function createCatalogService(db) {
     });
   }
   async function saveSatietyProduct(body, id, actor) {
-    return mutate(body.expectedRevision, actor, (doc) => {
+    return mutate(body.expectedRevision, actor, async (doc, tx) => {
       const old = id ? doc.satietyProducts.find((d) => d.id === id) : null;
       if (id && !old) throw new ApiError(404, "Doygunluk ürünü bulunamadı.");
       const name =
@@ -311,10 +311,14 @@ export function createCatalogService(db) {
         throw new ApiError(422, "Bu doygunluk ürünü zaten var.");
       if (!old && doc.satietyProducts.length >= 100)
         throw new ApiError(422, "En fazla 100 doygunluk ürünü eklenebilir.");
+      const iconMediaId = body.iconMediaId === undefined ? old?.iconMediaId || "" : body.iconMediaId;
+      if (typeof iconMediaId !== "string" || (iconMediaId && !(await tx.query("SELECT id FROM app_media WHERE id=?", [iconMediaId])).rows.length))
+        throw new ApiError(422, "Geçerli bir simge görseli yükleyin.");
       const definition = {
         id: old?.id || randomUUID(),
         name,
         icon: body.icon,
+        iconMediaId,
         active: body.active ?? old?.active ?? true,
       };
       if (old)

@@ -214,6 +214,7 @@ export default function SatietyIndicator({
   showTypeSelector = true,
   radioName = "satiety-level",
   compact = false,
+  iconUrl = "",
 }) {
   const type = value?.type || suggestedType;
   const level = value?.level || null;
@@ -228,7 +229,18 @@ export default function SatietyIndicator({
       key={number}
       className={"satiety-icon" + (number <= level ? " is-filled" : "")}
     >
-      <NutIcon type={type} />
+      {iconUrl ? (
+        <img
+          src={iconUrl}
+          alt=""
+          width={40}
+          height={40}
+          decoding="async"
+          loading="lazy"
+        />
+      ) : (
+        <NutIcon type={type} />
+      )}
     </span>
   ));
   return (

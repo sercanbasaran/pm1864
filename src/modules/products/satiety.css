@@ -65,6 +65,32 @@
   width: 100%;
   height: 100%;
 }
+.satiety-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+.satiety-icon-upload {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  min-width: 0;
+}
+.satiety-icon-upload h3,
+.satiety-icon-upload p {
+  margin: 0;
+}
+.satiety-icon-upload p,
+.satiety-icon-upload small {
+  color: var(--sl-color-neutral-600);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.satiety-icon-upload input {
+  max-width: 100%;
+}
 .satiety-caption {
   display: flex;
   align-items: center;

@@ -109,3 +109,24 @@ test("product cards render multiple named ingredients and their own levels", () 
   ]);
   expect(document.querySelectorAll(".satiety-icon.is-filled")).toHaveLength(6);
 });
+
+test("uploaded color icons are reused for all levels with grayscale on unfilled levels", () => {
+  render(
+    <SatietyIndicator
+      value={{ type: "banana", level: 2 }}
+      label="Muz"
+      iconUrl="/api/satiety-icons/icon-test"
+    />,
+  );
+  const icons = document.querySelectorAll(".satiety-icon");
+  expect(icons).toHaveLength(5);
+  expect(document.querySelectorAll(".satiety-icon img")).toHaveLength(5);
+  expect(document.querySelectorAll(".satiety-icon.is-filled")).toHaveLength(2);
+  expect(
+    [...icons].every(
+      (icon) =>
+        icon.querySelector("img").getAttribute("src") ===
+        "/api/satiety-icons/icon-test",
+    ),
+  ).toBe(true);
+});
