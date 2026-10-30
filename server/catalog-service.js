@@ -1,6 +1,7 @@
 import {validateProductDimensions, normalizeProductDimensions} from "../src/product-dimensions.js";
 import {validatePortion, variantPortionCount} from "../src/portions.js";
 import {bootstrapStores} from "./imports/bootstrap-stores.js";
+import {defaultPackagingMethods,upgradePackagingMethods,resolvePackagingMethod} from "../src/modules/packaging/packaging-methods.js";
 import {storeFields,storeCode,storeNameKey,validateStore} from "../src/modules/channels/store-fields.js";
 import {packagingShape} from "../src/modules/packaging/packaging-volume.js";
 import {packagingApprovalIssue} from "../src/modules/packaging/packaging-approval.js";
@@ -92,6 +93,7 @@ export const seedCatalog = () => { const doc = {
   satietyProducts: defaultSatietyProducts(),
   consumables: defaultConsumables(),
   packagingItems: defaultPackagingItems(),
+  packagingMethods: defaultPackagingMethods(),
   nextPackagingNumber: defaultPackagingItems().length + 1,
   products: [],
   logs: [],
@@ -115,6 +117,7 @@ export function publicCatalog(doc, revision) {
     satietyProducts: doc.satietyProducts ?? defaultSatietyProducts(),
     consumables: doc.consumables ?? defaultConsumables(),
     packagingItems: doc.packagingItems ?? defaultPackagingItems(),
+    packagingMethods: doc.packagingMethods ?? defaultPackagingMethods(),
     categories: doc.categories.map((c) => ({
       ...c,
       salesAvailability: salesAvailability(
@@ -175,6 +178,7 @@ export function createCatalogService(db) {
         );
       const doc = JSON.parse(row.document);
       upgradeSatiety(doc);
+      upgradePackagingMethods(doc);
       await fn(doc, tx);
       upgradeHierarchy(doc);
       const document = JSON.stringify(doc);
@@ -381,6 +385,28 @@ export function createCatalogService(db) {
       }
       if (old) doc.managedChannels = doc.managedChannels.map(current => current.id === id ? item : current); else doc.managedChannels.push(item);
       audit(doc, old ? "Kanal güncellendi" : "Kanal oluşturuldu", name, actor);
+    });
+  }
+  async function managePackagingMethod(body,id,method,actor) {
+    return mutate(body.expectedRevision,actor,doc=>{
+      const old=doc.packagingMethods.find(m=>m.id===id);
+      if(id&&!old)throw new ApiError(404,"Ambalaj / servis şekli bulunamadı.");
+      const used=old && doc.products.some(p=>p.variants.some(v=>resolvePackagingMethod(v.packaging,doc.packagingMethods)?.id===id));
+      if(method==="DELETE"){
+        if(used||old.kind!=="custom")throw new ApiError(409,"Kullanılan veya temel kutu/porsiyon seçeneği silinemez. Pasife alabilirsiniz.");
+        doc.packagingMethods=doc.packagingMethods.filter(m=>m.id!==id);
+      }else{
+        const name=typeof body.name==="string"?body.name.trim().replace(/\s+/g," "):"";
+        if(!name||name.length>120||body.active!==undefined&&typeof body.active!=="boolean")throw new ApiError(422,"Ad ve durum bilgilerini kontrol edin.");
+        if(doc.packagingMethods.some(m=>m.id!==id && normalizeName(m.name)===normalizeName(name)))throw new ApiError(422,"Bu ambalaj / servis şekli zaten var.");
+        if(!old&&doc.packagingMethods.length>=100)throw new ApiError(422,"En fazla 100 ambalaj / servis şekli tanımlanabilir.");
+        const item={id:old?.id||randomUUID(),name,kind:old?.kind||"custom",active:body.active??old?.active??true};
+        if(old){
+          for(const p of doc.products){let changed=false;p.variants=p.variants.map(v=>{if(resolvePackagingMethod(v.packaging,doc.packagingMethods)?.id!==id)return v;changed=changed||v.packaging!==name;return {...v,packaging:name};});if(changed){p.version=(p.version||0)+1;p.updated=new Date().toISOString();}}
+          doc.packagingMethods=doc.packagingMethods.map(m=>m.id===id?item:m);
+        }else doc.packagingMethods.push(item);
+      }
+      audit(doc,"Ambalaj / servis şekli "+(method==="DELETE"?"kaldırıldı":old?"güncellendi":"eklendi"),old?.name||body.name,actor);
     });
   }
   async function saveConsumable(body, id, actor) {
@@ -621,6 +647,11 @@ export function createCatalogService(db) {
         };
       for (let i = 0; i < p.variants.length; i++) {
         const v = p.variants[i];
+        if(v.packaging){
+          const method=resolvePackagingMethod(v.packaging,doc.packagingMethods),previous=old?.variants.find(item=>item.id===v.id);
+          if(!method || !method.active && resolvePackagingMethod(previous?.packaging,doc.packagingMethods)?.id!==method.id)throw new ApiError(422,"Aktif bir ambalaj / servis şekli seçin. Tanımları Ambalaj Merkezi’nden yönetin.");
+          v.packaging=method.name;
+        }
         if (isBoxVariant(v, doc.variantTypes) && v.packagingId) {
           const box = (doc.packagingItems ?? defaultPackagingItems()).find(item => item.id === v.packagingId);
           const issue = packagingApprovalIssue(v, box, p.id, [...doc.products.filter(item => item.id !== p.id), p], doc.categories);
@@ -645,6 +676,7 @@ export function createCatalogService(db) {
               v,
               [...doc.products.filter((item) => item.id !== p.id), p],
               doc.consumables ?? defaultConsumables(),
+              doc.packagingMethods,
             );
           } catch (e) {
             throw new ApiError(422, e.message);
@@ -887,7 +919,7 @@ export function createCatalogService(db) {
           owner.variants = owner.variants.map(v => {
             if (v.sourceProductId === undefined || !(v.items || [{ productId: v.sourceProductId }]).some(item => ids.includes(item.productId))) return v;
             affected = true;
-            try { return calculateVariant(v, doc.products, doc.consumables ?? defaultConsumables()); }
+            try { return calculateVariant(v, doc.products, doc.consumables ?? defaultConsumables(),doc.packagingMethods); }
             catch (e) { throw new ApiError(422, `${v.size}: ${e.message}`); }
           });
           if (affected && !ids.includes(owner.id)) { owner.version = (owner.version || 0) + 1; owner.updated = new Date().toISOString(); }
@@ -1241,6 +1273,7 @@ export function createCatalogService(db) {
     });
   }
   return {
+    managePackagingMethod,
     read,
     mutate,
     saveRegionalDefinition,

@@ -1,5 +1,9 @@
+import {
+  packagingMethodName,
+  packagingMethodOptions,
+} from "../packaging/packaging-methods.js";
 import VariantManagement from "./VariantManagement.jsx";
-import {variantPortionCount, portionCountLabel} from "../../portions.js";
+import { variantPortionCount, portionCountLabel } from "../../portions.js";
 import { duplicateVariant } from "../../catalog.js";
 import React, { useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
@@ -35,6 +39,7 @@ export default function VariantEditor({
     categories,
     variantTypes,
     consumables = defaultConsumables(),
+    packagingMethods,
     busy,
     mutate,
     notify,
@@ -78,10 +83,18 @@ export default function VariantEditor({
           (focus ? String(v.id) === focus : newVariant ? !v.id : true)
             ? calculateVariant(
                 isPortionVariant(v, variantTypes)
-                  ? { ...v, packagingId: "", packaging: "Tabakta servis" }
+                  ? {
+                      ...v,
+                      packagingId: "",
+                      packaging: packagingMethodName(
+                        packagingMethods,
+                        "plated",
+                      ),
+                    }
                   : v,
                 products,
                 consumables,
+                packagingMethods,
               )
             : v,
         ),
@@ -177,7 +190,14 @@ export default function VariantEditor({
               </SlBadge>
             </div>
             <dl className="variant-selected-stats">
-              <div><dt>Porsiyon bilgisi</dt><dd>{portionCountLabel(variantPortionCount(selected, products, current))}</dd></div>
+              <div>
+                <dt>Porsiyon bilgisi</dt>
+                <dd>
+                  {portionCountLabel(
+                    variantPortionCount(selected, products, current),
+                  )}
+                </dd>
+              </div>
               <div>
                 <dt>Satış fiyatı</dt>
                 <dd>{money(selected.price)}</dd>

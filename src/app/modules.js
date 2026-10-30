@@ -241,6 +241,7 @@ export const newMainModules = [
     icon: Cube,
     permission: "catalog.read",
     description: "Ambalaj tanımları ve ambalaj bilgilerinin yönetimi.",
+    children: ["packaging-items", "packaging-methods"],
   },
 ];
 export const primaryModules = [
@@ -271,6 +272,8 @@ export const modules = [
     description: "Porsiyon, kutu ve diğer varyant tiplerini yönetin.",
   },
   ...newMainModules,
+  {id:"packaging-items",label:"Kutular ve Ambalajlar",icon:Cube,permission:"catalog.read",description:"Kutu görselleri, ölçüler ve ürün izinleri."},
+  {id:"packaging-methods",label:"Ambalaj / Servis Şekilleri",icon:Cube,permission:"catalog.read",description:"Varyantlarda kullanılan ambalaj ve servis seçenekleri."},
   { id: "localization", label: "Çeviri ve Kur Merkezi", icon: Translate, permission: "catalog.read", description: "Otomatik çeviriler, referans kur dönüşümleri ve dışa aktarma." },
   {
     id: "user-roles",
@@ -285,7 +288,7 @@ export const modules = [
 ];
 export const moduleFor = (id) => modules.find((module) => module.id === id);
 export const parentFor = (id) =>
-  moduleGroups.find((group) => group.children.includes(id));
+  [...moduleGroups,...newMainModules].find((group) => group.children?.includes(id));
 export const visibleChildren = (group, user, can) =>
   group.children
     .map(moduleFor)

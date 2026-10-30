@@ -1,8 +1,11 @@
+import {
+  packagingMethodName,
+  packagingMethodOptions,
+} from "../packaging/packaging-methods.js";
 import PackagingSelect from "../packaging/PackagingSelect.jsx";
 import { suggestedVariantName } from "../../variant-name.js";
-import {packagingAllowsProduct} from "../packaging/packaging-approval.js";
+import { packagingAllowsProduct } from "../packaging/packaging-approval.js";
 import { variantWizardSteps } from "./variant-wizard.js";
-import { packagingOptions } from "../../variant-composition.js";
 import React, { useState } from "react";
 import EditorPage from "../../components/layout/EditorPage.jsx";
 import { Button, Input, Select } from "../../components/ui/Controls.jsx";
@@ -30,6 +33,7 @@ export default function VariantCreatePage({
     categories,
     variantTypes,
     packagingItems = defaultPackagingItems(),
+    packagingMethods,
   } = useCatalog();
   const [typeId, setTypeId] = useState(""),
     [name, setName] = useState(""),
@@ -37,12 +41,27 @@ export default function VariantCreatePage({
     [step, setStep] = useState(0),
     [owner, setOwner] = useState(null),
     [packagingId, setPackagingId] = useState(""),
-    [packaging, setPackaging] = useState(""), [approvalError, setApprovalError] = useState("");
+    [packaging, setPackaging] = useState(""),
+    [approvalError, setApprovalError] = useState("");
   const isBox = isBoxVariant({ typeId }, variantTypes);
   const isPortion = isPortionVariant({ typeId }, variantTypes);
   const selectedBox = packagingItems.find((item) => item.id === packagingId);
-  const displayName = nameEdited ? name : suggestedVariantName(initialProduct, typeId, variantTypes);
-  const selectOwner = p => { if(isBox && !packagingAllowsProduct(selectedBox,p.id,products,categories)) {setApprovalError("Bu ürün seçilen kutu için onaylı değil. Ambalaj Merkezi’nden ürün onayı verin veya başka kutu seçin."); return;} setApprovalError(""); setOwner(p); };
+  const displayName = nameEdited
+    ? name
+    : suggestedVariantName(initialProduct, typeId, variantTypes);
+  const selectOwner = (p) => {
+    if (
+      isBox &&
+      !packagingAllowsProduct(selectedBox, p.id, products, categories)
+    ) {
+      setApprovalError(
+        "Bu ürün seçilen kutu için onaylı değil. Ambalaj Merkezi’nden ürün onayı verin veya başka kutu seçin.",
+      );
+      return;
+    }
+    setApprovalError("");
+    setOwner(p);
+  };
   if (owner) {
     const draft = {
       ...structuredClone(owner),
@@ -50,7 +69,9 @@ export default function VariantCreatePage({
         ...structuredClone(owner.variants),
         {
           ...newVariant(),
-          size: displayName.trim() || suggestedVariantName(owner, typeId, variantTypes),
+          size:
+            displayName.trim() ||
+            suggestedVariantName(owner, typeId, variantTypes),
           typeId,
           sourceProductId: owner.id,
           items: [{ productId: owner.id, quantity: 1 }],
@@ -59,11 +80,14 @@ export default function VariantCreatePage({
                 packagingId: selectedBox.id,
                 packaging:
                   selectedBox.material === "Karton"
-                    ? "Karton kutu"
-                    : "Metal kutu",
+                    ? packagingMethodName(packagingMethods, "cardboard")
+                    : packagingMethodName(packagingMethods, "metal"),
               }
             : isPortion
-              ? { packagingId: "", packaging: "Tabakta servis" }
+              ? {
+                  packagingId: "",
+                  packaging: packagingMethodName(packagingMethods, "plated"),
+                }
               : { packaging }),
         },
       ],
@@ -97,7 +121,10 @@ export default function VariantCreatePage({
         {step === 0 ? (
           <section className="variant-wizard-section">
             <h3>Varyant türü ve adı</h3>
-            <p>Varyant adı ürün ve tür seçimine göre otomatik oluşturulur. İsterseniz değiştirebilirsiniz.</p>
+            <p>
+              Varyant adı ürün ve tür seçimine göre otomatik oluşturulur.
+              İsterseniz değiştirebilirsiniz.
+            </p>
             {initialProduct && (
               <p>
                 Seçili ürün: <strong>{initialProduct.name}</strong>
@@ -125,10 +152,17 @@ export default function VariantCreatePage({
                 maxLength={45}
                 value={displayName}
                 placeholder="Ürün ismi [Varyant tipi]"
-                onChange={(e) => {setName(e.target.value); setNameEdited(!!e.target.value.trim());}}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameEdited(!!e.target.value.trim());
+                }}
               />
               {isPortion && (
-                <Input label="Servis şekli" value="Tabakta Servis" disabled />
+                <Input
+                  label="Servis şekli"
+                  value={packagingMethodName(packagingMethods, "plated")}
+                  disabled
+                />
               )}
               {!isBox && !isPortion && typeId && (
                 <Select
@@ -137,13 +171,17 @@ export default function VariantCreatePage({
                   onChange={(e) => setPackaging(e.target.value)}
                 >
                   <option value="">Seçin</option>
-                  {packagingOptions.map((p) => (
+                  {packagingMethodOptions(packagingMethods).map((p) => (
                     <option key={p}>{p}</option>
                   ))}
                 </Select>
               )}
               {isBox && (
-                <PackagingSelect items={packagingItems} value={packagingId} onChange={e=>setPackagingId(e.target.value)} />
+                <PackagingSelect
+                  items={packagingItems}
+                  value={packagingId}
+                  onChange={(e) => setPackagingId(e.target.value)}
+                />
               )}
             </div>
             {!variantTypes.length && (
@@ -178,7 +216,10 @@ export default function VariantCreatePage({
               products={products}
               categories={categories}
               requireCapacity
-              isProductAllowed={p => !isBox || packagingAllowsProduct(selectedBox,p.id,products,categories)}
+              isProductAllowed={(p) =>
+                !isBox ||
+                packagingAllowsProduct(selectedBox, p.id, products, categories)
+              }
               onSelect={selectOwner}
             />
             <div className="variant-wizard-navigation">

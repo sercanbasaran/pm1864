@@ -337,6 +337,10 @@ export async function createApp({ env = process.env, database } = {}) {
           decodeURIComponent(match[1]),
           user.email,
         );
+      } else if ((match=route.match(/^\/api\/packaging-methods(?:\/([a-zA-Z0-9-]+))?$/)) && ["POST","PUT","DELETE"].includes(method)) {
+        requirePermission("products.write");
+        if((method==="POST")===!!match[1])throw new ApiError(405,"Geçersiz işlem.");
+        catalog=await service.managePackagingMethod(body,match[1],method,user.email);
       } else if (route === "/api/packaging" && method === "POST") {
         requirePermission("products.write");
         catalog = await service.savePackaging(body, null, user.email);

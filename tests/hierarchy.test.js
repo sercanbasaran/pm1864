@@ -45,6 +45,7 @@ test('deep legacy category paths flatten without dropping the product or changin
 test('variant weight, sales unit and packaging persist and invalid metadata is rejected',async()=>{
  const f=await fixture();try{
  const child=await sub(f,(await f.call('/catalog')).catalog.categories[0]);
+ await f.call('/packaging-methods','POST',{expectedRevision:(await f.call('/catalog')).catalog.revision,name:'Kırmızı metal kutu',active:true});
  let r=await save(f,child.id,[{...variant(),weight:900,unit:'Kutu',packaging:'Kırmızı metal kutu'}]);assert.equal(r.status,200);
  let p=r.catalog.products[0];assert.equal(p.variants[0].unit,'Kutu');assert.equal(p.variants[0].packaging,'Kırmızı metal kutu');assert.equal(p.variants[0].weight,900);
  const legacy={...p.variants[0]};delete legacy.unit;delete legacy.packaging;

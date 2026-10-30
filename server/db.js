@@ -1,5 +1,6 @@
 import { upgradePackagingCodes } from "../src/modules/packaging/packaging-codes.js";
 import {bootstrapStores} from "./imports/bootstrap-stores.js";
+import {upgradePackagingMethods} from "../src/modules/packaging/packaging-methods.js";
 import { upgradeRegionalDefinitions } from "../src/regional-definitions.js";
 import { upgradeSatiety } from "../src/satiety.js";
 import { upgradeProductIdentity } from "../src/product-identity.js";
@@ -164,12 +165,13 @@ export async function migrate(db, seed) {
     const regionalChanged = upgradeRegionalDefinitions(doc);
     const packagingCodesChanged = upgradePackagingCodes(doc);
     const storesChanged = bootstrapStores(doc);
+    const packagingMethodsChanged = upgradePackagingMethods(doc);
     if (
       hierarchyChanged ||
       typesChanged ||
       skuChanged ||
       identityChanged ||
-      satietyChanged || regionalChanged || packagingCodesChanged || storesChanged
+      satietyChanged || regionalChanged || packagingCodesChanged || storesChanged || packagingMethodsChanged
     ) {
       await tx.query(
         "UPDATE app_catalog SET revision=?,document=? WHERE id=1",

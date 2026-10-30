@@ -36,6 +36,7 @@ const ProductManagement = lazy(
 const VariantTypeManagement = lazy(() => import("../modules/variants/VariantTypeManagement.jsx"));
 const VariantCardManagement = lazy(() => import("../modules/variants/VariantCardManagement.jsx"));
 const VariantCreatePage = lazy(() => import("../modules/variants/VariantCreatePage.jsx"));
+const PackagingMethodManagement = lazy(() => import("../modules/packaging/PackagingMethodManagement.jsx"));
 const PackagingCenter = lazy(() => import("../modules/packaging/PackagingCenter.jsx"));
 const VariantManagement = lazy(
   () => import("../modules/variants/VariantManagement.jsx"),
@@ -313,7 +314,8 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         onCard={(p, v) => navigate(`variants/${p.id}/card?variant=${encodeURIComponent(v.id)}`)}
       />
     ),
-    "packaging-center": <PackagingCenter canWrite={can(user, "products.write")} />,
+    "packaging-items": <PackagingCenter canWrite={can(user, "products.write")} />,
+    "packaging-methods": <PackagingMethodManagement canWrite={can(user,"products.write")} />,
     "variant-types": <VariantTypeManagement canWrite={can(user, "products.write")} />,
     "satiety-products": (
       <SatietyProductManagement canWrite={can(user, "settings.write")} />
@@ -381,7 +383,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
       </Card>
     ),
   };
-  const group = moduleGroups.find((module) => module.id === page);
+  const group = modules.find((module) => module.id === page && module.children);
   const currentModule = modules.find((module) => module.id === page);
   let pageContent = group ? (
     <ModuleHome group={group} user={user} onNavigate={navigate} />

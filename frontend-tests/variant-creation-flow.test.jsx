@@ -76,7 +76,7 @@ test("sihirbaz türü seçtirir, ürünleri arama ve kategoriyle filtreler", asy
     [...document.querySelectorAll("sl-input")].find(
       (i) => i.label === "Servis şekli",
     )?.value,
-  ).toBe("Tabakta Servis");
+  ).toBe("Tabakta servis");
   expect(
     [...document.querySelectorAll("sl-select")].find(
       (i) => i.label === "Kutu tipi",

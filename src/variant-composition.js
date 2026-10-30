@@ -1,14 +1,17 @@
 import { hasUnitPricing } from "./unit-pricing.js";
 import {variantPortionCount} from "./portions.js";
+import {defaultPackagingMethods,resolvePackagingMethod} from "./modules/packaging/packaging-methods.js";
 import { nutritionRows, parseNutrition, serializeNutrition } from "./nutrition.js";
 import { satietyEntries } from "./satiety.js";
-export const packagingOptions = ["Metal kutu", "Karton kutu", "Tabakta servis"];
+export const packagingOptions = defaultPackagingMethods().map(method=>method.name);
 export const defaultConsumables = () => ["Peçete", "Kürdan bayrak", "Tabak servis kağıdı", "Kolonyalı mendil"].map((name, i) => ({ id: "consumable-" + (i + 1), name, active: true }));
 export const variantInfoFields = ["ingredients", "allergens", "nutrition", "servingSuggestion", "storageConditions", "longTermStorage"];
 export function variantItems(v) {
   return Array.isArray(v.items) ? v.items : [{ productId: v.sourceProductId, quantity: v.quantity }];
 }
-export function calculateVariant(v, products, consumables) {
+export function calculateVariant(v, products, consumables, methods=defaultPackagingMethods()) {
+  const method=resolvePackagingMethod(v.packaging,methods);
+  if(method)v={...v,packaging:method.name};
   const items = variantItems(v);
   if (!items.length || items.length > 50 || new Set(items.map(item => item?.productId)).size !== items.length) throw Error("Bir veya daha fazla farklı ürün seçin.");
   let totalPrice = 0, totalWeight = 0, totalSlices = 0, allSlices = true;
@@ -22,7 +25,7 @@ export function calculateVariant(v, products, consumables) {
     if (product.unitPricing.unit === "Dilim") totalSlices += item.quantity; else allSlices = false;
     return { product, weight };
   });
-  if (!packagingOptions.includes(v.packaging)) throw Error("Ambalaj / servis şekli seçin.");
+  if (!method) throw Error("Ambalaj Merkezi’nde tanımlı bir ambalaj / servis şekli seçin.");
   const calculatedPrice = Math.round(totalPrice * 100) / 100, weight = Math.round(totalWeight * 1000) / 1000;
   if (v.priceOverride != null && (!Number.isFinite(v.priceOverride) || v.priceOverride <= 0 || v.priceOverride > 1e8 || Math.abs(v.priceOverride * 100 - Math.round(v.priceOverride * 100)) > .00001)) throw Error("Satış fiyatı pozitif ve en fazla iki ondalıklı olmalıdır.");
   if (!Array.isArray(v.consumables) || v.consumables.length > 100 || new Set(v.consumables.map(c => c?.id)).size !== v.consumables.length || v.consumables.some(c => !consumables.some(d => d.id === c?.id) || !Number.isInteger(c.quantity) || c.quantity < 1 || c.quantity > 100000)) throw Error("Sarf malzeme ve adetlerini kontrol edin.");

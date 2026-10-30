@@ -1,8 +1,15 @@
-import {imageUrl} from "../../image-sizes.js";
-import {portionCountLabel, portionDefinition} from "../../portions.js";
+import {
+  packagingMethodName,
+  packagingMethodOptions,
+} from "../packaging/packaging-methods.js";
+import { imageUrl } from "../../image-sizes.js";
+import { portionCountLabel, portionDefinition } from "../../portions.js";
 import PackagingSelect from "../packaging/PackagingSelect.jsx";
 import { variantNameFromContents } from "../../variant-name.js";
-import {packagingAllowsProduct, packagingApprovalIssue} from "../packaging/packaging-approval.js";
+import {
+  packagingAllowsProduct,
+  packagingApprovalIssue,
+} from "../packaging/packaging-approval.js";
 import "./variant-composition.css";
 import React, { useEffect, useState } from "react";
 import VariantProductImage from "./VariantProductImage.jsx";
@@ -27,7 +34,6 @@ import {
   calculateVariant,
   defaultConsumables,
   deriveVariantInformation,
-  packagingOptions,
 } from "../../variant-composition.js";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import { money } from "../../catalog-tools.js";
@@ -46,6 +52,7 @@ export default function VariantCompositionFields({
     variantTypes,
     satietyProducts,
     packagingItems = defaultPackagingItems(),
+    packagingMethods,
     consumables = defaultConsumables(),
     refresh,
   } = useCatalog();
@@ -56,7 +63,12 @@ export default function VariantCompositionFields({
     : product.variants.findIndex((v) => !v.id);
   const i = index < 0 ? 0 : index,
     v = product.variants[i];
-  const [automaticName, setAutomaticName] = useState(() => !v?.id && (!v?.size || v.size === variantNameFromContents(v, product, products, variantTypes)));
+  const [automaticName, setAutomaticName] = useState(
+    () =>
+      !v?.id &&
+      (!v?.size ||
+        v.size === variantNameFromContents(v, product, products, variantTypes)),
+  );
   useEffect(() => {
     onReady?.(!!v?.id || step === steps.length - 1);
   }, [step, onReady, v?.id]);
@@ -72,10 +84,27 @@ export default function VariantCompositionFields({
           quantity: v.quantity ?? (v.slices || 1),
         },
       ];
-  const approvalIssue = isBox && v.packagingId ? packagingApprovalIssue({...v,items}, selectedBox, product.id, products, categories) : "";
+  const approvalIssue =
+    isBox && v.packagingId
+      ? packagingApprovalIssue(
+          { ...v, items },
+          selectedBox,
+          product.id,
+          products,
+          categories,
+        )
+      : "";
   const update = (patch) => {
     if (automaticName && !v.id && !Object.hasOwn(patch, "size")) {
-      patch = {...patch, size: variantNameFromContents({...v, ...patch}, product, products, variantTypes)};
+      patch = {
+        ...patch,
+        size: variantNameFromContents(
+          { ...v, ...patch },
+          product,
+          products,
+          variantTypes,
+        ),
+      };
     }
     onChange({
       ...product,
@@ -105,12 +134,18 @@ export default function VariantCompositionFields({
     calculated = calculateVariant(
       {
         ...v,
-        ...(isPortion ? { packagingId: "", packaging: "Tabakta servis" } : {}),
+        ...(isPortion
+          ? {
+              packagingId: "",
+              packaging: packagingMethodName(packagingMethods, "plated"),
+            }
+          : {}),
         items,
         consumables: v.consumables || [],
       },
       products,
       consumables,
+      packagingMethods,
     );
   } catch (e) {
     calculationError = e.message;
@@ -124,7 +159,9 @@ export default function VariantCompositionFields({
       step === 0 &&
       !isBox &&
       !isPortion &&
-      !packagingOptions.includes(v.packaging)
+      !packagingMethodOptions(packagingMethods, v.packaging).includes(
+        v.packaging,
+      )
     )
       return setError("Ambalaj / servis şekli seçin.");
     if (step === 0 && isBox && !v.id && !selectedBox)
@@ -187,7 +224,11 @@ export default function VariantCompositionFields({
           ),
         )}
       </nav>
-      {approvalIssue && <p role="alert" className="variant-wizard-error">{approvalIssue}</p>}
+      {approvalIssue && (
+        <p role="alert" className="variant-wizard-error">
+          {approvalIssue}
+        </p>
+      )}
       {error && (
         <p className="variant-wizard-error" role="alert">
           {error}
@@ -196,7 +237,10 @@ export default function VariantCompositionFields({
       {step === 0 && (
         <section className="variant-wizard-section">
           <h3>Varyant türü ve adı</h3>
-          <p>Varyant adı ürün ve tür seçimine göre otomatik oluşturulur. İsterseniz değiştirebilirsiniz.</p>
+          <p>
+            Varyant adı ürün ve tür seçimine göre otomatik oluşturulur.
+            İsterseniz değiştirebilirsiniz.
+          </p>
           <div className="variant-basic-grid">
             <Select
               label="Varyant türü"
@@ -209,7 +253,7 @@ export default function VariantCompositionFields({
                     { typeId: e.target.value },
                     variantTypes,
                   )
-                    ? "Tabakta servis"
+                    ? packagingMethodName(packagingMethods, "plated")
                     : "",
                 })
               }
@@ -226,10 +270,17 @@ export default function VariantCompositionFields({
               maxLength={45}
               required
               value={v.size}
-              onChange={(e) => {setAutomaticName(false); update({ size: e.target.value });}}
+              onChange={(e) => {
+                setAutomaticName(false);
+                update({ size: e.target.value });
+              }}
             />
             {isPortion && (
-              <Input label="Servis şekli" value="Tabakta Servis" disabled />
+              <Input
+                label="Servis şekli"
+                value={packagingMethodName(packagingMethods, "plated")}
+                disabled
+              />
             )}
             {!isPortion && !isBox && v.typeId && (
               <Select
@@ -247,13 +298,18 @@ export default function VariantCompositionFields({
                 }
               >
                 <option value="">Seçin</option>
-                {packagingOptions.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
+                {packagingMethodOptions(packagingMethods, v.packaging).map(
+                  (p) => (
+                    <option key={p}>{p}</option>
+                  ),
+                )}
               </Select>
             )}
             {isBox && (
-              <PackagingSelect items={packagingItems} value={v.packagingId || ""} includeInactive
+              <PackagingSelect
+                items={packagingItems}
+                value={v.packagingId || ""}
+                includeInactive
                 onChange={(e) => {
                   const box = packagingItems.find(
                     (item) => item.id === e.target.value,
@@ -264,8 +320,11 @@ export default function VariantCompositionFields({
                       ? {
                           packaging:
                             box.material === "Karton"
-                              ? "Karton kutu"
-                              : "Metal kutu",
+                              ? packagingMethodName(
+                                  packagingMethods,
+                                  "cardboard",
+                                )
+                              : packagingMethodName(packagingMethods, "metal"),
                         }
                       : {}),
                   });
@@ -288,7 +347,16 @@ export default function VariantCompositionFields({
               <VariantProductPicker
                 products={products}
                 categories={categories}
-                isProductAllowed={p => !isBox || !v.packagingId || packagingAllowsProduct(selectedBox,p.id,products,categories)}
+                isProductAllowed={(p) =>
+                  !isBox ||
+                  !v.packagingId ||
+                  packagingAllowsProduct(
+                    selectedBox,
+                    p.id,
+                    products,
+                    categories,
+                  )
+                }
                 exclude={items.map((item) => item.productId)}
                 disabled={items.length >= 50}
                 onSelect={(selected) =>
@@ -394,8 +462,16 @@ export default function VariantCompositionFields({
                 <small>Net gramaj</small>
                 <strong>≈ {calculated.weight} g</strong>
               </div>
-              <div><small>Porsiyon bilgisi</small><strong>{portionCountLabel(calculated.portionCount)}</strong></div>
-              {calculated.portionCount == null && <p>Hesaplama için seçilen tüm ürünlerde bir kişilik porsiyon miktarını tanımlayın.</p>}
+              <div>
+                <small>Porsiyon bilgisi</small>
+                <strong>{portionCountLabel(calculated.portionCount)}</strong>
+              </div>
+              {calculated.portionCount == null && (
+                <p>
+                  Hesaplama için seçilen tüm ürünlerde bir kişilik porsiyon
+                  miktarını tanımlayın.
+                </p>
+              )}
               <div>
                 <small>Satış fiyatı</small>
                 <strong>{money(calculated.price)}</strong>
@@ -479,7 +555,14 @@ export default function VariantCompositionFields({
               )
               .map((image) => (
                 <label key={image.id}>
-                  <img src={imageUrl(image.url,"thumb")} alt="Ürün görseli" width={100} height={100} loading="lazy" decoding="async" />
+                  <img
+                    src={imageUrl(image.url, "thumb")}
+                    alt="Ürün görseli"
+                    width={100}
+                    height={100}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <input
                     type="checkbox"
                     checked={(v.images || []).some((x) => x.id === image.id)}
