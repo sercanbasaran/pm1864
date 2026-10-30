@@ -1,4 +1,5 @@
 import {imageUrl} from "../../image-sizes.js";
+import {portionCountLabel, portionDefinition} from "../../portions.js";
 import PackagingSelect from "../packaging/PackagingSelect.jsx";
 import { variantNameFromContents } from "../../variant-name.js";
 import {packagingAllowsProduct, packagingApprovalIssue} from "../packaging/packaging-approval.js";
@@ -316,6 +317,7 @@ export default function VariantCompositionFields({
                             ? `${money(source.unitPricing.price)} / ${source.unitPricing.unit} · ≈ ${source.unitPricing.weight} g`
                             : "Birim fiyatı veya gramajı eksik"}
                         </small>
+                        <small>{portionDefinition(source)}</small>
                       </div>
                     </div>
                     <Input
@@ -392,6 +394,8 @@ export default function VariantCompositionFields({
                 <small>Net gramaj</small>
                 <strong>≈ {calculated.weight} g</strong>
               </div>
+              <div><small>Porsiyon bilgisi</small><strong>{portionCountLabel(calculated.portionCount)}</strong></div>
+              {calculated.portionCount == null && <p>Hesaplama için seçilen tüm ürünlerde bir kişilik porsiyon miktarını tanımlayın.</p>}
               <div>
                 <small>Satış fiyatı</small>
                 <strong>{money(calculated.price)}</strong>

@@ -1,4 +1,5 @@
 import {validateProductDimensions} from "./product-dimensions.js";
+import {validatePortion} from "./portions.js";
 import { validateUnitPricing } from "./unit-pricing.js";
 import { defaultVariantTypes } from "./variant-types.js";
 import { validateSalesAvailability } from "./sales-availability.js";
@@ -100,6 +101,8 @@ export function validateProduct(
   if (dimensionsError) return {tab:"Genel bilgiler",message:dimensionsError};
   const unitPriceError = validateUnitPricing(product.unitPricing);
   if (unitPriceError) return { tab: "Genel bilgiler", message: unitPriceError };
+  const portionError = validatePortion(product.portion, product.unitPricing);
+  if (portionError) return {tab:"Genel bilgiler",message:portionError};
   const salesError =
     validateSalesAvailability(product.salesAvailability) ||
     product.variants

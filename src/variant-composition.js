@@ -1,4 +1,5 @@
 import { hasUnitPricing } from "./unit-pricing.js";
+import {variantPortionCount} from "./portions.js";
 import { nutritionRows, parseNutrition, serializeNutrition } from "./nutrition.js";
 import { satietyEntries } from "./satiety.js";
 export const packagingOptions = ["Metal kutu", "Karton kutu", "Tabakta servis"];
@@ -27,7 +28,7 @@ export function calculateVariant(v, products, consumables) {
   if (!Array.isArray(v.consumables) || v.consumables.length > 100 || new Set(v.consumables.map(c => c?.id)).size !== v.consumables.length || v.consumables.some(c => !consumables.some(d => d.id === c?.id) || !Number.isInteger(c.quantity) || c.quantity < 1 || c.quantity > 100000)) throw Error("Sarf malzeme ve adetlerini kontrol edin.");
   const autoInfo = Array.isArray(v.items) ? deriveVariantInformation(v, products) : null;
   if (autoInfo) delete autoInfo.nutritionComplete;
-  return { ...v, ...(Array.isArray(v.items) ? { items, sourceProductId: items[0].productId, quantity: items[0].quantity, information: { ...autoInfo, ...(v.informationOverrides || {}) } } : {}), calculatedPrice, price: v.priceOverride ?? calculatedPrice, weight, unit: sources.length === 1 ? sources[0].product.unitPricing.unit : "Adet", slices: allSlices ? totalSlices : 0 };
+  return { ...v, portionCount:variantPortionCount({...v,items},products), ...(Array.isArray(v.items) ? { items, sourceProductId: items[0].productId, quantity: items[0].quantity, information: { ...autoInfo, ...(v.informationOverrides || {}) } } : {}), calculatedPrice, price: v.priceOverride ?? calculatedPrice, weight, unit: sources.length === 1 ? sources[0].product.unitPricing.unit : "Adet", slices: allSlices ? totalSlices : 0 };
 }
 export function deriveVariantInformation(v, products) {
   const sources = variantItems(v).map(item => ({ product: products.find(p => p.id === item.productId), quantity: item.quantity }));

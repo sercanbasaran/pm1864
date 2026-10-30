@@ -1,4 +1,5 @@
 import VariantManagement from "./VariantManagement.jsx";
+import {variantPortionCount, portionCountLabel} from "../../portions.js";
 import { duplicateVariant } from "../../catalog.js";
 import React, { useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
@@ -176,6 +177,7 @@ export default function VariantEditor({
               </SlBadge>
             </div>
             <dl className="variant-selected-stats">
+              <div><dt>Porsiyon bilgisi</dt><dd>{portionCountLabel(variantPortionCount(selected, products, current))}</dd></div>
               <div>
                 <dt>Satış fiyatı</dt>
                 <dd>{money(selected.price)}</dd>

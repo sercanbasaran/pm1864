@@ -1,4 +1,5 @@
 import CardNavigation from "./CardNavigation.jsx";
+import {hasPortion, portionDefinition, portionCountLabel} from "../../portions.js";
 import { salesChannels } from "../../sales-availability.js";
 import "./product-details.css";
 import { hasUnitPricing } from "../../unit-pricing.js";
@@ -112,6 +113,8 @@ export default function ProductDetails({ product: source, localizationUrl, navig
                 <div><dt>Net gramaj</dt><dd>≈ {new Intl.NumberFormat("tr-TR").format(product.variantPricing.weight)} g</dd></div>
               </dl>
             )}
+            {hasPortion(product) && <p><strong>Porsiyon bilgisi:</strong> {portionDefinition(product)}</p>}
+            {product.isVariantCard && <p><strong>Porsiyon bilgisi:</strong> {portionCountLabel(product.portionCount)}</p>}
             {product.salesAvailability && (
               <>
                 <hr className="product-summary-divider" />

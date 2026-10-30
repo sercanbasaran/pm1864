@@ -1,4 +1,5 @@
 import ProductImage from "../../components/ui/ProductImage.jsx";
+import {portionCountLabel, variantPortionCount} from "../../portions.js";
 import {selectedVariantImage} from "./variant-image.js";
 import ProductIdentity from "../../components/ui/ProductIdentity.jsx";
 import useSessionFilter from "../../hooks/useSessionFilter.js";
@@ -313,6 +314,7 @@ export default function VariantManager({
                         <div className="variant-serving-cell">
                           <span><TableText value={v.packagingName || v.packaging || "Ambalaj belirtilmedi"} /></span>
                           <SlTag size="small">{v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}</SlTag>
+                          <SlTag size="small">{portionCountLabel(variantPortionCount(v,products,p))}</SlTag>
                           {v.items?.length > 1 && v.slices > 0 && <SlTag size="small">{v.slices} dilim</SlTag>}
                         </div>
                       </TableCell>
@@ -360,6 +362,7 @@ export default function VariantManager({
                   <dl className="variant-card-facts">
                     <div><dt>Miktar</dt><dd>{v.items?.length > 1 ? `${v.items.length} ürün` : `${v.quantity ?? "—"} ${v.unit || "Adet"}`}</dd></div>
                     <div><dt>Net gramaj</dt><dd>≈ {new Intl.NumberFormat("tr-TR").format(v.weight)} g</dd></div>
+                    <div><dt>Porsiyon bilgisi</dt><dd>{portionCountLabel(variantPortionCount(v,products,p))}</dd></div>
                     <div className="variant-card-packaging"><dt>Ambalaj / servis</dt><dd>{v.packagingName || v.packaging || "—"}</dd></div>
                   </dl>
                   <div className="variant-card-price"><small>Satış fiyatı</small><strong>{money(v.price)}</strong><small>Hesaplanan fiyat: {money(v.calculatedPrice ?? v.price)}</small></div>

@@ -1,4 +1,5 @@
 import {validateProductDimensions, normalizeProductDimensions} from "../src/product-dimensions.js";
+import {validatePortion, variantPortionCount} from "../src/portions.js";
 import {packagingShape} from "../src/modules/packaging/packaging-volume.js";
 import {packagingApprovalIssue} from "../src/modules/packaging/packaging-approval.js";
 import {upgradePackagingCodes, allocatePackagingCode} from "../src/modules/packaging/packaging-codes.js";
@@ -129,6 +130,7 @@ export function publicCatalog(doc, revision) {
         effectiveSales: effectiveSales(p, undefined, doc.categories),
         variants: p.variants.map((v) => ({
           ...v,
+          portionCount: variantPortionCount(v, doc.products, p),
           packagingName: v.packagingId ? (doc.packagingItems ?? defaultPackagingItems()).find((item) => item.id === v.packagingId)?.name || "" : "",
           sku: displaySku(v.sku),
           salesAvailability: salesAvailability(
@@ -492,6 +494,11 @@ export function createCatalogService(db) {
       const old = id ? doc.products.find((p) => p.id === Number(id)) : null;
       if (id && !old) throw new ApiError(404, "Ürün bulunamadı.");
       const input = body.product || {};
+      const portionPricing = input.unitPricing === undefined ? old?.unitPricing : input.unitPricing;
+      let portion = input.portion === undefined ? old?.portion ?? null : input.portion;
+      if (old?.unitPricing?.unit !== portionPricing?.unit && JSON.stringify(portion) === JSON.stringify(old?.portion)) portion = null;
+      const portionError = validatePortion(portion, portionPricing);
+      if (portionError) throw new ApiError(422, portionError);
       const dimensions = input.dimensions === undefined ? old?.dimensions : input.dimensions;
       const dimensionsError = validateProductDimensions(dimensions);
       if (dimensionsError) throw new ApiError(422, dimensionsError);
@@ -539,6 +546,7 @@ export function createCatalogService(db) {
           ),
           description: text(input.description, 4000),
           dimensions: normalizeProductDimensions(dimensions),
+          portion: portion ? {quantity:portion.quantity,unit:portion.unit} : null,
           unitPricing: normalizeUnitPricing(
             input.unitPricing === undefined
               ? old?.unitPricing
@@ -850,6 +858,7 @@ export function createCatalogService(db) {
           const issue = validateUnitPricing(value);
           if (issue) throw new ApiError(422, `${p.name}: ${issue}`);
           p.unitPricing = normalizeUnitPricing(value);
+          if (p.portion && p.portion.unit !== unit) p.portion = null;
         }
         if (changes.channels) p.salesAvailability = { ...salesAvailability(p.salesAvailability), ...changes.channels };
         p.version = (p.version || 0) + 1;

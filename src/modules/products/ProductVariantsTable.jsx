@@ -1,4 +1,5 @@
 import TableText from "../../components/ui/TableText.jsx";
+import {portionCountLabel} from "../../portions.js";
 import React from "react";
 import { Plus, Trash, Copy, ArrowUp, ArrowDown } from "@phosphor-icons/react";
 import SlBadge from "@shoelace-style/shoelace/dist/react/badge/index.js";
@@ -86,6 +87,7 @@ export default function ProductVariantsTable({
                   "Boyut / ad",
                   "Varyant tipi",
                   "Gramaj (g)",
+                  ...(!editing ? ["Porsiyon bilgisi"] : []),
                   priceLabel,
                   "Dilim adedi",
                   "Birim",
@@ -130,6 +132,7 @@ export default function ProductVariantsTable({
                       ? control(v, i, "weight", "Gramaj (g)", "number")
                       : `≈ ${v.weight}`}
                   </TableCell>
+                  {!editing && <TableCell>{portionCountLabel(v.portionCount)}</TableCell>}
                   <TableCell>
                     {editing
                       ? control(v, i, "price", "Fiyat (₺)", "number")

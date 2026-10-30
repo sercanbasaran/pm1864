@@ -6,6 +6,7 @@ import { categoryOf, rootOf, categoryPath } from "./hierarchy.js";
 import { productInformationFields } from "./product-information.js";
 import { defaultSatietyProducts, resolvedSatiety } from "./satiety.js";
 import { variantsContainingProduct } from "./product-variants.js";
+import { hasPortion, variantPortionCount } from "./portions.js";
 
 export const productCardCode = (product) =>
   product.publicCardCode ||
@@ -41,6 +42,7 @@ export function productCardData(
     name: product.name,
     category: categoryPath(categoryOf(product, categories), categories),
     description: product.description || "",
+    ...(hasPortion(product) ? { portion: { ...product.portion } } : {}),
     salesAvailability: effectiveSales(product, undefined, categories),
     unitPricing: hasUnitPricing(product.unitPricing)
       ? normalizeUnitPricing(product.unitPricing)
@@ -57,7 +59,7 @@ export function productCardData(
       .filter(({ owner, variant }) =>
         variantCardEligible(owner, variant, categories, products),
       )
-      .map(({ variant: v }) => ({
+      .map(({ owner, variant: v }) => ({
         sku: displaySku(v.sku),
         size: v.size,
         typeName: variantTypeName(v, variantTypes),
@@ -66,6 +68,9 @@ export function productCardData(
         packaging: v.packaging || "",
         slices: v.slices,
         price: v.price,
+        ...(variantPortionCount(v, products, owner) != null
+          ? { portionCount: variantPortionCount(v, products, owner) }
+          : {}),
       })),
   };
 }
@@ -133,5 +138,10 @@ export function variantCardData(
     customImage: product.customImage || "",
     variants: [],
     isVariantCard: true,
+    portionCount: variantPortionCount(
+      variant,
+      products.length ? products : [product],
+      product,
+    ),
   };
 }

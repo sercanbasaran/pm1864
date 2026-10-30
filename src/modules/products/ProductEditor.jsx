@@ -1,4 +1,5 @@
 import ProductDimensions from "./ProductDimensions.jsx";
+import ProductPortion from "./ProductPortion.jsx";
 import "../variants/variant-composition.css";
 import UnitPricing from "./UnitPricing.jsx";
 import { hasUnitPricing } from "../../unit-pricing.js";
@@ -122,6 +123,7 @@ export default function ProductEditor({
             }
           : { [field]: value };
     const clean = { ...base, ...patch };
+    if (field === "unitPricing" && clean.portion?.unit !== clean.unitPricing?.unit) clean.portion = null;
     const invalid = validateProduct(
       clean,
       snapshot?.categories || categories,
@@ -314,7 +316,7 @@ export default function ProductEditor({
                   "unitPricing",
                   "Birim fiyat ve birim",
                   <UnitPricing value={draft.unitPricing} />,
-                  <UnitPricing value={draft.unitPricing} editing onChange={(unitPricing) => setDraft({ ...draft, unitPricing })} />,
+                  <UnitPricing value={draft.unitPricing} editing onChange={(unitPricing) => setDraft({ ...draft, unitPricing, portion:draft.portion?.unit === unitPricing?.unit ? draft.portion : null })} />,
                   !hasUnitPricing(draft.unitPricing),
                 )}
                 {field(
@@ -322,6 +324,12 @@ export default function ProductEditor({
                   "Ürün ölçüleri",
                   <ProductDimensions value={draft.dimensions} />,
                   <ProductDimensions value={draft.dimensions} editing onChange={dimensions=>setDraft({...draft,dimensions})} />,
+                )}
+                {field(
+                  "portion",
+                  "Porsiyon bilgisi",
+                  <ProductPortion value={draft.portion} pricing={draft.unitPricing} />,
+                  <ProductPortion value={draft.portion} pricing={draft.unitPricing} editing onChange={portion=>setDraft({...draft,portion})} />,
                 )}
                 {field(
                   "description",
@@ -455,6 +463,7 @@ export default function ProductEditor({
                   <div><dt>Kategori</dt><dd>{[root?.name, category?.parentId ? category.name : null].filter(Boolean).join(" / ") || "Seçilmedi"}</dd></div>
                   <div><dt>Ürün ölçüleri</dt><dd><ProductDimensions value={draft.dimensions} /></dd></div>
                   <div><dt>Birim fiyat</dt><dd><UnitPricing value={draft.unitPricing} /></dd></div>
+                  <div><dt>Porsiyon bilgisi</dt><dd><ProductPortion value={draft.portion} pricing={draft.unitPricing} /></dd></div>
                   <div><dt>Görseller</dt><dd>{images.length} görsel</dd></div></dl>
               </section>
             ) : active === "Doygunluk bilgisi" ? (
