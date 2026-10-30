@@ -1,4 +1,5 @@
 import PackagingSelect from "../packaging/PackagingSelect.jsx";
+import { suggestedVariantName } from "../../variant-name.js";
 import {packagingAllowsProduct} from "../packaging/packaging-approval.js";
 import { variantWizardSteps } from "./variant-wizard.js";
 import { packagingOptions } from "../../variant-composition.js";
@@ -32,6 +33,7 @@ export default function VariantCreatePage({
   } = useCatalog();
   const [typeId, setTypeId] = useState(""),
     [name, setName] = useState(""),
+    [nameEdited, setNameEdited] = useState(false),
     [step, setStep] = useState(0),
     [owner, setOwner] = useState(null),
     [packagingId, setPackagingId] = useState(""),
@@ -39,6 +41,7 @@ export default function VariantCreatePage({
   const isBox = isBoxVariant({ typeId }, variantTypes);
   const isPortion = isPortionVariant({ typeId }, variantTypes);
   const selectedBox = packagingItems.find((item) => item.id === packagingId);
+  const displayName = nameEdited ? name : suggestedVariantName(initialProduct, typeId, variantTypes);
   const selectOwner = p => { if(isBox && !packagingAllowsProduct(selectedBox,p.id,products,categories)) {setApprovalError("Bu ürün seçilen kutu için onaylı değil. Ambalaj Merkezi’nden ürün onayı verin veya başka kutu seçin."); return;} setApprovalError(""); setOwner(p); };
   if (owner) {
     const draft = {
@@ -47,7 +50,7 @@ export default function VariantCreatePage({
         ...structuredClone(owner.variants),
         {
           ...newVariant(),
-          size: name.trim(),
+          size: displayName.trim() || suggestedVariantName(owner, typeId, variantTypes),
           typeId,
           sourceProductId: owner.id,
           items: [{ productId: owner.id, quantity: 1 }],
@@ -94,7 +97,7 @@ export default function VariantCreatePage({
         {step === 0 ? (
           <section className="variant-wizard-section">
             <h3>Varyant türü ve adı</h3>
-            <p>Örneğin porsiyon veya kutu seçin ve varyanta bir ad verin.</p>
+            <p>Varyant adı ürün ve tür seçimine göre otomatik oluşturulur. İsterseniz değiştirebilirsiniz.</p>
             {initialProduct && (
               <p>
                 Seçili ürün: <strong>{initialProduct.name}</strong>
@@ -120,8 +123,9 @@ export default function VariantCreatePage({
               <Input
                 label="Varyant adı"
                 maxLength={45}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={displayName}
+                placeholder="Ürün ismi [Varyant tipi]"
+                onChange={(e) => {setName(e.target.value); setNameEdited(!!e.target.value.trim());}}
               />
               {isPortion && (
                 <Input label="Servis şekli" value="Tabakta Servis" disabled />
@@ -151,7 +155,6 @@ export default function VariantCreatePage({
                 variant="primary"
                 disabled={
                   !typeId ||
-                  !name.trim() ||
                   (!isBox && !isPortion && !packaging) ||
                   (isBox && !selectedBox) ||
                   (initialProduct && initialProduct.variants.length >= 50)

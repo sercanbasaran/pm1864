@@ -1,5 +1,6 @@
 import {imageUrl} from "../../image-sizes.js";
 import PackagingSelect from "../packaging/PackagingSelect.jsx";
+import { variantNameFromContents } from "../../variant-name.js";
 import {packagingAllowsProduct, packagingApprovalIssue} from "../packaging/packaging-approval.js";
 import "./variant-composition.css";
 import React, { useEffect, useState } from "react";
@@ -54,6 +55,7 @@ export default function VariantCompositionFields({
     : product.variants.findIndex((v) => !v.id);
   const i = index < 0 ? 0 : index,
     v = product.variants[i];
+  const [automaticName, setAutomaticName] = useState(() => !v?.id && (!v?.size || v.size === variantNameFromContents(v, product, products, variantTypes)));
   useEffect(() => {
     onReady?.(!!v?.id || step === steps.length - 1);
   }, [step, onReady, v?.id]);
@@ -70,13 +72,17 @@ export default function VariantCompositionFields({
         },
       ];
   const approvalIssue = isBox && v.packagingId ? packagingApprovalIssue({...v,items}, selectedBox, product.id, products, categories) : "";
-  const update = (patch) =>
+  const update = (patch) => {
+    if (automaticName && !v.id && !Object.hasOwn(patch, "size")) {
+      patch = {...patch, size: variantNameFromContents({...v, ...patch}, product, products, variantTypes)};
+    }
     onChange({
       ...product,
       variants: product.variants.map((item, n) =>
         n === i ? { ...item, ...patch } : item,
       ),
     });
+  };
   const updateItems = (next) =>
     update({
       items: next,
@@ -189,7 +195,7 @@ export default function VariantCompositionFields({
       {step === 0 && (
         <section className="variant-wizard-section">
           <h3>Varyant türü ve adı</h3>
-          <p>Örneğin porsiyon veya kutu seçin ve varyanta bir ad verin.</p>
+          <p>Varyant adı ürün ve tür seçimine göre otomatik oluşturulur. İsterseniz değiştirebilirsiniz.</p>
           <div className="variant-basic-grid">
             <Select
               label="Varyant türü"
@@ -219,7 +225,7 @@ export default function VariantCompositionFields({
               maxLength={45}
               required
               value={v.size}
-              onChange={(e) => update({ size: e.target.value })}
+              onChange={(e) => {setAutomaticName(false); update({ size: e.target.value });}}
             />
             {isPortion && (
               <Input label="Servis şekli" value="Tabakta Servis" disabled />
