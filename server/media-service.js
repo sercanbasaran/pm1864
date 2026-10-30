@@ -177,6 +177,7 @@ export function createMediaService(db) {
         throw new ApiError(409, "Medya kaydı değişti. Listeyi yenileyin.");
       if (
         (context.doc.satietyProducts || []).some(item => item.iconMediaId === id) ||
+        (context.doc.managedChannels || []).some(item => item.images?.some(image => image.id === id)) ||
         (context.doc.packagingItems || []).some(item => item.mediaId === id) ||
         context.doc.categories.some((c) =>
           (c.images || []).some((image) => image.id === id),
@@ -193,7 +194,7 @@ export function createMediaService(db) {
       )
         throw new ApiError(
           409,
-          "Bu görsel bir ürün, kategori, ambalaj veya doygunluk simgesinde kullanılıyor. Önce bağlantısını kaldırın.",
+          "Bu görsel bir ürün, kategori, ambalaj, mağaza veya doygunluk simgesinde kullanılıyor. Önce bağlantısını kaldırın.",
           "MEDIA_IN_USE",
         );
       await tx.query("DELETE FROM app_media WHERE id=?", [id]);

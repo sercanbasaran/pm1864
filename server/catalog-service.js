@@ -1,5 +1,7 @@
 import {validateProductDimensions, normalizeProductDimensions} from "../src/product-dimensions.js";
 import {validatePortion, variantPortionCount} from "../src/portions.js";
+import {bootstrapStores} from "./imports/bootstrap-stores.js";
+import {storeFields,storeCode,storeNameKey,validateStore} from "../src/modules/channels/store-fields.js";
 import {packagingShape} from "../src/modules/packaging/packaging-volume.js";
 import {packagingApprovalIssue} from "../src/modules/packaging/packaging-approval.js";
 import {upgradePackagingCodes, allocatePackagingCode} from "../src/modules/packaging/packaging-codes.js";
@@ -69,7 +71,7 @@ import {
 } from "../src/catalog.js";
 import { ApiError } from "./errors.js";
 export { ApiError } from "./errors.js";
-export const seedCatalog = () => ({
+export const seedCatalog = () => { const doc = {
   ...defaultRegionalDefinitions(),
   categories: [
     ["Baklavalar", "100"],
@@ -98,13 +100,14 @@ export const seedCatalog = () => ({
   skuSchemaVersion: SKU_SCHEMA_VERSION,
   nextProductNumbers: {},
   productIdentityVersion: PRODUCT_IDENTITY_VERSION,
-});
+}; bootstrapStores(doc); return doc; };
 const text = (v, max = 200) =>
   typeof v === "string" ? v.trim().slice(0, max) : "";
 export function publicCatalog(doc, revision) {
   return {
     revision,
     managedChannels: doc.managedChannels || [],
+    storeImportReport: doc.storeImportReport || null,
     currencies: doc.currencies || defaultRegionalDefinitions().currencies,
     languages: doc.languages || defaultRegionalDefinitions().languages,
     defaultCurrency: doc.defaultCurrency || "TRY",
@@ -353,7 +356,7 @@ export function createCatalogService(db) {
     });
   }
   async function manageChannel(body, id, kind, method, actor) {
-    return mutate(body.expectedRevision, actor, doc => {
+    return mutate(body.expectedRevision, actor, async (doc, tx) => {
       doc.managedChannels ||= [];
       const old = doc.managedChannels.find(item => item.id === id && item.kind === kind);
       if (id && !old) throw new ApiError(404, "Kanal bulunamadı.");
@@ -362,6 +365,20 @@ export function createCatalogService(db) {
       const name = body.name.trim();
       if (doc.managedChannels.some(item => item.id !== id && item.kind === kind && normalizeName(item.name) === normalizeName(name))) throw new ApiError(422, "Bu isimde bir kanal zaten var.");
       const item = {id: old?.id || randomUUID(), kind, name, description: body.description || "", active: body.active !== false};
+      if(kind === "stores") {
+        for(const [key] of storeFields)item[key]=body[key] === undefined ? old?.[key] || "" : body[key];
+        item.status=body.status ?? old?.status ?? ((body.active ?? old?.active ?? true) ? "Aktif":"Pasif");
+        item.active=item.status === "Aktif";
+        item.services=body.services ?? old?.services ?? [];
+        item.code=body.code === undefined ? old?.code || "" : typeof body.code === "string" ? body.code.trim().toUpperCase() : body.code;
+        if(item.code === "")item.code=storeCode(name,doc.managedChannels,item.id);
+        const issue=validateStore(item);if(issue)throw new ApiError(422,issue);
+        if(doc.managedChannels.some(c=>c.id!==item.id && c.kind==="stores" && (c.code===item.code || storeNameKey(c.name)===storeNameKey(name))))throw new ApiError(422,"Bu mağaza kodu veya adı zaten kullanılıyor.");
+        const images=body.images ?? old?.images ?? [];
+        if(!Array.isArray(images) || images.length>30 || images.some(image=>!image || typeof image.id!=="string") || new Set(images.map(image=>image.id)).size!==images.length)throw new ApiError(422,"En fazla 30 farklı mağaza fotoğrafı seçin.");
+        for(const image of images)if(!(await tx.query("SELECT id FROM app_media WHERE id=?",[image.id])).rows.length)throw new ApiError(422,"Mağaza fotoğrafı Kütüphane’de bulunamadı.");
+        item.images=images.map(image=>({id:image.id,url:"/api/media/"+encodeURIComponent(image.id)+"/content"}));
+      }
       if (old) doc.managedChannels = doc.managedChannels.map(current => current.id === id ? item : current); else doc.managedChannels.push(item);
       audit(doc, old ? "Kanal güncellendi" : "Kanal oluşturuldu", name, actor);
     });

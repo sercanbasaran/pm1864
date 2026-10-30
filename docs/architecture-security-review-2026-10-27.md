@@ -30,7 +30,7 @@ Uygulama küçük bir ekip ve katalog için işlevsel bir modüler monolittir. S
 | --- | --- |
 | SheetJS `xlsx` 0.18.5 → üreticinin 0.20.3 dağıtımı | Bilinen prototype pollution ve ReDoS advisories kapsamındaki eski sürüm kaldırıldı. Paket adresi ve integrity lockfile'da tutuluyor. |
 | Excel parser worker + 10 saniye süre sınırı | Ayrıştırma ana pencerenin global nesnelerini ve ana iş parçacığını kullanmıyor. Worker tamamlanınca veya hata/süre aşımında sonlandırılıyor. |
-| Parser modülü ve 500 satır / 32 sütun sınırı | Sheet verisini JSON'a dönüştürmeden önce aralık sınırlandırılıyor; ilk sheet okunuyor. HTML/formül/VBA işleme seçenekleri kapatıldı. Sıkıştırılmış dosya belleği için tam sandbox değildir. |
+| Parser modülü ve 500 satır / 64 sütun sınırı (güncel ürün şablonu) | Sheet verisini JSON'a dönüştürmeden önce aralık sınırlandırılıyor; ilk sheet okunuyor. HTML/formül/VBA işleme seçenekleri kapatıldı. Sıkıştırılmış dosya belleği için tam sandbox değildir. |
 | Excel şablon kodu dinamik import | XLSX normal ürün listelemesi sırasında ana ürün modülüne yüklenmiyor. Build çıktısında ürün yönetimi JS parçası yaklaşık 438 KB'den 19 KB'ye indi; XLSX ayrı yükleniyor. Bu bir ağ performans benchmark'ı değildir. |
 | `server/errors.js`, `server/audit.js` | Kullanıcı/medya servislerinin yalnızca hata ve audit için katalog servisine bağlanması kaldırıldı. Eski importlar için katalog servisinde re-export korundu. |
 | `server/http/json-body.js` | JSON içerik türü tam doğrulanıyor; byte sınırı akış okunurken kontrol ediliyor. Aşımda okuma iptal ediliyor. Normal ve görsel isteklerin mevcut farklı sınırları korundu. |

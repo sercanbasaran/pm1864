@@ -1,0 +1,115 @@
+.store-tools {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: end;
+  margin: 1rem 0;
+}
+.store-tools sl-input {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+.store-tools sl-select {
+  flex: 0 1 15rem;
+  min-width: 0;
+}
+.store-list table {
+  width: 100%;
+}
+.store-list td {
+  vertical-align: top;
+}
+.store-list td small {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--sl-color-neutral-600);
+}
+.store-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 15rem;
+}
+.store-identity img,
+.store-image-placeholder {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 0.5rem;
+  background: var(--sl-color-neutral-100);
+}
+.store-image-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--sl-color-neutral-500);
+}
+.store-list details {
+  margin-top: 0.5rem;
+}
+.store-list details ul {
+  padding-left: 1rem;
+}
+.store-row-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.store-form-section {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--sl-color-neutral-200);
+  min-width: 0;
+}
+.store-form-section h3 {
+  margin-top: 0;
+}
+.store-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.store-form-grid > * {
+  min-width: 0;
+}
+.store-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.store-photos .category-gallery {
+  max-width: 34rem;
+}
+.store-photos .category-gallery-frame {
+  aspect-ratio: 16/9;
+  max-height: 20rem;
+}
+.store-form-section small {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--sl-color-neutral-600);
+}
+.store-import-status {
+  color: var(--sl-color-neutral-600);
+  font-size: 0.875rem;
+}
+@media (max-width: 640px) {
+  .store-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .store-tools sl-select {
+    flex: 1 1 100%;
+  }
+  .store-row-actions {
+    flex-direction: column;
+  }
+  .store-form-actions sl-button {
+    flex: 1;
+  }
+}
+.store-form-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

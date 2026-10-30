@@ -7,7 +7,8 @@ import { downloadTransfer } from "../transfer/transfer.js";
 import BulkCreateProducts from "./BulkCreateProducts.jsx";
 import BulkProducts from "./BulkProducts.jsx";
 import TableText from "../../components/ui/TableText.jsx";
-import ProductImport, { productTransferColumns } from "./ProductImport.jsx";
+import ProductImport from "./ProductImport.jsx";
+import {productTransferColumns, productTransferRow} from "./product-transfer.js";
 import "./product-management.css";
 import ProductQualitySummary from "./ProductQualitySummary.jsx";
 import {
@@ -18,7 +19,6 @@ import UnitPricing from "./UnitPricing.jsx";
 import SlTag from "@shoelace-style/shoelace/dist/react/tag/index.js";
 import ManagementSummary from "../../components/ui/ManagementSummary.jsx";
 import Card from "../../components/ui/Card.jsx";
-import { salesChannels } from "../../sales-availability.js";
 import {
   Button,
   Input,
@@ -65,7 +65,7 @@ export default function ProductManagement({
   onCreateVariant,
   onFocusConsumed,
 }) {
-  const { products, categories, variantTypes, busy, notify } = useCatalog(),
+  const { products, categories, variantTypes, satietyProducts = [], busy, notify } = useCatalog(),
     [query, setQuery] = useSessionFilter("products:query", ""),
     [category, setCategory] = useSessionFilter("products:category", ""),
     [status, setStatus] = useSessionFilter("products:status", ""),
@@ -160,13 +160,7 @@ export default function ProductManagement({
     );
   }
   async function exportRows(format) {
-    const rows = visible.map(p => {
-      const category = categoryOf(p, categories);
-      const root = rootOf(category, categories);
-      const code = category?.parentId ? `${root?.code || ""}${category.code || ""}` : category?.code || "";
-      const sales = p.salesAvailability || {};
-      return [p.name, code, p.description || "", p.status, p.unitPricing?.unit || "", p.unitPricing?.price ?? "", p.unitPricing?.weight ?? "", p.ingredients || "", p.allergens || "", p.nutrition || "", p.servingSuggestion || "", p.storageConditions || "", p.longTermStorage || "", p.productCode || "", ...salesChannels.map(c => sales[c.key] ? "Açık" : "Kapalı")];
-    });
+    const rows = visible.map(p => productTransferRow(p,categories,satietyProducts));
     try { await downloadTransfer(productTransferColumns, rows, format, "urunler", "Ürünler"); }
     catch { notify("Dışa aktarma dosyası hazırlanamadı."); }
   }

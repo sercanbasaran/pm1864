@@ -12,6 +12,8 @@ export default function CategoryGallery({
   disabled = false,
   editable = true,
   label = "Kategori",
+  onUploadingChange,
+  maxImages = Infinity,
 }) {
   const [index, setIndex] = useState(0),
     [paused, setPaused] = useState(false),
@@ -19,6 +21,7 @@ export default function CategoryGallery({
     [error, setError] = useState("");
   const input = useRef(null);
   const current = Math.min(index, Math.max(0, images.length - 1));
+  useEffect(() => { onUploadingChange?.(uploading); }, [uploading,onUploadingChange]);
   useEffect(() => {
     if (
       paused ||
@@ -34,6 +37,7 @@ export default function CategoryGallery({
   }, [paused, images.length]);
   async function uploadFiles(files) {
     if (!files.length || disabled || uploading || !editable) return;
+    if(images.length + files.length > maxImages) {setError(`En fazla ${maxImages} görsel yükleyebilirsiniz.`); return;}
     setUploading(true);
     setError("");
     const added = [];

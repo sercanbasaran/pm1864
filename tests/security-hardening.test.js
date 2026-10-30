@@ -104,9 +104,9 @@ test("spreadsheet parsing accepts normal rows and bounds huge ranges before conv
     ["Baklava", "0100"],
   ]);
   assert.equal(parseProductWorkbook(buffer(sheet))[0]["Ürün adı"], "Baklava");
-  sheet["AG1"] = { t: "s", v: "invalid" };
-  sheet["!ref"] = "A1:AG2";
-  assert.throws(() => parseProductWorkbook(buffer(sheet)), /32 sütun/);
+  sheet["BM1"] = { t: "s", v: "invalid" };
+  sheet["!ref"] = "A1:BM2";
+  assert.throws(() => parseProductWorkbook(buffer(sheet)), /64 sütun/);
   const tooMany = XLSX.utils.aoa_to_sheet([
     ["Ürün adı"],
     ...Array.from({ length: 501 }, () => ["Baklava"]),
