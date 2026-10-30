@@ -160,7 +160,7 @@ export default function ProductDetails({ product: source, localizationUrl, navig
         </Card>
       )}
       {!product.isVariantCard && <Card className="product-detail-card product-card-variants">
-        <h3>Ürün varyantları</h3>
+        <h3>Ürünün dahil olduğu varyantlar</h3>
         {product.variants?.length ? (
           <ProductVariantsTable product={product} formatPrice={formatPrice} priceLabel={`Fiyat (${activeCurrency})`} />
         ) : (

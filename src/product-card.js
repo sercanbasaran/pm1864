@@ -5,6 +5,7 @@ import { defaultVariantTypes, variantTypeName } from "./variant-types.js";
 import { categoryOf, rootOf, categoryPath } from "./hierarchy.js";
 import { productInformationFields } from "./product-information.js";
 import { defaultSatietyProducts, resolvedSatiety } from "./satiety.js";
+import { variantsContainingProduct } from "./product-variants.js";
 
 export const productCardCode = (product) =>
   product.publicCardCode ||
@@ -32,6 +33,7 @@ export function productCardData(
   image = product.customImage || "",
   variantTypes = defaultVariantTypes(),
   satietyProducts = defaultSatietyProducts(),
+  products = [product],
 ) {
   return {
     productCode: product.productCode || productCardCode(product),
@@ -51,9 +53,11 @@ export function productCardData(
         product[field.key] || "",
       ]),
     ),
-    variants: product.variants
-      .filter((v) => v.active !== false)
-      .map((v) => ({
+    variants: variantsContainingProduct(product, products)
+      .filter(({ owner, variant }) =>
+        variantCardEligible(owner, variant, categories, products),
+      )
+      .map(({ variant: v }) => ({
         sku: displaySku(v.sku),
         size: v.size,
         typeName: variantTypeName(v, variantTypes),
@@ -66,27 +70,65 @@ export function productCardData(
   };
 }
 
-export function variantCardEligible(product, variant, categories, products = [product]) {
+export function variantCardEligible(
+  product,
+  variant,
+  categories,
+  products = [product],
+) {
   if (!variant || variant.active === false) return false;
-  const ids = Array.isArray(variant.items) && variant.items.length ? variant.items.map(item => item.productId) : [variant.sourceProductId ?? product.id];
-  return ids.every(id => products.some(item => item.id === id && item.status === "Aktif"));
+  const ids =
+    Array.isArray(variant.items) && variant.items.length
+      ? variant.items.map((item) => item.productId)
+      : [variant.sourceProductId ?? product.id];
+  return ids.every((id) =>
+    products.some((item) => item.id === id && item.status === "Aktif"),
+  );
 }
-export function variantCardData(product, variant, categories, products = [], satietyProducts = defaultSatietyProducts()) {
+export function variantCardData(
+  product,
+  variant,
+  categories,
+  products = [],
+  satietyProducts = defaultSatietyProducts(),
+) {
   const information = variant.information || product;
-  const items = (variant.items || [{ productId: variant.sourceProductId ?? product.id, quantity: variant.quantity ?? 1 }]).map((item) => {
-    const source = products.find((p) => p.id === item.productId) || (item.productId === product.id ? product : null);
-    return { name: source?.name || "Ürün", quantity: item.quantity, unit: source?.unitPricing?.unit || "Adet" };
+  const items = (
+    variant.items || [
+      {
+        productId: variant.sourceProductId ?? product.id,
+        quantity: variant.quantity ?? 1,
+      },
+    ]
+  ).map((item) => {
+    const source =
+      products.find((p) => p.id === item.productId) ||
+      (item.productId === product.id ? product : null);
+    return {
+      name: source?.name || "Ürün",
+      quantity: item.quantity,
+      unit: source?.unitPricing?.unit || "Adet",
+    };
   });
   return {
     productCode: displaySku(variant.sku),
     name: variant.size,
     category: "",
     description: items.map((item) => item.name).join(" · "),
-    variantPricing: { price: variant.price, weight: variant.weight, packaging: variant.packagingName || variant.packaging || "" },
+    variantPricing: {
+      price: variant.price,
+      weight: variant.weight,
+      packaging: variant.packagingName || variant.packaging || "",
+    },
     variantContents: items,
     salesAvailability: effectiveSales(product, variant, categories),
     satiety: resolvedSatiety(information.satiety, satietyProducts),
-    ...Object.fromEntries(productInformationFields.map((field) => [field.key, information[field.key] || ""])),
+    ...Object.fromEntries(
+      productInformationFields.map((field) => [
+        field.key,
+        information[field.key] || "",
+      ]),
+    ),
     images: variant.images || [],
     customImage: product.customImage || "",
     variants: [],

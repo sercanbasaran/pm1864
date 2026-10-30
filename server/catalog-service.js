@@ -1048,6 +1048,7 @@ export function createCatalogService(db) {
               : "",
           catalog.variantTypes,
           catalog.satietyProducts,
+          catalog.products,
         ),
       ),
     };
@@ -1102,6 +1103,7 @@ export function createCatalogService(db) {
             : "",
         catalog.variantTypes,
         catalog.satietyProducts,
+        catalog.products,
       ),
       images: images.map((image) => ({
         id: image.id,
@@ -1148,6 +1150,7 @@ export function createCatalogService(db) {
       image,
       catalog.variantTypes,
       catalog.satietyProducts,
+      catalog.products,
     );
   }
   async function variantPage(id, authenticated = false, assetId = "") {

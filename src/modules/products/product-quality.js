@@ -1,6 +1,7 @@
 import { hasUnitPricing } from "../../unit-pricing.js";
 import { hasSatiety } from "../../satiety.js";
 import { parseNutrition } from "../../nutrition.js";
+import { variantsContainingProduct } from "../../product-variants.js";
 const blank = (value) => typeof value !== "string" || !value.trim();
 export const productQualityChecks = [
   {
@@ -57,7 +58,9 @@ export const productQualityChecks = [
     missing: (p) => !hasSatiety(p.satiety),
   },
 ];
-export function missingProductInformation(product, key) {
+export function missingProductInformation(product, key, products = [product]) {
+  if (key === "noVariants")
+    return variantsContainingProduct(product, products).length === 0;
   return key === "any"
     ? productQualityChecks.some((c) => c.missing(product))
     : !!productQualityChecks.find((c) => c.key === key)?.missing(product);

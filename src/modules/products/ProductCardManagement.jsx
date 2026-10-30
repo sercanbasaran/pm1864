@@ -100,6 +100,7 @@ export default function ProductCardManagement({ product, user, onClose, onNaviga
             product.customImage,
             variantTypes,
             satietyProducts,
+            products,
           )}
         />
         <Card className="product-card-sharing">

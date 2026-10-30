@@ -70,3 +70,21 @@ test('publication enforces permissions, revision checks, boolean values, active 
   catalog=(await f.call(path,'PATCH',{expectedRevision:catalog.revision,enabled:false})).catalog;assert.equal(catalog.logs[0].title,'Ürün kartı yayından kaldırıldı');
  }finally{await f.app.close()}
 });
+
+test('all product card endpoints include variants owned elsewhere when the product is in their composition', async()=>{
+ const f=await fixture();try{
+  const row=(await f.app.db.query('SELECT document FROM app_catalog WHERE id=1')).rows[0];
+  const doc=JSON.parse(row.document), first=doc.products[0];
+  first.publicCardEnabled=true;
+  const second={...first,id:999,name:'Karma kutudaki ürün',productCode:'1000101',publicCardCode:'1000101',publicSlug:'karma-urun',variants:[]};
+  first.variants[0].items=[{productId:first.id,quantity:1},{productId:second.id,quantity:1}];
+  doc.products.push(second);
+  await f.app.db.query('UPDATE app_catalog SET document=? WHERE id=1',[JSON.stringify(doc)]);
+  for(const path of ['/public/products/1000101','/product-pages/karma-urun']){
+   const result=await f.call(path,'GET',undefined,true);
+   assert.equal(result.status,200);
+   assert.equal(result.product.variants.length,1);
+   assert.equal(result.product.variants[0].size,first.variants[0].size);
+  }
+ }finally{await f.app.close()}
+});

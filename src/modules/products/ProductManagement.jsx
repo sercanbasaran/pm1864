@@ -120,7 +120,7 @@ export default function ProductManagement({
       (p) =>
         categoryMatches(p, category, categories) &&
         (!status || p.status === status) &&
-        (!quality || missingProductInformation(p, quality)) &&
+        (!quality || missingProductInformation(p, quality, products)) &&
         `${p.name} ${p.productCode} ${p.variants.map((v) => v.size).join(" ")}`
           .toLocaleLowerCase("tr")
           .includes(query.toLocaleLowerCase("tr")),
@@ -334,6 +334,7 @@ export default function ProductManagement({
             >
               <option value="">Tüm ürünler</option>
               <option value="any">Eksik bilgili tüm ürünler</option>
+              <option value="noVariants">Varyantı oluşturulmamış ürünler</option>
               {productQualityChecks.map((check) => (
                 <option key={check.key} value={check.key}>
                   {check.label}

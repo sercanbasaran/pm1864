@@ -44,7 +44,12 @@ test("quality checks distinguish missing product information without requiring o
   );
   assert.equal(
     missingProductInformation(
-      { ...p, name: "Muzlu Muhallebi", category: "Muhallebiler", satiety: [{ ingredientId: "banana", level: 3 }] },
+      {
+        ...p,
+        name: "Muzlu Muhallebi",
+        category: "Muhallebiler",
+        satiety: [{ ingredientId: "banana", level: 3 }],
+      },
       "satiety",
     ),
     false,
