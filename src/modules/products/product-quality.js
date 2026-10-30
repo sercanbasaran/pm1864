@@ -53,9 +53,8 @@ export const productQualityChecks = [
   },
   {
     key: "satiety",
-    label: "Doygunluk bilgisi olmayan baklavalar",
-    missing: (p) =>
-      /baklava/i.test(p.category || p.name || "") && !hasSatiety(p.satiety),
+    label: "Doygunluk bilgisi",
+    missing: (p) => !hasSatiety(p.satiety),
   },
 ];
 export function missingProductInformation(product, key) {

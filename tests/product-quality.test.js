@@ -40,6 +40,13 @@ test("quality checks distinguish missing product information without requiring o
       { ...p, category: "Lokumlar", satiety: [] },
       "satiety",
     ),
+    true,
+  );
+  assert.equal(
+    missingProductInformation(
+      { ...p, name: "Muzlu Muhallebi", category: "Muhallebiler", satiety: [{ ingredientId: "banana", level: 3 }] },
+      "satiety",
+    ),
     false,
   );
 });
