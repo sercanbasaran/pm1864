@@ -92,3 +92,44 @@ test("product card bottom table shows mixed variants containing this product", (
     document.querySelector(".product-card-variants tbody").textContent,
   ).toContain("Karışık kutu");
 });
+
+test("portion filter and incomplete-record count exclude valid portion definitions", async () => {
+  const data = products.map((p) => ({
+    ...p,
+    unitPricing: { unit: "Dilim", price: 100, weight: 40 },
+    ...(p.id === 1 ? { portion: { unit: "Dilim", quantity: 3 } } : {}),
+  }));
+  const snapshot = {
+    revision: 1,
+    products: data,
+    categories: [{ id: "a", name: "Tatlılar", active: true }],
+    variantTypes: [],
+  };
+  render(
+    <CatalogProvider snapshot={snapshot} notify={vi.fn()}>
+      <ProductManagement
+        user={{ role: "viewer" }}
+        focus={{ quality: "portion" }}
+        onEdit={vi.fn()}
+        onBulk={vi.fn()}
+        onNew={vi.fn()}
+        onDuplicate={vi.fn()}
+        onCard={vi.fn()}
+      />
+    </CatalogProvider>,
+  );
+  await settle();
+  const rows = document.querySelectorAll("tbody tr");
+  expect(rows).toHaveLength(2);
+  expect([...rows].map((row) => row.textContent).join(" ")).not.toContain(
+    "Baklava",
+  );
+  const filter = document.querySelector(
+    'sl-select[aria-label="İçerik eksikliği"]',
+  );
+  expect(filter.value).toBe("portion");
+  const summary = [
+    ...document.querySelectorAll(".product-quality-actions sl-button"),
+  ].find((button) => button.textContent.includes("Porsiyon bilgisi"));
+  expect(summary.querySelector("sl-badge").textContent).toBe("2");
+});

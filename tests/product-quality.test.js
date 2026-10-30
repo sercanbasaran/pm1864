@@ -14,11 +14,22 @@ test("quality checks distinguish missing product information without requiring o
     longTermStorage: "Dondurucu",
     satiety: [{ ingredientId: "pistachio", level: 3 }],
     unitPricing: { unit: "Dilim", price: 50, weight: 30 },
+    portion: { unit: "Dilim", quantity: 3 },
     nutrition:
       "100 g için: Enerji 400 kcal / 1673 kJ; Yağ 20 g; Doymuş yağ 3 g; Karbonhidrat 50 g; Şeker 25 g; Lif 2 g; Protein 6 g; Tuz 0,2 g.",
     variants: [],
   };
   assert.equal(missingProductInformation(p, "any"), false);
+  assert.equal(missingProductInformation(p, "portion"), false);
+  for (const portion of [
+    undefined,
+    null,
+    { unit: "Dilim", quantity: 0 },
+    { unit: "Gram", quantity: 150 },
+  ]) {
+    assert.equal(missingProductInformation({ ...p, portion }, "portion"), true);
+    assert.equal(missingProductInformation({ ...p, portion }, "any"), true);
+  }
   assert.equal(
     missingProductInformation({ ...p, description: " " }, "description"),
     true,

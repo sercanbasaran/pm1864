@@ -1,5 +1,6 @@
 import { hasUnitPricing } from "../../unit-pricing.js";
 import { hasSatiety } from "../../satiety.js";
+import { hasPortion } from "../../portions.js";
 import { parseNutrition } from "../../nutrition.js";
 import { variantsContainingProduct } from "../../product-variants.js";
 const blank = (value) => typeof value !== "string" || !value.trim();
@@ -41,6 +42,11 @@ export const productQualityChecks = [
     key: "servingSuggestion",
     label: "Servis önerisi eksik ürünler",
     missing: (p) => blank(p.servingSuggestion),
+  },
+  {
+    key: "portion",
+    label: "Porsiyon bilgisi",
+    missing: (p) => !hasPortion(p),
   },
   {
     key: "storageConditions",
