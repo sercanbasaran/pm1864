@@ -53,7 +53,7 @@ test("migration preserves existing single ratings, seeds only missing definition
   assert.deepEqual(doc.products[2].satiety, []);
   assert.deepEqual(
     doc.satietyProducts.map((d) => d.name),
-    ["Fıstık", "Ceviz"],
+    ["Fıstık", "Ceviz", "Muz", "Frambuaz", "Karışık Meyve"],
   );
   assert.equal(upgradeSatiety(doc), false);
   doc.satietyProducts[0].name = "Antep fıstığı";
@@ -94,7 +94,7 @@ test("API manages reusable definitions, multiple ratings, visibility, revisions 
     let catalog = (await call("/catalog")).catalog;
     assert.deepEqual(
       catalog.satietyProducts.map((d) => d.name),
-      ["Fıstık", "Ceviz"],
+      ["Fıstık", "Ceviz", "Muz", "Frambuaz", "Karışık Meyve"],
     );
     const created = await call("/satiety-products", "POST", {
       expectedRevision: catalog.revision,
@@ -211,5 +211,35 @@ test("API manages reusable definitions, multiple ratings, visibility, revisions 
     );
   } finally {
     await app.close();
+  }
+});
+
+test("fruit definitions upgrade existing catalogs without duplicates or changing ratings", () => {
+  const custom = {
+    id: "custom-banana",
+    name: "Muz",
+    icon: "general",
+    active: false,
+  };
+  const doc = {
+    products: [{ satiety: [{ ingredientId: "custom-banana", level: 4 }] }],
+    satietyProducts: [custom],
+  };
+  assert.equal(upgradeSatiety(doc), true);
+  assert.equal(doc.satietyProducts.length, 3);
+  assert.deepEqual(doc.satietyProducts[0], custom);
+  assert.equal(upgradeSatiety(doc), false);
+  assert.equal(
+    validateSatiety(doc.products[0].satiety, doc.satietyProducts),
+    "",
+  );
+  for (const id of ["banana", "raspberry", "mixed-fruit"]) {
+    assert.equal(
+      validateSatiety(
+        [{ ingredientId: id, level: 5 }],
+        defaultSatietyProducts(),
+      ),
+      "",
+    );
   }
 });

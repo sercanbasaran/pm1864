@@ -5,7 +5,7 @@ import SatietyIndicator from "../src/modules/products/SatietyIndicator.jsx";
 import ProductDetails from "../src/modules/products/ProductDetails.jsx";
 afterEach(cleanup);
 
-test.each(["pistachio", "walnut"])(
+test.each(["pistachio", "walnut", "banana", "raspberry", "mixed-fruit"])(
   "%s shows five illustrations and a readable level",
   (type) => {
     render(<SatietyIndicator value={{ type, level: 3 }} />);

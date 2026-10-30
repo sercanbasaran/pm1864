@@ -4,11 +4,29 @@ export const satietyTypes = [
   { value: "chocolate", label: "Çikolata" },
   { value: "strawberry", label: "Çilek" },
   { value: "cherry", label: "Vişne" },
+  { value: "banana", label: "Muz", metric: "Muz yoğunluğu" },
+  { value: "raspberry", label: "Frambuaz", metric: "Frambuaz yoğunluğu" },
+  {
+    value: "mixed-fruit",
+    label: "Karışık Meyve",
+    metric: "Karışık Meyve yoğunluğu",
+  },
   { value: "general", label: "Genel", metric: "Doygunluk seviyesi" },
 ];
 export const defaultSatietyProducts = () => [
   { id: "pistachio", name: "Fıstık", icon: "pistachio", active: true },
   { id: "walnut", name: "Ceviz", icon: "walnut", active: true },
+  ...fruitSatietyProducts(),
+];
+const fruitSatietyProducts = () => [
+  { id: "banana", name: "Muz", icon: "banana", active: true },
+  { id: "raspberry", name: "Frambuaz", icon: "raspberry", active: true },
+  {
+    id: "mixed-fruit",
+    name: "Karışık Meyve",
+    icon: "mixed-fruit",
+    active: true,
+  },
 ];
 export const satietyLevels = [
   "Çok hafif",
@@ -72,6 +90,17 @@ export function upgradeSatiety(doc) {
     doc.products.map((p) => p.satiety),
   ]);
   doc.satietyProducts ??= defaultSatietyProducts();
+  for (const definition of fruitSatietyProducts()) {
+    if (
+      !doc.satietyProducts.some(
+        (d) =>
+          d.id === definition.id ||
+          d.name.trim().toLocaleLowerCase("tr-TR") ===
+            definition.name.toLocaleLowerCase("tr-TR"),
+      )
+    )
+      doc.satietyProducts.push(definition);
+  }
   for (const p of doc.products) {
     if (p.satiety && !Array.isArray(p.satiety)) {
       const legacy = p.satiety;

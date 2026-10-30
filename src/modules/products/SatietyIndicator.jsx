@@ -91,6 +91,74 @@ function NutIcon({ type }) {
             strokeLinecap="round"
           />
         </>
+      ) : type === "banana" ? (
+        <>
+          <path
+            d="M9 10c1 19 12 29 29 17-6 17-28 20-33 1C3 22 4 15 9 10Z"
+            fill="#f4cf50"
+            stroke="#bd9230"
+            strokeWidth="2"
+          />
+          <path
+            d="M9 14c3 17 13 22 26 16"
+            fill="none"
+            stroke="#ffe990"
+            strokeWidth="3"
+          />
+          <path
+            d="m8 11 2-6m27 23 4-4"
+            stroke="#796037"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </>
+      ) : type === "raspberry" ? (
+        <>
+          <path d="m24 14-12-5 9-1 3-5 4 5 9 1-12 5" fill="#648e42" />
+          {[
+            [17, 17],
+            [29, 17],
+            [12, 25],
+            [24, 25],
+            [36, 25],
+            [18, 33],
+            [30, 33],
+            [24, 40],
+          ].map(([cx, cy]) => (
+            <circle
+              key={`${cx}-${cy}`}
+              cx={cx}
+              cy={cy}
+              r="6"
+              fill="#cf456c"
+              stroke="#a42952"
+              strokeWidth="1.5"
+            />
+          ))}
+        </>
+      ) : type === "mixed-fruit" ? (
+        <>
+          <circle
+            cx="15"
+            cy="28"
+            r="11"
+            fill="#e79636"
+            stroke="#b97527"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M22 25c0-8 20-8 20 0 0 9-8 17-10 17s-10-8-10-17Z"
+            fill="#d74649"
+            stroke="#a12d36"
+            strokeWidth="1.5"
+          />
+          <path
+            d="m32 23-8-7 7 1 2-6 3 6 7-1-9 7M14 17c-1-8 8-11 12-8-2 6-6 9-12 8"
+            fill="#648e42"
+          />
+          <circle cx="13" cy="36" r="5" fill="#755399" />
+          <circle cx="21" cy="39" r="5" fill="#8862aa" />
+        </>
       ) : type === "cherry" ? (
         <>
           <path
