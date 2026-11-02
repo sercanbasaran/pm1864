@@ -1,3 +1,4 @@
+import { variantBoxLayoutIssue } from "../packaging/box-layout.js";
 import {
   packagingMethodName,
   packagingMethodOptions,
@@ -19,7 +20,7 @@ import {
 } from "../../variant-composition.js";
 import { variantTypeName } from "../../variant-types.js";
 import { money } from "../../catalog-tools.js";
-import { isPortionVariant } from "../packaging/packaging-data.js";
+import { isPortionVariant, isBoxVariant } from "../packaging/packaging-data.js";
 import VariantCompositionFields from "./VariantCompositionFields.jsx";
 import "./variant-composition.css";
 
@@ -40,6 +41,7 @@ export default function VariantEditor({
     variantTypes,
     consumables = defaultConsumables(),
     packagingMethods,
+    packagingItems = [],
     busy,
     mutate,
     notify,
@@ -75,27 +77,36 @@ export default function VariantEditor({
     if (busy || readOnly || !wizardReady) return;
     const newVariant = draft.variants.some((item) => !item.id);
     let next;
+    const calculateWithLayout = (v) => {
+      if (isBoxVariant(v, variantTypes)) {
+        const issue = variantBoxLayoutIssue(
+          v,
+          packagingItems.find((box) => box.id === v.packagingId),
+          products,
+          current.id,
+        );
+        if (issue) throw Error(issue);
+      }
+      return calculateVariant(
+        isPortionVariant(v, variantTypes)
+          ? {
+              ...v,
+              packagingId: "",
+              packaging: packagingMethodName(packagingMethods, "plated"),
+            }
+          : v,
+        products,
+        consumables,
+        packagingMethods,
+      );
+    };
     try {
       next = {
         ...current,
         variants: draft.variants.map((v) =>
           v.sourceProductId !== undefined &&
           (focus ? String(v.id) === focus : newVariant ? !v.id : true)
-            ? calculateVariant(
-                isPortionVariant(v, variantTypes)
-                  ? {
-                      ...v,
-                      packagingId: "",
-                      packaging: packagingMethodName(
-                        packagingMethods,
-                        "plated",
-                      ),
-                    }
-                  : v,
-                products,
-                consumables,
-                packagingMethods,
-              )
+            ? calculateWithLayout(v)
             : v,
         ),
       };

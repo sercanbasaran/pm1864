@@ -119,3 +119,24 @@
 .variant-capacity-summary progress { width: 100%; max-width: 100%; accent-color: var(--sl-color-primary-600); }
 .variant-capacity-summary small, .variant-capacity-product { overflow-wrap: anywhere; }
 .variant-capacity-summary [role="alert"] { color: var(--sl-color-danger-700); }
+
+.variant-orientation-fields { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;min-width:0; }
+.variant-orientation-fields small { grid-column:1/-1; }
+.variant-layout-dialog { --width:calc(100vw - 24px); }
+.variant-layout-dialog::part(panel) { width:calc(100vw - 24px);max-width:none;height:calc(100dvh - 24px);max-height:none; }
+.variant-layout-dialog::part(body) { overflow:auto;min-width:0; }
+.variant-layout-workspace { display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:1.25rem;margin-top:1rem;min-width:0; }
+.variant-layout-workspace > * { min-width:0; }
+.variant-layout-drawing svg { display:block;width:100%;max-height:65dvh;color:var(--sl-color-neutral-900); }
+.variant-layout-controls,.variant-layout-product,.variant-layout-suggestions { display:grid;gap:.75rem;min-width:0; }
+.variant-layout-product { padding:.8rem;border:1px solid var(--sl-color-neutral-200);border-radius:.5rem; }
+.variant-layout-product h4,.variant-layout-suggestions h4 { margin:0; }
+.variant-layout-legend { display:flex;flex-wrap:wrap;gap:.75rem;padding:0;list-style:none; }
+.variant-layout-legend li { display:flex;gap:.4rem;align-items:center; }
+.variant-layout-legend li span { width:1rem;height:1rem;border:1px solid #475569;flex-shrink:0; }
+.variant-layout-suggestions > div { display:flex;align-items:center;flex-wrap:wrap;gap:.75rem;padding:.75rem;border:1px solid var(--sl-color-neutral-200);border-radius:.5rem; }
+.variant-layout-suggestions > div > span { flex:1 1 15rem;min-width:0;overflow-wrap:anywhere; }
+@media(max-width:800px) { .variant-layout-workspace {grid-template-columns:minmax(0,1fr);} .variant-layout-dialog::part(body) {padding:12px;} }
+
+.variant-layout-controls { align-content:start;align-self:start; }
+.variant-layout-product { align-content:start; }

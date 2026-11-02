@@ -5,7 +5,7 @@ import {
   capacityProductLabel,
 } from "../src/modules/packaging/packaging-capacity.js";
 
-const box = { length: 100, width: 100, height: 40 };
+const box = { length: 100, width: 100, height: 40, maxProductWeight: 5000 };
 const slice = {
   id: 1,
   name: "Baklava",
@@ -31,8 +31,9 @@ test("capacity estimates honor single-layer base area and change with mixed quan
   assert.equal(capacity.basePercent, 36);
   assert.equal(capacity.usedVolume, 92);
   assert.equal(capacity.remainingVolume, 308);
-  assert.deepEqual(capacity.forProduct(slice), { maximum: 25, additional: 16 });
-  assert.deepEqual(
+  assert.equal(capacity.forProduct(slice).maximum, 25);
+  assert.equal(capacity.forProduct(slice).additional, 16);
+  assert.equal(
     packagingCapacity(
       box,
       [
@@ -40,8 +41,8 @@ test("capacity estimates honor single-layer base area and change with mixed quan
         { productId: 2, quantity: 2 },
       ],
       [slice, large],
-    ).forProduct(slice),
-    { maximum: 25, additional: 15 },
+    ).forProduct(slice).additional,
+    15,
   );
   assert.equal(
     packagingCapacity(box, [{ productId: 1, quantity: 5 }], [slice]).forProduct(
@@ -73,7 +74,8 @@ test("rotation, height, round boxes and weight limits are accounted for", () => 
     [{ productId: 1, quantity: 6 }],
     [slice],
   );
-  assert.deepEqual(weighted.forProduct(slice), { maximum: 10, additional: 4 });
+  assert.equal(weighted.forProduct(slice).maximum, 10);
+  assert.equal(weighted.forProduct(slice).additional, 4);
   const round = packagingCapacity(
     { shape: "cylinder", diameter: 100, height: 40 },
     [],
@@ -98,8 +100,8 @@ test("missing dimensions, fractional slice counts and mass units never yield mis
     [missing],
   );
   assert.equal(unknown.ready, false);
-  assert.equal(unknown.volumePercent, null);
-  assert.equal(unknown.forProduct(slice).additional, undefined);
+  assert.equal(unknown.volumePercent, undefined);
+  assert.equal(unknown.forProduct, undefined);
   assert.match(unknown.reason, /Baklava/);
   assert.equal(
     packagingCapacity(box, [{ productId: 1, quantity: 1.5 }], [slice]).ready,

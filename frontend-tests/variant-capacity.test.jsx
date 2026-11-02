@@ -31,13 +31,15 @@ const box = {
   width: 100,
   height: 40,
   active: true,
+  maxProductWeight: 5000,
   allowedProductIds: [1, 2],
 };
-function Harness({ snapshot }) {
+function Harness({ snapshot, onReady, initialId }) {
   const [product, setProduct] = useState({
     ...first,
     variants: [
       {
+        id: initialId,
         size: "Karışık",
         typeId: "type-box",
         packagingId: "box",
@@ -53,6 +55,7 @@ function Harness({ snapshot }) {
         product={product}
         onChange={setProduct}
         initialStep={1}
+        onReady={onReady}
       />
     </CatalogProvider>
   );
@@ -72,7 +75,7 @@ const capacity = () =>
   document.querySelector('[aria-label="Cevizli kapasitesi"]').textContent;
 async function quantity(value) {
   const input = document.querySelector(
-    'sl-input[aria-label="Fıstıklı miktarı"]',
+    'sl-input[aria-label="Fıstıklı yatay adedi"]',
   );
   input.value = String(value);
   fireEvent(input, new CustomEvent("sl-input", { bubbles: true }));
@@ -83,7 +86,7 @@ test("picker and selected products update remaining slices after quantities, add
   await settle();
   expect(
     document.querySelector('[aria-label="Kutu kapasitesi"]').textContent,
-  ).toContain("Hacim doluluğu");
+  ).toContain("Taban doluluğu");
   expect(capacity()).toContain("10 dilim daha");
   await quantity(10);
   expect(capacity()).toContain("7 dilim daha");
@@ -101,7 +104,9 @@ test("picker and selected products update remaining slices after quantities, add
   await settle();
   expect(capacity()).toContain("7 dilim daha");
   fireEvent.click(
-    [...document.querySelectorAll("sl-button")].find((x) => x.textContent.trim() === "Geri"),
+    [...document.querySelectorAll("sl-button")].find(
+      (x) => x.textContent.trim() === "Geri",
+    ),
   );
   await settle();
   const select = [...document.querySelectorAll("sl-select")].find(
@@ -132,4 +137,94 @@ test("missing measurements show an explanation instead of a fabricated remaining
     document.querySelector('[aria-label="Kutu kapasitesi"]').textContent,
   ).toContain("ölçü");
   expect(capacity()).not.toContain("dilim daha");
+});
+
+const clickText = async (label, root = document) => {
+  fireEvent.click(
+    [...root.querySelectorAll("sl-button")].find(
+      (button) => button.textContent.trim() === label,
+    ),
+  );
+  await settle();
+};
+test("full width grid supports 4 horizontal plus 8 vertical pieces and blocks navigation below 95 percent or above kg limits", async () => {
+  const ready = vi.fn();
+  const measured = {
+    ...snapshot,
+    products: [
+      { ...first, dimensions: { length: 50, width: 25, height: 30 } },
+      second,
+    ],
+    packagingItems: [{ ...box, length: 150, maxProductWeight: 600 }],
+  };
+  render(<Harness snapshot={measured} onReady={ready} initialId="saved" />);
+  await settle();
+  expect(ready).toHaveBeenLastCalledWith(false);
+  expect(
+    [...document.querySelectorAll("sl-button")].find(
+      (b) => b.textContent.trim() === "Devam et",
+    ).disabled,
+  ).toBe(true);
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog.variant-layout-dialog");
+  expect(dialog.open).toBe(true);
+  expect(dialog.querySelector('svg[role="img"]')).not.toBeNull();
+  for (const [label, value] of [
+    ["Fıstıklı yatay adedi", 4],
+    ["Fıstıklı dikey adedi", 8],
+  ]) {
+    const control = dialog.querySelector(`sl-input[aria-label="${label}"]`);
+    control.value = String(value);
+    fireEvent(control, new CustomEvent("sl-input", { bubbles: true }));
+    await settle();
+  }
+  expect(dialog.querySelectorAll("svg g")).toHaveLength(12);
+  expect(ready).toHaveBeenLastCalledWith(true);
+  expect(dialog.textContent).toContain("0,6 kg");
+  fireEvent.click(dialog.querySelector('sl-button[aria-label="Cevizli seç"]'));
+  await settle();
+  expect(ready).toHaveBeenLastCalledWith(false);
+  fireEvent.click(
+    dialog.querySelector('sl-button[aria-label="Cevizli yerleşimden kaldır"]'),
+  );
+  await settle();
+  expect(ready).toHaveBeenLastCalledWith(true);
+
+  await clickText("Yerleşime dön", dialog);
+  expect(document.querySelector("sl-dialog")).toBeNull();
+  expect(
+    [...document.querySelectorAll("sl-button")].find(
+      (b) => b.textContent.trim() === "Devam et",
+    ).disabled,
+  ).toBe(false);
+  const vertical = document.querySelector(
+    'sl-input[aria-label="Fıstıklı dikey adedi"]',
+  );
+  vertical.value = "9";
+  fireEvent(vertical, new CustomEvent("sl-input", { bubbles: true }));
+  await settle();
+  expect(ready).toHaveBeenLastCalledWith(false);
+  expect(
+    [...document.querySelectorAll("sl-button")].find(
+      (b) => b.textContent.trim() === "Devam et",
+    ).disabled,
+  ).toBe(true);
+});
+test("a feasible filler recommendation updates orientation counts and enables progression", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  const suggestion = document.querySelector(
+    'sl-button[aria-label="Fıstıklı önerisini uygula"]',
+  );
+  expect(suggestion).not.toBeNull();
+  fireEvent.click(suggestion);
+  await settle();
+  expect(
+    document.querySelector('[aria-label="Kutu kapasitesi"]').textContent,
+  ).toContain("Yerleşim uygun");
+  expect(
+    [...document.querySelectorAll("sl-button")].find(
+      (b) => b.textContent.trim() === "Devam et",
+    ).disabled,
+  ).toBe(false);
 });

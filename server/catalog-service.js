@@ -1,3 +1,4 @@
+import {variantBoxLayoutIssue, orientationIssue} from "../src/modules/packaging/box-layout.js";
 import {validateProductDimensions, normalizeProductDimensions} from "../src/product-dimensions.js";
 import {validatePortion, variantPortionCount} from "../src/portions.js";
 import {bootstrapStores} from "./imports/bootstrap-stores.js";
@@ -476,6 +477,11 @@ export function createCatalogService(db) {
       if (typeof mediaId !== "string" || mediaId.length > 100) throw new ApiError(422, "Geçerli ambalaj görseli seçin.");
       if (mediaId && !(await tx.query("SELECT id FROM app_media WHERE id=?", [mediaId])).rows.length) throw new ApiError(422, "Ambalaj görseli bulunamadı.");
       const item = { id: old?.id || randomUUID(), name, code, material, shape, ...dimensions, description: text(body.description, 4000), active: body.active ?? true, allowedProductIds, allowedCategoryIds, excludedProductIds, mediaId, imageUrl: mediaId ? "/api/media/" + encodeURIComponent(mediaId) + "/content" : "" };
+      for(const owner of doc.products) for(const variant of owner.variants) {
+        if(variant.layoutVersion!==1 || variant.packagingId!==item.id)continue;
+        const issue=variantBoxLayoutIssue(variant,item,doc.products,owner.id);
+        if(issue)throw new ApiError(422,`${owner.name} / ${variant.size}: ${issue}`);
+      }
       if (old) doc.packagingItems = doc.packagingItems.map(value => value.id === id ? item : value); else doc.packagingItems.push(item);
       audit(doc, old ? "Ambalaj güncellendi" : "Ambalaj eklendi", name, actor);
     });
@@ -625,6 +631,7 @@ export function createCatalogService(db) {
                       images: v.images ?? [],
                     }
                   : {}),
+                ...(old?.variants.find(previous => previous.id === v.id)?.layoutVersion === 1 ? {layoutVersion:1} : {}),
                 size: text(v.size, 45),
                 typeId: typeof v.typeId === "string" ? v.typeId : "",
                 price: v.price,
@@ -647,6 +654,9 @@ export function createCatalogService(db) {
         };
       for (let i = 0; i < p.variants.length; i++) {
         const v = p.variants[i];
+        if(v.items !== undefined && (!Array.isArray(v.items) || v.items.length>50 || v.items.some(item=>!item || typeof item!=="object" || Array.isArray(item) || Object.keys(item).some(key=>!["productId","quantity","horizontal","vertical"].includes(key)))))throw new ApiError(422,"Varyant ürünleri geçersiz.");
+        for(const item of v.items || []) {const issue=orientationIssue(item);if(issue)throw new ApiError(422,issue);}
+
         if(v.packaging){
           const method=resolvePackagingMethod(v.packaging,doc.packagingMethods),previous=old?.variants.find(item=>item.id===v.id);
           if(!method || !method.active && resolvePackagingMethod(previous?.packaging,doc.packagingMethods)?.id!==method.id)throw new ApiError(422,"Aktif bir ambalaj / servis şekli seçin. Tanımları Ambalaj Merkezi’nden yönetin.");
@@ -657,14 +667,21 @@ export function createCatalogService(db) {
           const issue = packagingApprovalIssue(v, box, p.id, [...doc.products.filter(item => item.id !== p.id), p], doc.categories);
           if (issue) throw new ApiError(422, issue);
         }
+        if(isBoxVariant(v,doc.variantTypes)) {
+          const previous=old?.variants.find(item=>item.id===v.id);
+          const key=item=>JSON.stringify([item?.typeId,item?.packagingId,item?.sourceProductId,item?.quantity,item?.slices,item?.items]);
+          if(!previous || previous.layoutVersion===1 || key(previous)!==key(v)) {
+            const issue=variantBoxLayoutIssue(v,(doc.packagingItems||[]).find(box=>box.id===v.packagingId),[...doc.products.filter(item=>item.id!==p.id),p],p.id);
+            if(issue)throw new ApiError(422,issue);
+            v.layoutVersion=1;
+          }
+        }
         if (v.sourceProductId !== undefined) {
           if (v.packagingId !== undefined && v.packagingId !== "") {
             const box = (doc.packagingItems ?? defaultPackagingItems()).find(item => item.id === v.packagingId);
             const previous = old?.variants.find(item => item.id === v.id);
             if (!box || (!box.active && previous?.packagingId !== box.id) || !isBoxVariant(v, doc.variantTypes)) throw new ApiError(422, "Geçerli ve aktif bir kutu tipi seçin.");
           }
-          if (v.items !== undefined && (!Array.isArray(v.items) || v.items.some(item => !item || typeof item !== "object" || Object.keys(item).some(key => !["productId", "quantity"].includes(key)))))
-            throw new ApiError(422, "Varyant ürünleri geçersiz.");
           for (const information of [v.information, v.informationOverrides]) {
             if (information === undefined) continue;
             if (!information || typeof information !== "object" || Array.isArray(information) || Object.keys(information).some(key => ![...productInformationFields.map(field => field.key), "satiety"].includes(key))) throw new ApiError(422, "Varyant bilgileri geçersiz.");
@@ -882,6 +899,11 @@ export function createCatalogService(db) {
         doc.products.unshift(p);
         doc.nextProductId++;
       }
+      for(const owner of doc.products) for(const variant of owner.variants) {
+        if(owner.id===p.id || variant.layoutVersion!==1 || !isBoxVariant(variant,doc.variantTypes) || !(variant.items || [{productId:variant.sourceProductId}]).some(item=>item.productId===p.id))continue;
+        const issue=variantBoxLayoutIssue(variant,(doc.packagingItems||[]).find(box=>box.id===variant.packagingId),doc.products,owner.id);
+        if(issue)throw new ApiError(422,`${owner.name} / ${variant.size}: ${issue}`);
+      }
       audit(
         doc,
         old ? "Ürün güncellendi" : "Ürün oluşturuldu",
@@ -924,6 +946,11 @@ export function createCatalogService(db) {
           });
           if (affected && !ids.includes(owner.id)) { owner.version = (owner.version || 0) + 1; owner.updated = new Date().toISOString(); }
         }
+      }
+      for(const owner of doc.products) for(const variant of owner.variants) {
+        if(variant.layoutVersion!==1 || !isBoxVariant(variant,doc.variantTypes))continue;
+        const issue=variantBoxLayoutIssue(variant,(doc.packagingItems||[]).find(box=>box.id===variant.packagingId),doc.products,owner.id);
+        if(issue)throw new ApiError(422,`${owner.name} / ${variant.size}: ${issue}`);
       }
       audit(doc, "Toplu ürün güncellemesi", `${selected.length} ürün`, actor);
     });

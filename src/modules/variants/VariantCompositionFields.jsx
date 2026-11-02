@@ -1,4 +1,13 @@
 import {
+  boxLayout,
+  layoutRecommendations,
+  layoutItemsWithAutoOrientation,
+} from "../packaging/box-layout.js";
+import VariantLayoutEditor, {
+  OrientationFields,
+  LayoutRecommendations,
+} from "./VariantLayoutEditor.jsx";
+import {
   packagingCapacity,
   capacityProductLabel,
 } from "../packaging/packaging-capacity.js";
@@ -16,7 +25,7 @@ import {
   packagingApprovalIssue,
 } from "../packaging/packaging-approval.js";
 import "./variant-composition.css";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import VariantProductImage from "./VariantProductImage.jsx";
 import { variantWizardSteps as steps } from "./variant-wizard.js";
 import {
@@ -62,7 +71,8 @@ export default function VariantCompositionFields({
     refresh,
   } = useCatalog();
   const [step, setStep] = useState(initialStep),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [layoutOpen, setLayoutOpen] = useState(false);
   const index = focusVariantId
     ? product.variants.findIndex((v) => String(v.id) === focusVariantId)
     : product.variants.findIndex((v) => !v.id);
@@ -74,24 +84,36 @@ export default function VariantCompositionFields({
       (!v?.size ||
         v.size === variantNameFromContents(v, product, products, variantTypes)),
   );
-  useEffect(() => {
-    onReady?.(!!v?.id || step === steps.length - 1);
-  }, [step, onReady, v?.id]);
-  if (!v) return <p>Varyant bulunamadı.</p>;
-  const isBox = isBoxVariant(v, variantTypes);
-  const isPortion = isPortionVariant(v, variantTypes);
-  const selectedBox = packagingItems.find((item) => item.id === v.packagingId);
-  const items = Array.isArray(v.items)
+  const isBox = isBoxVariant(v || {}, variantTypes);
+  const isPortion = isPortionVariant(v || {}, variantTypes);
+  const selectedBox = packagingItems.find((item) => item.id === v?.packagingId);
+  const items = Array.isArray(v?.items)
     ? v.items
     : [
         {
-          productId: v.sourceProductId ?? product.id,
-          quantity: v.quantity ?? (v.slices || 1),
+          productId: v?.sourceProductId ?? product.id,
+          quantity: v?.quantity ?? (v?.slices || 1),
         },
       ];
-  const capacity = isBox
-    ? packagingCapacity(selectedBox, items, products)
-    : null;
+  const capacity = useMemo(
+    () => (isBox ? packagingCapacity(selectedBox, items, products) : null),
+    [isBox, selectedBox, items, products],
+  );
+  const suggestions = useMemo(
+    () =>
+      isBox
+        ? layoutRecommendations(capacity, selectedBox, items, products, (p) =>
+            packagingAllowsProduct(selectedBox, p.id, products, categories),
+          )
+        : [],
+    [capacity, selectedBox, items, products, categories, isBox],
+  );
+  useEffect(() => {
+    onReady?.(
+      (!!v?.id || step === steps.length - 1) && (!isBox || !!capacity?.valid),
+    );
+  }, [step, onReady, v?.id, isBox, capacity?.valid]);
+  if (!v) return <p>Varyant bulunamadı.</p>;
   const approvalIssue =
     isBox && v.packagingId
       ? packagingApprovalIssue(
@@ -160,6 +182,7 @@ export default function VariantCompositionFields({
   }
   function next() {
     setError("");
+    if (step >= 1 && isBox && !capacity.valid) return setError(capacity.reason);
     if (step === 1 && approvalIssue) return setError(approvalIssue);
     if (step === 0 && (!v.typeId || !v.size.trim()))
       return setError("Varyant türünü ve adını girin.");
@@ -232,6 +255,32 @@ export default function VariantCompositionFields({
           ),
         )}
       </nav>
+      {isBox && step !== 1 && step > 0 && !capacity.valid && (
+        <p role="alert" className="variant-wizard-error">
+          {capacity.reason}
+        </p>
+      )}
+      {isBox && layoutOpen && (
+        <VariantLayoutEditor
+          box={selectedBox}
+          capacity={capacity}
+          items={items}
+          products={products}
+          categories={categories}
+          suggestions={suggestions}
+          onChange={updateItems}
+          disabled={disabled}
+          onClose={() => setLayoutOpen(false)}
+          onAutoArrange={() =>
+            updateItems(
+              layoutItemsWithAutoOrientation(
+                items,
+                boxLayout(selectedBox, items, products, { autoOrient: true }),
+              ),
+            )
+          }
+        />
+      )}
       {approvalIssue && (
         <p role="alert" className="variant-wizard-error">
           {approvalIssue}
@@ -350,7 +399,30 @@ export default function VariantCompositionFields({
             bulunmalıdır.
           </p>
           {isBox && (
-            <VariantCapacitySummary capacity={capacity} box={selectedBox} />
+            <>
+              <VariantCapacitySummary capacity={capacity} box={selectedBox} />
+              <Button
+                type="button"
+                onClick={() => setLayoutOpen(true)}
+                disabled={disabled}
+              >
+                Kutu yerleşimini aç
+              </Button>
+              <LayoutRecommendations
+                suggestions={suggestions}
+                onApply={updateItems}
+                disabled={disabled}
+              />
+              {capacity.ready &&
+                !capacity.valid &&
+                !capacity.overCapacity &&
+                !suggestions.length && (
+                  <p>
+                    Boşluğa uygun ürün önerisi bulunamadı. Gridde yönleri
+                    düzenleyin veya farklı ürün / kutu seçin.
+                  </p>
+                )}
+            </>
           )}
           <div className="variant-product-transfer">
             <div>
@@ -408,23 +480,35 @@ export default function VariantCompositionFields({
                         )}
                       </div>
                     </div>
-                    <Input
-                      label={`Miktar (${source?.unitPricing?.unit || "birim"})`}
-                      aria-label={`${source?.name || "Ürün"} miktarı`}
-                      type="number"
-                      min={0.001}
-                      step="any"
-                      value={item.quantity}
-                      onChange={(e) =>
-                        updateItems(
-                          items.map((x, j) =>
-                            j === n
-                              ? { ...x, quantity: Number(e.target.value) }
-                              : x,
-                          ),
-                        )
-                      }
-                    />
+                    {isBox ? (
+                      <OrientationFields
+                        item={item}
+                        product={source}
+                        capacity={capacity}
+                        disabled={disabled}
+                        onChange={(next) =>
+                          updateItems(items.map((x, j) => (j === n ? next : x)))
+                        }
+                      />
+                    ) : (
+                      <Input
+                        label={`Miktar (${source?.unitPricing?.unit || "birim"})`}
+                        aria-label={`${source?.name || "Ürün"} miktarı`}
+                        type="number"
+                        min={0.001}
+                        step="any"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateItems(
+                            items.map((x, j) =>
+                              j === n
+                                ? { ...x, quantity: Number(e.target.value) }
+                                : x,
+                            ),
+                          )
+                        }
+                      />
+                    )}
                     <Button
                       type="button"
                       disabled={items.length <= 1}
@@ -690,7 +774,12 @@ export default function VariantCompositionFields({
           </Button>
         )}
         {step < steps.length - 1 && (
-          <Button type="button" variant="primary" onClick={next}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={next}
+            disabled={disabled || (isBox && step >= 1 && !capacity.valid)}
+          >
             Devam et
           </Button>
         )}

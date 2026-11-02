@@ -4,6 +4,7 @@ import { missingProductInformation } from "../src/modules/products/product-quali
 test("quality checks distinguish missing product information without requiring optional variants", () => {
   const p = {
     name: "Baklava",
+    dimensions: { length: 50, width: 25, height: 30 },
     category: "Fıstıklı Baklavalar",
     images: [{ id: "x" }],
     description: "Açıklama",
@@ -20,6 +21,24 @@ test("quality checks distinguish missing product information without requiring o
     variants: [],
   };
   assert.equal(missingProductInformation(p, "any"), false);
+  assert.equal(missingProductInformation(p, "dimensions"), false);
+  for (const dimensions of [
+    undefined,
+    null,
+    {},
+    { length: 50, width: 25 },
+    { length: 50, width: 0, height: 30 },
+    { length: -1, width: 25, height: 30 },
+    { length: 50, width: 25, height: NaN },
+    { length: "50", width: 25, height: 30 },
+  ]) {
+    assert.equal(
+      missingProductInformation({ ...p, dimensions }, "dimensions"),
+      true,
+    );
+    assert.equal(missingProductInformation({ ...p, dimensions }, "any"), true);
+  }
+
   assert.equal(missingProductInformation(p, "portion"), false);
   for (const portion of [
     undefined,

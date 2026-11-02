@@ -143,3 +143,12 @@ Ana kategori kodu dört, alt kategori kodu üç rakam olmalıdır. Yeni kategori
 `code`, önizlemede gösterilen `nextCategoryCode(categories)` değeri; `previewRevision`, önizlemenin oluşturulduğu katalog revision değeridir. Sunucu aynı transaction içinde güncel revision, kod, kategori türü ve isim çakışmasını doğrular. Eski önizleme veya kod uyuşmazlığı 409; geçersiz dönüşüm / boş kod kalmaması 422; kayıt bulunamaması 404 döndürür.
 
 İşlem kategori ID’si, slug, görseller, erişim tercihi ve ürün bağlantılarını korur. Yeni ana kategoriye ilk boş dört haneli kod atanır ve `parentId` boşaltılır. Üst kategoriden miras alınan pasiflik ve satış kanalı kısıtları yeni ana kategoriye uygulanır. Mevcut ürün/varyant kodları, URL’ler, QR adresleri ve sıra sayaçları değiştirilmez; sonraki yeni ürünler yeni ana kategori koduyla numaralanır. İşlem geçmişinde eski üst kategori/kod ve yeni kod kaydedilir.
+
+## Kutu yerleşimi ve kapasite doğrulaması
+
+Kutu varyantlarının `items` satırları isteğe bağlı `horizontal` / `vertical` adetleri taşır:
+`{"productId":1,"quantity":12,"horizontal":4,"vertical":8}`. İki yönün toplamı `quantity` olmalıdır. Yatay, ürün uzunluğunun kutunun X eksenine hizalanmasıdır; dikey, tabanda 90° dönüş anlamına gelir. Ürün yüksekliği değişmez ve tek kat yerleşim kullanılır. Yönler belirtilmezse otomatik yerleşim yönleri dener.
+
+Yeni veya içeriği / kutusu değişen kutu varyantlarında bütün ürünlerin ölçüleri ve birim gramajı, kutunun iç ölçüleri ve `maxProductWeight` (gram) tanımlı olmalıdır. Sunucu aynı geometri motoruyla çakışma / sınır / yükseklik, en az %95 taban doluluğu ve maksimum net ürün ağırlığını denetler; başarısız işlemler 422 ile atomik olarak reddedilir. Grid en fazla 500 dilim / adet / kap destekler. Otomatik yerleşim farklı sıralamalar dener; küresel olarak en iyi yerleşimi bulma garantisi vermez. Ölçüler ürünü çevreleyen dikdörtgen kabul edilir, ölçüm toleransları dahil değildir.
+
+Başarılı kutu doğrulaması sunucu tarafından `layoutVersion:1` olarak işaretlenir. Bu varyantlarda bağlı ürün ölçü / gramaj değişiklikleri, toplu birim güncellemeleri ve kutu ölçü / maksimum ağırlık değişiklikleri de geçerli yerleşimi korumalıdır. Eski, henüz doğrulanmamış kutu varyantlarının ilgisiz bilgi değişiklikleri korunur; içerikleri değiştirilirken yeni kontroller uygulanır. İstemci doğrulama işaretini düşüremez.

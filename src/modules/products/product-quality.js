@@ -1,3 +1,4 @@
+import { dimensionFields } from "../../product-dimensions.js";
 import { hasUnitPricing } from "../../unit-pricing.js";
 import { hasSatiety } from "../../satiety.js";
 import { hasPortion } from "../../portions.js";
@@ -5,6 +6,15 @@ import { parseNutrition } from "../../nutrition.js";
 import { variantsContainingProduct } from "../../product-variants.js";
 const blank = (value) => typeof value !== "string" || !value.trim();
 export const productQualityChecks = [
+  {
+    key: "dimensions",
+    label: "Ölçüleri eksik ürünler",
+    missing: (p) =>
+      dimensionFields.some(
+        ([key]) =>
+          !Number.isFinite(p.dimensions?.[key]) || p.dimensions[key] <= 0,
+      ),
+  },
   {
     key: "image",
     label: "Görseli olmayan ürünler",
