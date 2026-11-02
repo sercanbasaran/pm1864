@@ -1,3 +1,4 @@
+import { capacityProductLabel } from "../packaging/packaging-capacity.js";
 import useSessionFilter from "../../hooks/useSessionFilter.js";
 import VariantProductImage from "./VariantProductImage.jsx";
 import React, { useState } from "react";
@@ -9,6 +10,7 @@ import { money } from "../../catalog-tools.js";
 
 export default function VariantProductPicker({
   products,
+  capacity,
   isProductAllowed = () => true,
   categories,
   exclude = [],
@@ -82,9 +84,21 @@ export default function VariantProductPicker({
                   {money(p.unitPricing.price)} / {p.unitPricing.unit} · ≈{" "}
                   {p.unitPricing.weight} g
                 </small>
+                {capacity && (
+                  <small
+                    className="variant-capacity-product"
+                    aria-label={`${p.name} kapasitesi`}
+                  >
+                    {capacityProductLabel(capacity, p)}
+                  </small>
+                )}
               </div>
             </div>
-            {!isProductAllowed(p) && <small role="status">Bu ürün seçilen kutu için onaylı değil.</small>}
+            {!isProductAllowed(p) && (
+              <small role="status">
+                Bu ürün seçilen kutu için onaylı değil.
+              </small>
+            )}
             <Button
               type="button"
               disabled={disabled || !isProductAllowed(p)}

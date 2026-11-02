@@ -111,3 +111,11 @@
   .product-wizard-review dl { grid-template-columns: 1fr; }
   .product-wizard-navigation { width: 100%; }
 }
+
+.variant-capacity-summary { display: grid; gap: .75rem; min-width: 0; padding: 1rem; border: 1px solid var(--sl-color-neutral-200); border-radius: var(--sl-border-radius-medium); background: var(--sl-color-neutral-50); }
+.variant-capacity-summary h4, .variant-capacity-summary p { margin: 0; }
+.variant-capacity-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .75rem; }
+.variant-capacity-stats span { display: grid; gap: .25rem; }
+.variant-capacity-summary progress { width: 100%; max-width: 100%; accent-color: var(--sl-color-primary-600); }
+.variant-capacity-summary small, .variant-capacity-product { overflow-wrap: anywhere; }
+.variant-capacity-summary [role="alert"] { color: var(--sl-color-danger-700); }

@@ -1,4 +1,9 @@
 import {
+  packagingCapacity,
+  capacityProductLabel,
+} from "../packaging/packaging-capacity.js";
+import VariantCapacitySummary from "./VariantCapacitySummary.jsx";
+import {
   packagingMethodName,
   packagingMethodOptions,
 } from "../packaging/packaging-methods.js";
@@ -84,6 +89,9 @@ export default function VariantCompositionFields({
           quantity: v.quantity ?? (v.slices || 1),
         },
       ];
+  const capacity = isBox
+    ? packagingCapacity(selectedBox, items, products)
+    : null;
   const approvalIssue =
     isBox && v.packagingId
       ? packagingApprovalIssue(
@@ -341,10 +349,14 @@ export default function VariantCompositionFields({
             Ürün ekleyebilir veya çıkarabilirsiniz. Varyantta en az bir ürün
             bulunmalıdır.
           </p>
+          {isBox && (
+            <VariantCapacitySummary capacity={capacity} box={selectedBox} />
+          )}
           <div className="variant-product-transfer">
             <div>
               <h4>Eklenebilir ürünler</h4>
               <VariantProductPicker
+                capacity={capacity}
                 products={products}
                 categories={categories}
                 isProductAllowed={(p) =>
@@ -386,6 +398,14 @@ export default function VariantCompositionFields({
                             : "Birim fiyatı veya gramajı eksik"}
                         </small>
                         <small>{portionDefinition(source)}</small>
+                        {isBox && source && (
+                          <small
+                            className="variant-capacity-product"
+                            aria-label={`${source.name} kapasitesi`}
+                          >
+                            {capacityProductLabel(capacity, source)}
+                          </small>
+                        )}
                       </div>
                     </div>
                     <Input
