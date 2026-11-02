@@ -228,3 +228,41 @@ test("a feasible filler recommendation updates orientation counts and enables pr
     ).disabled,
   ).toBe(false);
 });
+
+test("separators can be positioned and resized with at most two horizontal and three vertical", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog");
+  for (let i = 0; i < 2; i++) await clickText("Yatay separatör ekle", dialog);
+  expect(
+    [...dialog.querySelectorAll("sl-button")].find(
+      (b) => b.textContent.trim() === "Yatay separatör ekle",
+    ).disabled,
+  ).toBe(true);
+  for (let i = 0; i < 3; i++) await clickText("Dikey separatör ekle", dialog);
+  expect(
+    [...dialog.querySelectorAll("sl-button")].find(
+      (b) => b.textContent.trim() === "Dikey separatör ekle",
+    ).disabled,
+  ).toBe(true);
+  expect(dialog.querySelectorAll(".box-separator")).toHaveLength(5);
+  const width = dialog.querySelector(
+    'sl-input[aria-label="1. separatör genişliği"]',
+  );
+  width.value = "10";
+  fireEvent(width, new CustomEvent("sl-input", { bubbles: true }));
+  await settle();
+  expect(dialog.querySelector(".box-separator").getAttribute("height")).toBe(
+    "10",
+  );
+  fireEvent.click(
+    dialog.querySelector('sl-button[aria-label="1. separatörü kaldır"]'),
+  );
+  await settle();
+  expect(
+    [...dialog.querySelectorAll("sl-button")].find(
+      (b) => b.textContent.trim() === "Yatay separatör ekle",
+    ).disabled,
+  ).toBe(false);
+});

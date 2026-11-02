@@ -1,3 +1,4 @@
+import SeparatorFields from "./SeparatorFields.jsx";
 import VariantProductPicker from "./VariantProductPicker.jsx";
 import { packagingAllowsProduct } from "../packaging/packaging-approval.js";
 import React, { useId } from "react";
@@ -162,6 +163,31 @@ function LayoutGrid({ capacity, products }) {
             strokeWidth={width / 300}
           />
         )}
+        <defs>
+          <clipPath id={`${pattern}-separators`}>
+            {circle ? (
+              <circle cx={width / 2} cy={length / 2} r={width / 2} />
+            ) : (
+              <rect width={width} height={length} />
+            )}
+          </clipPath>
+        </defs>
+        <>
+          {(capacity.separators || []).map((r, i) => (
+            <rect
+              key={i}
+              clipPath={`url(#${pattern}-separators)`}
+              className="box-separator"
+              x={r.x}
+              y={r.y}
+              width={r.w}
+              height={r.h}
+              fill="#64748b"
+            >
+              <title>Separatör {i + 1}</title>
+            </rect>
+          ))}
+        </>
         {capacity.placements.map((p, i) => {
           const id = ids.indexOf(p.productId),
             name = products.find((product) => product.id === p.productId)?.name;
@@ -236,6 +262,7 @@ export default function VariantLayoutEditor({
   suggestions,
   onChange,
   onAutoArrange,
+  onSeparatorsChange,
   onClose,
   disabled,
 }) {
@@ -256,6 +283,12 @@ export default function VariantLayoutEditor({
           )}
         </div>
         <div className="variant-layout-controls">
+          <SeparatorFields
+            box={box}
+            onChange={onSeparatorsChange}
+            disabled={disabled}
+          />
+
           <Button type="button" onClick={onAutoArrange} disabled={disabled}>
             Yönleri otomatik düzenle
           </Button>

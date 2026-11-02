@@ -181,6 +181,78 @@ test("server rejects invalid grids and kg limits, preserves orientation counts a
       r.catalog.products.find((p) => p.id === owner.id).variants[0].id,
       saved.id,
     );
+
+    c = r.catalog;
+    r = await call("/products", "POST", {
+      expectedRevision: c.revision,
+      product: {
+        name: "Separatör ürünü",
+        category: "Baklavalar",
+        status: "Aktif",
+        variants: [],
+        unitPricing: { unit: "Dilim", price: 100, weight: 50 },
+        dimensions: { length: 45, width: 100, height: 20 },
+      },
+    });
+    assert.equal(r.status, 200);
+    c = r.catalog;
+    const member = c.products.find((p) => p.name === "Separatör ürünü");
+    r = await call("/packaging", "POST", {
+      expectedRevision: c.revision,
+      name: "Bölmeli kutu",
+      material: "Metal",
+      length: 100,
+      width: 100,
+      height: 30,
+      maxProductWeight: 100,
+      active: true,
+      allowedProductIds: [member.id],
+    });
+    assert.equal(r.status, 200);
+    c = r.catalog;
+    const dividedBox = c.packagingItems.find((b) => b.name === "Bölmeli kutu");
+    owner = c.products.find((p) => p.id === owner.id);
+    const separators = [{ orientation: "vertical", position: 45, width: 10 }];
+    const divided = {
+      ...variant,
+      size: "Bölmeli",
+      sourceProductId: member.id,
+      quantity: 2,
+      items: [
+        { productId: member.id, quantity: 2, horizontal: 2, vertical: 0 },
+      ],
+      packagingId: dividedBox.id,
+      separators,
+    };
+    r = await call(`/products/${owner.id}`, "PUT", {
+      expectedRevision: c.revision,
+      product: { ...owner, variants: [...owner.variants, divided] },
+    });
+    assert.equal(r.status, 200, JSON.stringify(r));
+    c = r.catalog;
+    owner = c.products.find((p) => p.id === owner.id);
+    assert.deepEqual(
+      owner.variants.find((v) => v.size === "Bölmeli").separators,
+      separators,
+    );
+    const bad = await call(`/products/${owner.id}`, "PUT", {
+      expectedRevision: c.revision,
+      product: {
+        ...owner,
+        variants: owner.variants.map((v) =>
+          v.size === "Bölmeli"
+            ? {
+                ...v,
+                separators: [
+                  { orientation: "vertical", position: 45, width: 11 },
+                ],
+              }
+            : v,
+        ),
+      },
+    });
+    assert.equal(bad.status, 422);
+    assert.equal((await call("/catalog")).catalog.revision, c.revision);
   } finally {
     await app.close();
   }

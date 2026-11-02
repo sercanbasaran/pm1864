@@ -1,3 +1,4 @@
+import { separatorLayout, circleRectangleArea } from "./box-separators.js";
 import { packagingShape, packagingVolume } from "./packaging-volume.js";
 export const MIN_BASE_FILL = 95;
 export const MAX_LAYOUT_PIECES = 500;
@@ -175,7 +176,7 @@ function arrange(pieces, shape) {
   let best;
   for (const order of orders)
     for (const mode of ["short", "bottom"]) {
-      let free = [{ x: 0, y: 0, w: shape.width, h: shape.length }];
+      let free = shape.free;
       const placements = [],
         unplaced = [];
       for (const piece of [...pieces].sort(order)) {
@@ -275,9 +276,23 @@ export function boxLayout(
     length: circle ? box.diameter : box.width,
     height: box.height,
   };
-  const totalArea = circle
-    ? Math.PI * (shape.width / 2) ** 2
-    : shape.width * shape.length;
+  const separators = separatorLayout(shape, box.separators);
+  if (separators.reason)
+    return { ready: false, valid: false, reason: separators.reason };
+  shape.free = [{ x: 0, y: 0, w: shape.width, h: shape.length }];
+  for (const rect of separators.rectangles)
+    shape.free = splitFree(shape.free, rect);
+  const totalArea = shape.free.reduce(
+    (sum, r) =>
+      sum + (circle ? circleRectangleArea(r, shape.width) : r.w * r.h),
+    0,
+  );
+  if (totalArea <= 1e-7)
+    return {
+      ready: false,
+      valid: false,
+      reason: "Separatörler kullanılabilir taban alanını tamamen kapatıyor.",
+    };
   const totalQuantity = items.reduce(
     (sum, item) =>
       sum +
@@ -346,6 +361,7 @@ export function boxLayout(
           : "";
   const capacity = {
     ...packed,
+    separators: separators.rectangles,
     shape,
     ready: true,
     valid: !reason,
@@ -373,7 +389,7 @@ export function boxLayout(
     if (size.reason) result = { reason: size.reason };
     else {
       const all = fillProduct(
-        [{ x: 0, y: 0, w: shape.width, h: shape.length }],
+        shape.free,
         product,
         shape,
         maxWeight ?? Infinity,
@@ -515,5 +531,8 @@ export function variantBoxLayoutIssue(variant, box, products, ownerId) {
           quantity: variant.quantity ?? variant.slices ?? 1,
         },
       ];
-  return boxLayout(box, items, products).reason || "";
+  return (
+    boxLayout({ ...box, separators: variant.separators }, items, products)
+      .reason || ""
+  );
 }

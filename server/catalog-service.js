@@ -632,6 +632,7 @@ export function createCatalogService(db) {
                     }
                   : {}),
                 ...(old?.variants.find(previous => previous.id === v.id)?.layoutVersion === 1 ? {layoutVersion:1} : {}),
+                separators:v.separators === undefined ? old?.variants.find(previous=>previous.id===v.id)?.separators : v.separators,
                 size: text(v.size, 45),
                 typeId: typeof v.typeId === "string" ? v.typeId : "",
                 price: v.price,
@@ -669,7 +670,7 @@ export function createCatalogService(db) {
         }
         if(isBoxVariant(v,doc.variantTypes)) {
           const previous=old?.variants.find(item=>item.id===v.id);
-          const key=item=>JSON.stringify([item?.typeId,item?.packagingId,item?.sourceProductId,item?.quantity,item?.slices,item?.items]);
+          const key=item=>JSON.stringify([item?.typeId,item?.packagingId,item?.sourceProductId,item?.quantity,item?.slices,item?.items,item?.separators]);
           if(!previous || previous.layoutVersion===1 || key(previous)!==key(v)) {
             const issue=variantBoxLayoutIssue(v,(doc.packagingItems||[]).find(box=>box.id===v.packagingId),[...doc.products.filter(item=>item.id!==p.id),p],p.id);
             if(issue)throw new ApiError(422,issue);

@@ -86,7 +86,11 @@ export default function VariantCompositionFields({
   );
   const isBox = isBoxVariant(v || {}, variantTypes);
   const isPortion = isPortionVariant(v || {}, variantTypes);
-  const selectedBox = packagingItems.find((item) => item.id === v?.packagingId);
+  const baseBox = packagingItems.find((item) => item.id === v?.packagingId);
+  const selectedBox = useMemo(
+    () => (baseBox ? { ...baseBox, separators: v?.separators } : undefined),
+    [baseBox, v?.separators],
+  );
   const items = Array.isArray(v?.items)
     ? v.items
     : [
@@ -263,6 +267,7 @@ export default function VariantCompositionFields({
       {isBox && layoutOpen && (
         <VariantLayoutEditor
           box={selectedBox}
+          onSeparatorsChange={(separators) => update({ separators })}
           capacity={capacity}
           items={items}
           products={products}

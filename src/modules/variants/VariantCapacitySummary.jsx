@@ -59,6 +59,9 @@ export default function VariantCapacitySummary({ capacity, box }) {
         <p role="alert">{capacity.reason}</p>
       )}
       <small>
+        Separatörlerin kapladığı alan doluluk hesabına dahil edilmez.{" "}
+      </small>
+      <small>
         Ürünler tek kat yerleştirilir. Kutu ölçüleri kullanılabilir iç ölçüler,
         ürün ölçüleri bir dilim / adet / kap içindir. Ölçülere göre otomatik
         yerleşim hesaplanır; gerçek ürün şekli ve ölçüm toleransları sonucu
