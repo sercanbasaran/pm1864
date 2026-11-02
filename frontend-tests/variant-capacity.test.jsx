@@ -12,6 +12,7 @@ afterEach(() => {
 const first = {
   id: 1,
   name: "Fıstıklı",
+  images: [{ id: "photo", url: "/fistikli.png" }],
   status: "Aktif",
   variants: [],
   unitPricing: { unit: "Dilim", price: 100, weight: 50 },
@@ -169,6 +170,14 @@ test("full width grid supports 4 horizontal plus 8 vertical pieces and blocks na
   const dialog = document.querySelector("sl-dialog.variant-layout-dialog");
   expect(dialog.open).toBe(true);
   expect(dialog.querySelector('svg[role="img"]')).not.toBeNull();
+  expect(dialog.querySelector(".grid-product-name").textContent).toContain(
+    "Fıstıklı",
+  );
+  expect(
+    dialog
+      .querySelector(".variant-layout-product-heading img")
+      .getAttribute("alt"),
+  ).toBe("Fıstıklı");
   for (const [label, value] of [
     ["Fıstıklı yatay adedi", 4],
     ["Fıstıklı dikey adedi", 8],
@@ -183,13 +192,10 @@ test("full width grid supports 4 horizontal plus 8 vertical pieces and blocks na
   expect(dialog.textContent).toContain("0,6 kg");
   fireEvent.click(dialog.querySelector('sl-button[aria-label="Cevizli seç"]'));
   await settle();
-  expect(ready).toHaveBeenLastCalledWith(false);
-  fireEvent.click(
+  expect(
     dialog.querySelector('sl-button[aria-label="Cevizli yerleşimden kaldır"]'),
-  );
-  await settle();
+  ).toBeNull();
   expect(ready).toHaveBeenLastCalledWith(true);
-
   await clickText("Yerleşime dön", dialog);
   expect(document.querySelector("sl-dialog")).toBeNull();
   expect(
@@ -203,12 +209,10 @@ test("full width grid supports 4 horizontal plus 8 vertical pieces and blocks na
   vertical.value = "9";
   fireEvent(vertical, new CustomEvent("sl-input", { bubbles: true }));
   await settle();
-  expect(ready).toHaveBeenLastCalledWith(false);
+  expect(ready).toHaveBeenLastCalledWith(true);
   expect(
-    [...document.querySelectorAll("sl-button")].find(
-      (b) => b.textContent.trim() === "Devam et",
-    ).disabled,
-  ).toBe(true);
+    document.querySelector('sl-input[aria-label="Fıstıklı dikey adedi"]').value,
+  ).toBe("8");
 });
 test("a feasible filler recommendation updates orientation counts and enables progression", async () => {
   render(<Harness snapshot={snapshot} />);
@@ -265,4 +269,45 @@ test("separators can be positioned and resized with at most two horizontal and t
       (b) => b.textContent.trim() === "Yatay separatör ekle",
     ).disabled,
   ).toBe(false);
+});
+
+test("individual pieces rotate and invalid keyboard moves retain the previous placement", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog");
+  let piece = dialog.querySelector('svg g[role="button"]');
+  fireEvent.focus(piece);
+  await settle();
+  await clickText("Seçili dilimi yatay / dikey çevir", dialog);
+  piece = dialog.querySelector('svg g[role="button"]');
+  expect(piece.textContent).toContain("1D");
+  const before = piece.querySelector("rect").getAttribute("x");
+  fireEvent.keyDown(piece, { key: "ArrowLeft" });
+  await settle();
+  expect(dialog.textContent).toContain("çarpamaz");
+  expect(
+    dialog.querySelector('svg g[role="button"] rect').getAttribute("x"),
+  ).toBe(before);
+});
+
+test("fill with separators preserves product positions and updates usable base occupancy", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog");
+  const coordinates = () =>
+    [...dialog.querySelectorAll('svg g[role="button"] rect')].map((r) => [
+      r.getAttribute("x"),
+      r.getAttribute("y"),
+    ]);
+  const before = coordinates();
+  await clickText("Separatör ile doldur", dialog);
+  expect(dialog.querySelectorAll(".box-separator").length).toBeGreaterThan(0);
+  expect(coordinates()).toEqual(before);
+  expect(
+    dialog.querySelector('[aria-label="Kutu kapasitesi"]').textContent,
+  ).toContain("Yerleşim uygun");
+  expect(dialog.textContent).toContain("Dikey eşit dağıt");
+  expect(dialog.textContent).toContain("Yatay eşit dağıt");
 });

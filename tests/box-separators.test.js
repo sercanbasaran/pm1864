@@ -104,3 +104,57 @@ test("circle strip areas use the circular interior rather than the bounding squa
   assert.ok(c.totalArea < Math.PI * 2500);
   assert.ok(c.totalArea > Math.PI * 2500 - 1000);
 });
+
+import {
+  alignSeparators,
+  fillWithSeparators,
+} from "../src/modules/packaging/box-separators.js";
+test("alignment preserves widths and relative gaps; justify equalizes inside and outside gaps", () => {
+  const values = [
+    { orientation: "vertical", position: 20, width: 10 },
+    { orientation: "vertical", position: 50, width: 20 },
+  ];
+  assert.deepEqual(
+    alignSeparators(shape, values, "vertical", "start").values.map(
+      (v) => v.position,
+    ),
+    [0, 30],
+  );
+  assert.deepEqual(
+    alignSeparators(shape, values, "vertical", "end").values.map(
+      (v) => v.position,
+    ),
+    [50, 80],
+  );
+  assert.deepEqual(
+    alignSeparators(shape, values, "vertical", "center").values.map(
+      (v) => v.position,
+    ),
+    [25, 55],
+  );
+  const j = alignSeparators(shape, values, "vertical", "justify").values;
+  assert.ok(Math.abs(j[0].position - 70 / 3) < 1e-8);
+  assert.ok(Math.abs(j[1].position - (140 / 3 + 10)) < 1e-8);
+  assert.deepEqual(
+    j.map((v) => v.width),
+    [10, 20],
+  );
+});
+test("filling adds only empty full-length bands and respects the separator limit", () => {
+  const placements = [{ x: 20, y: 10, w: 60, h: 80 }];
+  const result = fillWithSeparators(shape, [], placements);
+  assert.equal(result.added, 4);
+  assert.equal(separatorLayout(shape, result.values).reason, undefined);
+  for (const s of result.values)
+    for (const p of placements)
+      assert.ok(
+        s.orientation === "vertical"
+          ? s.position + s.width <= p.x || s.position >= p.x + p.w
+          : s.position + s.width <= p.y || s.position >= p.y + p.h,
+      );
+  assert.equal(fillWithSeparators(shape, result.values, placements).added, 0);
+  assert.equal(
+    fillWithSeparators(shape, [], [{ x: 0, y: 0, w: 100, h: 100 }]).added,
+    0,
+  );
+});

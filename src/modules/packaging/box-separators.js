@@ -69,3 +69,71 @@ export function circleRectangleArea(rect, diameter) {
     quadrant(x, y)
   );
 }
+
+export function alignSeparators(shape, values, direction, alignment) {
+  const issue = separatorLayout(shape, values).reason;
+  if (issue) return { reason: issue };
+  const indices = values
+    .map((v, i) => ({ v, i }))
+    .filter(({ v }) => v.orientation === direction)
+    .sort((a, b) => a.v.position - b.v.position);
+  if (!indices.length)
+    return { reason: "Önce bu yönde bir separatör ekleyin." };
+  const size = direction === "vertical" ? shape.width : shape.length;
+  const first = indices[0].v.position,
+    last = indices.at(-1).v.position + indices.at(-1).v.width,
+    extent = last - first;
+  const delta =
+    alignment === "start"
+      ? -first
+      : alignment === "end"
+        ? size - last
+        : (size - extent) / 2 - first;
+  const result = values.map((v) => ({ ...v }));
+  let cursor =
+    (size - indices.reduce((sum, { v }) => sum + v.width, 0)) /
+    (indices.length + 1);
+  const gap = cursor;
+  for (const { v, i } of indices) {
+    result[i].position = alignment === "justify" ? cursor : v.position + delta;
+    cursor += v.width + gap;
+  }
+  return { values: result };
+}
+export function fillWithSeparators(shape, values, placements) {
+  const issue = separatorLayout(shape, values).reason;
+  if (issue) return { reason: issue };
+  const result = values.map((v) => ({ ...v }));
+  for (const direction of ["vertical", "horizontal"]) {
+    const size = direction === "vertical" ? shape.width : shape.length;
+    const occupied = placements
+      .map((p) =>
+        direction === "vertical" ? [p.x, p.x + p.w] : [p.y, p.y + p.h],
+      )
+      .concat(
+        values
+          .filter((v) => v.orientation === direction)
+          .map((v) => [v.position, v.position + v.width]),
+      )
+      .sort((a, b) => a[0] - b[0]);
+    let cursor = 0;
+    const gaps = [];
+    for (const [start, end] of occupied) {
+      if (start - cursor >= 0.01)
+        gaps.push({ position: cursor, width: start - cursor });
+      cursor = Math.max(cursor, end);
+    }
+    if (size - cursor >= 0.01)
+      gaps.push({ position: cursor, width: size - cursor });
+    const remaining =
+      (direction === "vertical" ? 3 : 2) -
+      values.filter((v) => v.orientation === direction).length;
+    result.push(
+      ...gaps
+        .sort((a, b) => b.width - a.width)
+        .slice(0, remaining)
+        .map((gap) => ({ ...gap, orientation: direction })),
+    );
+  }
+  return { values: result, added: result.length - values.length };
+}

@@ -1,3 +1,7 @@
+import {
+  boxLayout,
+  placementData,
+} from "../src/modules/packaging/box-layout.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../server/app.js";
@@ -122,7 +126,32 @@ test("server rejects invalid grids and kg limits, preserves orientation counts a
     assert.equal(saved.items[0].horizontal, 4);
     assert.equal(saved.items[0].vertical, 8);
     assert.equal(saved.weight, 600);
+    const positions = placementData(boxLayout(box, saved.items, [source]));
+    r = await call(`/products/${owner.id}`, "PUT", {
+      expectedRevision: c.revision,
+      product: { ...owner, variants: [{ ...saved, placements: positions }] },
+    });
+    assert.equal(r.status, 200);
+    c = r.catalog;
+    owner = c.products.find((p) => p.id === owner.id);
+    assert.deepEqual(owner.variants[0].placements, positions);
     const invalidWrites = [
+      [
+        `/products/${owner.id}`,
+        {
+          product: {
+            ...owner,
+            variants: [
+              {
+                ...owner.variants[0],
+                placements: positions.map((p, i) =>
+                  i === 0 ? { ...p, x: -1 } : p,
+                ),
+              },
+            ],
+          },
+        },
+      ],
       [
         `/products/${owner.id}`,
         {

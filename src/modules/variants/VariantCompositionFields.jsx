@@ -1,3 +1,5 @@
+import { placementData } from "../packaging/box-layout.js";
+import { capItemIncrease } from "../packaging/box-layout.js";
 import {
   boxLayout,
   layoutRecommendations,
@@ -72,7 +74,8 @@ export default function VariantCompositionFields({
   } = useCatalog();
   const [step, setStep] = useState(initialStep),
     [error, setError] = useState(""),
-    [layoutOpen, setLayoutOpen] = useState(false);
+    [layoutOpen, setLayoutOpen] = useState(false),
+    [notice, setNotice] = useState("");
   const index = focusVariantId
     ? product.variants.findIndex((v) => String(v.id) === focusVariantId)
     : product.variants.findIndex((v) => !v.id);
@@ -88,8 +91,15 @@ export default function VariantCompositionFields({
   const isPortion = isPortionVariant(v || {}, variantTypes);
   const baseBox = packagingItems.find((item) => item.id === v?.packagingId);
   const selectedBox = useMemo(
-    () => (baseBox ? { ...baseBox, separators: v?.separators } : undefined),
-    [baseBox, v?.separators],
+    () =>
+      baseBox
+        ? {
+            ...baseBox,
+            separators: v?.separators,
+            placements: v?.placements ?? undefined,
+          }
+        : undefined,
+    [baseBox, v?.separators, v?.placements],
   );
   const items = Array.isArray(v?.items)
     ? v.items
@@ -147,12 +157,19 @@ export default function VariantCompositionFields({
       ),
     });
   };
-  const updateItems = (next) =>
+  const updateItems = (next) => {
+    const bounded = isBox
+      ? capItemIncrease(selectedBox, items, next, products)
+      : { items: next };
+    setNotice(bounded.notice || "");
+    setError("");
     update({
-      items: next,
-      sourceProductId: next[0]?.productId,
-      quantity: next[0]?.quantity,
+      items: bounded.items,
+      placements: null,
+      sourceProductId: bounded.items[0]?.productId,
+      quantity: bounded.items[0]?.quantity,
     });
+  };
   const derived = deriveVariantInformation({ ...v, items }, products);
   const overrides = v.informationOverrides ?? v.information ?? {};
   const information = { ...derived, ...overrides };
@@ -267,13 +284,21 @@ export default function VariantCompositionFields({
       {isBox && layoutOpen && (
         <VariantLayoutEditor
           box={selectedBox}
-          onSeparatorsChange={(separators) => update({ separators })}
+          onSeparatorsChange={(separators, preserve) =>
+            update({
+              separators,
+              placements: preserve ? placementData(capacity) : null,
+            })
+          }
           capacity={capacity}
           items={items}
           products={products}
           categories={categories}
           suggestions={suggestions}
           onChange={updateItems}
+          onPlacementChange={(placements, nextItems) =>
+            update({ placements, items: nextItems })
+          }
           disabled={disabled}
           onClose={() => setLayoutOpen(false)}
           onAutoArrange={() =>
@@ -289,6 +314,11 @@ export default function VariantCompositionFields({
       {approvalIssue && (
         <p role="alert" className="variant-wizard-error">
           {approvalIssue}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="variant-layout-notice">
+          {notice}
         </p>
       )}
       {error && (

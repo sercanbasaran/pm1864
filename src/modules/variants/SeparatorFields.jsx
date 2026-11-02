@@ -1,6 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
+import {
+  alignSeparators,
+  fillWithSeparators,
+} from "../packaging/box-separators.js";
 import { Button, Input } from "../../components/ui/Controls.jsx";
-export default function SeparatorFields({ box, onChange, disabled }) {
+export default function SeparatorFields({ box, capacity, onChange, disabled }) {
+  const [notice, setNotice] = useState("");
+  const shape = capacity?.shape || {
+    width: box?.diameter || box?.length,
+    length: box?.diameter || box?.width,
+  };
+  function align(direction, mode) {
+    const result = alignSeparators(shape, values, direction, mode);
+    setNotice(
+      result.reason ||
+        "Separatörler hizalandı. Ürün yerleşimi yeniden düzenlendi.",
+    );
+    if (result.values) onChange(result.values);
+  }
+  function fill() {
+    const result = fillWithSeparators(shape, values, capacity.placements);
+    setNotice(
+      result.reason ||
+        (result.added
+          ? `${result.added} separatör eklendi.`
+          : "Doldurulabilecek tam boy boş şerit bulunamadı veya separatör sınırına ulaşıldı."),
+    );
+    if (result.added) onChange(result.values, true);
+  }
   const values = box?.separators || [];
   const size = (direction) =>
     direction === "vertical"
@@ -49,6 +76,69 @@ export default function SeparatorFields({ box, onChange, disabled }) {
           {direction === "horizontal" ? "Yatay" : "Dikey"} separatör ekle
         </Button>
       ))}
+      <div className="separator-alignment-tools">
+        <strong>Dikey separatörleri hizala</strong>
+        <div className="variant-table-actions">
+          {[
+            ["start", "Sola"],
+            ["center", "Ortala"],
+            ["end", "Sağa"],
+            ["justify", "Dikey eşit dağıt"],
+          ].map(([mode, label]) => (
+            <Button
+              key={mode}
+              type="button"
+              disabled={
+                disabled || !values.some((v) => v.orientation === "vertical")
+              }
+              onClick={() => align("vertical", mode)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <strong>Yatay separatörleri hizala</strong>
+        <div className="variant-table-actions">
+          {[
+            ["start", "Yukarı"],
+            ["center", "Ortala"],
+            ["end", "Aşağı"],
+            ["justify", "Yatay eşit dağıt"],
+          ].map(([mode, label]) => (
+            <Button
+              key={mode}
+              type="button"
+              disabled={
+                disabled || !values.some((v) => v.orientation === "horizontal")
+              }
+              onClick={() => align("horizontal", mode)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <small>
+          Eşit dağıtma, dış boşluklar dahil aralıkları eşitler. Ortalama mevcut
+          iç aralıkları korur.
+        </small>
+        <Button
+          type="button"
+          disabled={
+            disabled ||
+            !capacity?.ready ||
+            capacity.overCapacity ||
+            !capacity.placements?.length
+          }
+          onClick={fill}
+        >
+          Separatör ile doldur
+        </Button>
+        <small>
+          Ürünlerin yerleri korunur. Yalnızca kutu boyunca uzanan boş şeritler
+          doldurulur; kalan düzensiz boşluklar korunur.
+        </small>
+        <p role="status">{notice}</p>
+      </div>
       {values.map((v, i) => (
         <div className="variant-layout-product" key={i}>
           <strong>

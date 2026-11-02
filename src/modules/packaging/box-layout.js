@@ -344,7 +344,95 @@ export function boxLayout(
   });
   if (issues.length)
     return { ready: false, reason: issues.join(" "), valid: false };
-  const packed = arrange(pieces, shape);
+  let packed;
+  if (box.placements !== undefined && !autoOrient) {
+    const manual = box.placements;
+    if (
+      !Array.isArray(manual) ||
+      manual.length !== pieces.length ||
+      manual.length > MAX_LAYOUT_PIECES
+    )
+      return {
+        ready: false,
+        valid: false,
+        reason: "Manuel yerleşim adetleri ürünlerle eşleşmiyor.",
+      };
+    const placed = [],
+      keys = new Set();
+    let free = shape.free;
+    for (const entry of manual) {
+      if (
+        !entry ||
+        !Number.isInteger(entry.pieceIndex) ||
+        entry.pieceIndex < 0 ||
+        !Number.isFinite(entry.x) ||
+        !Number.isFinite(entry.y) ||
+        !["horizontal", "vertical"].includes(entry.orientation)
+      )
+        return {
+          ready: false,
+          valid: false,
+          reason: "Manuel yerleşim koordinatları geçersiz.",
+        };
+      const piece = pieces.find(
+          (p) =>
+            p.productId === entry.productId &&
+            p.pieceIndex === entry.pieceIndex,
+        ),
+        key = JSON.stringify([entry.productId, entry.pieceIndex]);
+      if (!piece || keys.has(key))
+        return {
+          ready: false,
+          valid: false,
+          reason: "Manuel yerleşimde eksik veya tekrarlanan ürün var.",
+        };
+      keys.add(key);
+      const rect = {
+        ...piece,
+        x: entry.x,
+        y: entry.y,
+        orientation: entry.orientation,
+        w: entry.orientation === "vertical" ? piece.width : piece.length,
+        h: entry.orientation === "vertical" ? piece.length : piece.width,
+      };
+      if (
+        rect.height > shape.height ||
+        !inside(shape, rect) ||
+        !free.some((r) => contained(rect, r))
+      )
+        return {
+          ready: false,
+          valid: false,
+          reason:
+            "Ürün kutu dışına çıkamaz, başka ürüne veya separatöre çarpamaz.",
+        };
+      placed.push(rect);
+      free = splitFree(free, rect);
+    }
+    for (const item of items)
+      if (
+        Object.hasOwn(item, "horizontal") ||
+        Object.hasOwn(item, "vertical")
+      ) {
+        if (
+          placed.filter(
+            (p) =>
+              p.productId === item.productId && p.orientation === "horizontal",
+          ).length !== orientationCounts(item).horizontal
+        )
+          return {
+            ready: false,
+            valid: false,
+            reason: "Manuel yerleşimin yatay/dikey adetleri eşleşmiyor.",
+          };
+      }
+    packed = {
+      placements: placed,
+      free,
+      unplaced: [],
+      placedArea: placed.reduce((n, p) => n + p.area, 0),
+    };
+  } else packed = arrange(pieces, shape);
   const basePercent = (packed.placedArea / totalArea) * 100;
   const maxWeight = positive(box.maxProductWeight)
     ? box.maxProductWeight
@@ -501,7 +589,11 @@ export function layoutRecommendations(
       ? items.map((item) => (item.productId === product.id ? next : item))
       : [...items, next];
     if (nextItems.length > 50) continue;
-    const check = boxLayout(box, nextItems, products);
+    const check = boxLayout(
+      { ...box, placements: undefined },
+      nextItems,
+      products,
+    );
     if (!check.ready || check.overCapacity) continue;
     suggestions.push({
       product,
@@ -532,7 +624,59 @@ export function variantBoxLayoutIssue(variant, box, products, ownerId) {
         },
       ];
   return (
-    boxLayout({ ...box, separators: variant.separators }, items, products)
-      .reason || ""
+    boxLayout(
+      {
+        ...box,
+        separators: variant.separators,
+        placements: variant.placements ?? undefined,
+      },
+      items,
+      products,
+    ).reason || ""
   );
+}
+
+export const placementData = (capacity) =>
+  capacity.placements.map(({ productId, pieceIndex, x, y, orientation }) => ({
+    productId,
+    pieceIndex,
+    x,
+    y,
+    orientation,
+  }));
+export function capItemIncrease(box, previous, next, products) {
+  const index = next.findIndex(
+    (item) =>
+      item.quantity >
+      (previous.find((p) => p.productId === item.productId)?.quantity || 0),
+  );
+  if (index < 0) return { items: next };
+  const item = next[index],
+    counts = orientationCounts(item),
+    old = previous.find((p) => p.productId === item.productId),
+    before = old ? orientationCounts(old) : { horizontal: 0, vertical: 0 };
+  const horizontalChanged = counts.horizontal > before.horizontal;
+  for (let q = Math.min(500, Math.floor(item.quantity)); q >= 1; q--) {
+    const vertical = horizontalChanged
+      ? Math.min(counts.vertical, q)
+      : q - Math.min(counts.horizontal, q);
+    const candidate = next.map((p, i) =>
+      i === index
+        ? { ...p, quantity: q, horizontal: q - vertical, vertical }
+        : p,
+    );
+    const c = boxLayout({ ...box, placements: undefined }, candidate, products);
+    if (c.ready && !c.overCapacity)
+      return {
+        items: candidate,
+        notice:
+          q < item.quantity
+            ? `Bu ürün için sığan maksimum ${q} adet uygulandı.`
+            : "",
+      };
+  }
+  return {
+    items: previous,
+    notice: "Bu ürün için kutuda uygun yer veya kilogram kapasitesi kalmadı.",
+  };
 }

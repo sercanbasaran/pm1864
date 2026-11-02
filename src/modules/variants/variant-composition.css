@@ -140,3 +140,8 @@
 
 .variant-layout-controls { align-content:start;align-self:start; }
 .variant-layout-product { align-content:start; }
+
+.variant-layout-product-heading {display:flex;align-items:center;gap:.75rem;min-width:0;}
+.variant-layout-product-heading h4 {min-width:0;overflow-wrap:anywhere;}
+.variant-layout-product-heading .product-image {width:72px;height:72px;flex:0 0 72px;overflow:hidden;border-radius:.375rem;}
+.variant-layout-product-heading .product-image img {width:100%;height:100%;object-fit:contain;object-position:center;}

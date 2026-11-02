@@ -1,7 +1,13 @@
+import VariantProductImage from "./VariantProductImage.jsx";
+import {
+  boxLayout,
+  placementData,
+  layoutItemsWithAutoOrientation,
+} from "../packaging/box-layout.js";
 import SeparatorFields from "./SeparatorFields.jsx";
 import VariantProductPicker from "./VariantProductPicker.jsx";
 import { packagingAllowsProduct } from "../packaging/packaging-approval.js";
-import React, { useId } from "react";
+import React, { useId, useState, useRef } from "react";
 import Modal from "../../components/ui/Modal.jsx";
 import { Button, Input } from "../../components/ui/Controls.jsx";
 import { orientationCounts } from "../packaging/box-layout.js";
@@ -110,7 +116,67 @@ export function LayoutRecommendations({ suggestions, onApply, disabled }) {
     </section>
   );
 }
-function LayoutGrid({ capacity, products }) {
+function LayoutGrid({ capacity, products, box, onPlacementChange, disabled }) {
+  const [selected, setSelected] = useState(null),
+    [message, setMessage] = useState("");
+  const drag = useRef(null);
+  const point = (e) => {
+    const svg = e.currentTarget.ownerSVGElement;
+    return new DOMPoint(e.clientX, e.clientY).matrixTransform(
+      svg.getScreenCTM().inverse(),
+    );
+  };
+  function apply(index, x, y, rotate = false, magnet = false) {
+    if (magnet) {
+      const p = capacity.placements[index],
+        others = capacity.placements
+          .filter((_, i) => i !== index)
+          .concat(capacity.separators || []);
+      // Prefer a nearby edge over the unaligned coordinate.
+      const nearest = (value, edges) => {
+        const sorted = edges
+          .filter((n) => Math.abs(n - value) <= 2)
+          .sort((a, b) => Math.abs(a - value) - Math.abs(b - value));
+        return sorted[0] ?? value;
+      };
+      x = nearest(x, [
+        0,
+        capacity.shape.width - p.w,
+        ...others.flatMap((r) => [r.x + r.w, r.x - p.w]),
+      ]);
+      y = nearest(y, [
+        0,
+        capacity.shape.length - p.h,
+        ...others.flatMap((r) => [r.y + r.h, r.y - p.h]),
+      ]);
+    }
+
+    const placements = placementData(capacity).map((p, i) =>
+      i === index
+        ? {
+            ...p,
+            x,
+            y,
+            orientation: rotate
+              ? p.orientation === "horizontal"
+                ? "vertical"
+                : "horizontal"
+              : p.orientation,
+          }
+        : p,
+    );
+    const items = layoutItemsWithAutoOrientation(capacity.items, {
+      placements,
+    });
+    const check = boxLayout({ ...box, placements }, items, products);
+    if (!check.ready || check.overCapacity) {
+      setMessage(check.reason || "Bu konum uygun değil.");
+      return;
+    }
+    setMessage("Yerleşim güncellendi.");
+    onPlacementChange(placements, items);
+  }
+
   const pattern = useId(),
     title = useId();
   if (!capacity.shape) return <p>{capacity.reason}</p>;
@@ -120,6 +186,23 @@ function LayoutGrid({ capacity, products }) {
   const ids = [...new Set(capacity.items.map((item) => item.productId))];
   return (
     <div className="variant-layout-drawing">
+      <p>
+        Dilimi sürükleyerek taşıyın. Seçtiğiniz dilimi düğmeyle veya R tuşuyla
+        çevirin; ok tuşlarıyla 1 mm taşıyın.
+      </p>
+      <Button
+        type="button"
+        disabled={
+          disabled || selected === null || !capacity.placements[selected]
+        }
+        onClick={() => {
+          const p = capacity.placements[selected];
+          apply(selected, p.x, p.y, true);
+        }}
+      >
+        Seçili dilimi yatay / dikey çevir
+      </Button>
+      <p role="status">{message}</p>
       <svg
         viewBox={`${-gap} ${-gap} ${width + gap * 2} ${length + gap * 2}`}
         role="img"
@@ -191,8 +274,88 @@ function LayoutGrid({ capacity, products }) {
         {capacity.placements.map((p, i) => {
           const id = ids.indexOf(p.productId),
             name = products.find((product) => product.id === p.productId)?.name;
+          const label = Array.from(name || "Ürün");
+          const short =
+            label.length > 30
+              ? label.slice(0, 29).join("") + "…"
+              : label.join("");
+          const lines =
+            short.length > 16 ? [short.slice(0, 16), short.slice(16)] : [short];
+          const font = Math.min(
+            p.h * 0.18,
+            p.w / (Math.max(...lines.map((line) => line.length)) * 0.8),
+          );
           return (
-            <g key={`${p.productId}-${p.pieceIndex}`}>
+            <g
+              key={`${p.productId}-${p.pieceIndex}`}
+              tabIndex={disabled ? -1 : 0}
+              role="button"
+              aria-label={`${name} ${p.pieceIndex + 1}. dilimi taşı veya çevir`}
+              style={{
+                cursor: disabled ? "default" : "grab",
+                touchAction: "none",
+                outline:
+                  selected === i
+                    ? "2px solid var(--sl-color-primary-600)"
+                    : "none",
+              }}
+              onFocus={() => setSelected(i)}
+              onKeyDown={(e) => {
+                if (disabled) return;
+                const key = e.key.toLowerCase();
+                if (
+                  [
+                    "r",
+                    "arrowleft",
+                    "arrowright",
+                    "arrowup",
+                    "arrowdown",
+                  ].includes(key)
+                ) {
+                  e.preventDefault();
+                  apply(
+                    i,
+                    p.x +
+                      (key === "arrowleft" ? -1 : key === "arrowright" ? 1 : 0),
+                    p.y +
+                      (key === "arrowup" ? -1 : key === "arrowdown" ? 1 : 0),
+                    key === "r",
+                  );
+                }
+              }}
+              onPointerDown={(e) => {
+                if (disabled) return;
+                setSelected(i);
+                drag.current = { point: point(e), i };
+                e.currentTarget.setPointerCapture(e.pointerId);
+              }}
+              onPointerMove={(e) => {
+                if (drag.current?.i !== i) return;
+                const q = point(e);
+                e.currentTarget.setAttribute(
+                  "transform",
+                  `translate(${q.x - drag.current.point.x} ${q.y - drag.current.point.y})`,
+                );
+              }}
+              onPointerCancel={(e) => {
+                drag.current = null;
+                e.currentTarget.removeAttribute("transform");
+              }}
+              onPointerUp={(e) => {
+                if (drag.current?.i !== i) return;
+                const q = point(e),
+                  start = drag.current.point;
+                drag.current = null;
+                e.currentTarget.removeAttribute("transform");
+                apply(
+                  i,
+                  Math.round((p.x + q.x - start.x) * 10) / 10,
+                  Math.round((p.y + q.y - start.y) * 10) / 10,
+                  false,
+                  true,
+                );
+              }}
+            >
               <title>
                 {name} · {p.orientation === "vertical" ? "Dikey" : "Yatay"} ·{" "}
                 {p.w} × {p.h} mm · x: {p.x}, y: {p.y}
@@ -207,15 +370,32 @@ function LayoutGrid({ capacity, products }) {
                 strokeWidth={width / 500}
               />
               <text
-                x={p.x + p.w / 2}
-                y={p.y + p.h / 2}
-                dominantBaseline="central"
                 textAnchor="middle"
-                fontSize={Math.min(p.w, p.h) * 0.22}
+                dominantBaseline="central"
+                fontSize={font}
                 fill="#111827"
+                pointerEvents="none"
+                className="grid-product-name"
               >
-                {id + 1}
-                {p.orientation === "vertical" ? "D" : "Y"}
+                {lines.map((line, n) => (
+                  <tspan
+                    key={n}
+                    x={p.x + p.w / 2}
+                    y={
+                      p.y + p.h * (lines.length === 1 ? 0.38 : 0.28 + n * 0.24)
+                    }
+                  >
+                    {line}
+                  </tspan>
+                ))}
+                <tspan
+                  x={p.x + p.w / 2}
+                  y={p.y + p.h * 0.78}
+                  fontSize={Math.min(p.h * 0.15, p.w * 0.12)}
+                >
+                  {id + 1}
+                  {p.orientation === "vertical" ? "D" : "Y"}
+                </tspan>
               </text>
             </g>
           );
@@ -263,6 +443,7 @@ export default function VariantLayoutEditor({
   onChange,
   onAutoArrange,
   onSeparatorsChange,
+  onPlacementChange,
   onClose,
   disabled,
 }) {
@@ -277,7 +458,13 @@ export default function VariantLayoutEditor({
       <div className="variant-layout-workspace">
         <div>
           {capacity.ready ? (
-            <LayoutGrid capacity={capacity} products={products} />
+            <LayoutGrid
+              capacity={capacity}
+              products={products}
+              box={box}
+              onPlacementChange={onPlacementChange}
+              disabled={disabled}
+            />
           ) : (
             <p>{capacity.reason}</p>
           )}
@@ -285,6 +472,7 @@ export default function VariantLayoutEditor({
         <div className="variant-layout-controls">
           <SeparatorFields
             box={box}
+            capacity={capacity}
             onChange={onSeparatorsChange}
             disabled={disabled}
           />
@@ -296,7 +484,10 @@ export default function VariantLayoutEditor({
             const p = products.find((p) => p.id === item.productId);
             return (
               <section className="variant-layout-product" key={item.productId}>
-                <h4>{p?.name}</h4>
+                <div className="variant-layout-product-heading">
+                  <VariantProductImage product={p} />
+                  <h4>{p?.name}</h4>
+                </div>
                 <small>
                   {p?.dimensions
                     ? `${p.dimensions.length ?? "—"} × ${p.dimensions.width ?? "—"} × ${p.dimensions.height ?? "—"} mm`
