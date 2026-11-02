@@ -166,3 +166,9 @@ Gridde çift tıklama, D tuşu veya “Seçili dilimi çoğalt” düğmesi ayn�
 Gridde seçili dilim Delete/Backspace veya sil düğmesiyle kaldırılabilir. Kalan konumlar korunur, dilim indeksleri ve yatay/dikey adetler yeniden hesaplanır. Son dilim silinemez. Doluluk yeniden %95'in altına inerse kayıt engellenir.
 
 Gridde taşıma, hedef koordinatta önce mevcut yönü, sığmazsa 90° döndürülmüş yönü dener. İki yön de geçersizse eski konum korunur. Başarılı dönüş, manuel koordinatlarla ve yatay/dikey adetlerle birlikte saklanır; diğer dilimler hareket ettirilmez.
+
+Gridde Shift+tık seçimi genişletir veya daraltır; normal tık tek dilim seçer. Çoklu seçim birlikte taşınabilir, çevrilebilir, çoğaltılabilir ve silinebilir. Grup hareketleri / dönüşleri çakışırsa uygulanmaz; gruptaki tüm dilimler için kapasite yoksa toplu çoğaltma yapılmaz. Son dilimin silinmesi engellenir.
+
+Bir kutu en fazla 4 farklı ürün içerebilir. Bu sınır `items` içindeki farklı ürün sayısıdır; aynı üründen eklenen dilim adedi ayrı kapasite / kilogram kontrollerine tabidir. Arayüz seçimi ve sunucu kutu doğrulaması aynı sınırı uygular.
+
+Gridde ürün adları sabit 3 mm fontla hücre genişliğine göre satırlara bölünür; sıra / yön işaretleri metin üzerinde gösterilmez. Metin hücre dışına taşmaz, tam ürün adı erişilebilir etiket ve tooltipte korunur. Seçili grubu kutuya göre kenara/merkeze hizalama grup içi mesafeleri korur; yatay/dikey eşit dağıtma dış boşlukları da eşitler. Bütün hizalamalar aynı geometri doğrulamasından geçer.

@@ -482,7 +482,7 @@ export default function VariantCompositionFields({
                   )
                 }
                 exclude={items.map((item) => item.productId)}
-                disabled={items.length >= 50}
+                disabled={disabled || items.length >= (isBox ? 4 : 50)}
                 onSelect={(selected) =>
                   updateItems([
                     ...items,

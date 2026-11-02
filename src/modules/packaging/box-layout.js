@@ -261,6 +261,12 @@ export function boxLayout(
       valid: false,
       reason: "Aynı ürünün adetlerini tek satırda birleştirin.",
     };
+  if (items.length > 4)
+    return {
+      ready: false,
+      valid: false,
+      reason: "Aynı kutuya en fazla 4 farklı ürün eklenebilir.",
+    };
   const volume = packagingVolume(box);
   if (!volume)
     return {
@@ -588,7 +594,7 @@ export function layoutRecommendations(
     const nextItems = old
       ? items.map((item) => (item.productId === product.id ? next : item))
       : [...items, next];
-    if (nextItems.length > 50) continue;
+    if (nextItems.length > 4) continue;
     const retained = appendToExistingLayout(box, items, nextItems, products);
     if (
       !retained ||
@@ -713,6 +719,12 @@ export function appendToExistingLayout(box, previous, next, products) {
     return null;
   const current = boxLayout(box, previous, products);
   if (!current.ready || current.overCapacity) return null;
+  if (new Set(next.map((item) => item.productId)).size > 4)
+    return {
+      items: previous,
+      placements: placementData(current),
+      notice: "Aynı kutuya en fazla 4 farklı ürün eklenebilir.",
+    };
   const placements = placementData(current);
   let free = current.free,
     weight = current.usedWeight;

@@ -281,7 +281,7 @@ test("individual pieces rotate and invalid keyboard moves retain the previous pl
   await settle();
   await clickText("Seçili dilimi yatay / dikey çevir", dialog);
   piece = dialog.querySelector('svg g[role="button"]');
-  expect(piece.textContent).toContain("1D");
+  expect(piece.querySelector("title").textContent).toContain("Dikey");
   const before = piece.querySelector("rect").getAttribute("x");
   fireEvent.keyDown(piece, { key: "ArrowLeft" });
   await settle();
@@ -377,4 +377,114 @@ test("Delete removes a selected piece without moving the others and cannot remov
   await settle();
   expect(nodes()).toHaveLength(1);
   expect(dialog.textContent).toContain("en az bir dilim");
+});
+
+test("Shift click toggles multiple pieces and deleting the group preserves all other coordinates", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog"),
+    nodes = () => [...dialog.querySelectorAll('svg g[role="button"]')];
+  const before = nodes().map((n) => [
+    n.querySelector("rect").getAttribute("x"),
+    n.querySelector("rect").getAttribute("y"),
+  ]);
+  fireEvent.click(nodes()[0]);
+  await settle();
+  fireEvent.click(nodes()[1], { shiftKey: true });
+  await settle();
+  fireEvent.click(nodes()[2], { shiftKey: true });
+  await settle();
+  expect(
+    nodes().filter((n) => n.getAttribute("aria-pressed") === "true"),
+  ).toHaveLength(3);
+  fireEvent.click(nodes()[1], { shiftKey: true });
+  await settle();
+  expect(
+    nodes().filter((n) => n.getAttribute("aria-pressed") === "true"),
+  ).toHaveLength(2);
+  fireEvent.keyDown(nodes()[2], { key: "Delete" });
+  await settle();
+  expect(
+    nodes().map((n) => [
+      n.querySelector("rect").getAttribute("x"),
+      n.querySelector("rect").getAttribute("y"),
+    ]),
+  ).toEqual(before.filter((_, i) => i !== 0 && i !== 2));
+});
+test("selected pieces can be rotated and duplicated together", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog"),
+    nodes = () => [...dialog.querySelectorAll('svg g[role="button"]')];
+  fireEvent.click(nodes()[0]);
+  await settle();
+  fireEvent.click(nodes()[1], { shiftKey: true });
+  await settle();
+  await clickText("Seçili dilimi yatay / dikey çevir", dialog);
+  expect(nodes()[0].querySelector("title").textContent).toContain("Dikey");
+  expect(nodes()[1].querySelector("title").textContent).toContain("Dikey");
+  fireEvent.keyDown(nodes()[1], { key: "d" });
+  await settle();
+  expect(nodes()).toHaveLength(7);
+});
+
+test("settings accordions toggle and action buttons follow the grid", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog");
+  const sections = [...dialog.querySelectorAll("sl-details")];
+  expect(sections.map((s) => s.summary)).toEqual(
+    expect.arrayContaining([
+      "Separatör ayarları",
+      "Ürün bilgileri · 1 / 4 farklı ürün",
+    ]),
+  );
+  const section = sections.find((s) => s.summary === "Separatör ayarları");
+  expect(section.open).toBe(true);
+  fireEvent.click(section.shadowRoot.querySelector('[part="header"]'));
+  await settle();
+  expect(section.open).toBe(false);
+  const svg = dialog.querySelector('svg[role="img"]'),
+    actions = dialog.querySelector(".grid-action-buttons");
+  expect(
+    svg.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  expect(actions.querySelectorAll("sl-button")).toHaveLength(3);
+});
+
+test("grid names wrap at a fixed font without sequence or direction badges, and group alignment preserves other pieces", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog"),
+    nodes = () => [...dialog.querySelectorAll('svg g[role="button"]')];
+  const name = dialog.querySelector(".grid-product-name");
+  expect(name.querySelectorAll("tspan").length).toBeGreaterThan(1);
+  expect(name.getAttribute("font-size")).toBe("3");
+  expect(name.textContent).toBe("Fıstıklı");
+  const before = nodes().map((n) => [
+    n.querySelector("rect").getAttribute("x"),
+    n.querySelector("rect").getAttribute("y"),
+  ]);
+  fireEvent.click(nodes()[0]);
+  await settle();
+  fireEvent.click(nodes()[1], { shiftKey: true });
+  await settle();
+  await clickText(
+    "Aşağı",
+    dialog.querySelector('[aria-label="Seçili dilimleri hizala"]'),
+  );
+  expect(nodes()[0].querySelector("rect").getAttribute("y")).toBe("80");
+  expect(nodes()[1].querySelector("rect").getAttribute("y")).toBe("80");
+  expect(
+    nodes()
+      .slice(2)
+      .map((n) => [
+        n.querySelector("rect").getAttribute("x"),
+        n.querySelector("rect").getAttribute("y"),
+      ]),
+  ).toEqual(before.slice(2));
 });

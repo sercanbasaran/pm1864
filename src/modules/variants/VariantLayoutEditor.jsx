@@ -1,5 +1,17 @@
+import {
+  GRID_NAME_FONT,
+  wrapGridName,
+  alignGridSelection,
+} from "../packaging/grid-actions.js";
+import SlDetails from "@shoelace-style/shoelace/dist/react/details/index.js";
 import VariantProductImage from "./VariantProductImage.jsx";
-import { placementData, moveLayoutPiece } from "../packaging/box-layout.js";
+import {
+  placementData,
+  moveLayoutPiece,
+  boxLayout,
+  layoutItemsWithAutoOrientation,
+  appendToExistingLayout,
+} from "../packaging/box-layout.js";
 import SeparatorFields from "./SeparatorFields.jsx";
 import VariantProductPicker from "./VariantProductPicker.jsx";
 import { packagingAllowsProduct } from "../packaging/packaging-approval.js";
@@ -121,8 +133,75 @@ function LayoutGrid({
   disabled,
 }) {
   const [selected, setSelected] = useState(null),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [selection, setSelection] = useState([]);
+  const active = (index) => (selection.includes(index) ? selection : [index]);
+  function groupChange(indices, dx, dy, rotate) {
+    const placements = placementData(capacity).map((p, i) =>
+      indices.includes(i)
+        ? {
+            ...p,
+            x: p.x + dx,
+            y: p.y + dy,
+            orientation: rotate
+              ? p.orientation === "horizontal"
+                ? "vertical"
+                : "horizontal"
+              : p.orientation,
+          }
+        : p,
+    );
+    const items = layoutItemsWithAutoOrientation(capacity.items, {
+      placements,
+    });
+    const check = boxLayout({ ...box, placements }, items, products);
+    if (!check.ready || check.overCapacity) {
+      setMessage(check.reason || "Seçili dilimler bu konuma sığmıyor.");
+      return;
+    }
+    onPlacementChange(placements, items);
+    setMessage(`${indices.length} dilim güncellendi.`);
+  }
   function duplicate(index) {
+    const group = active(index);
+    if (group.length > 1) {
+      const next = capacity.items.map((item) => {
+        const picked = group
+            .map((i) => capacity.placements[i])
+            .filter((p) => p.productId === item.productId),
+          c = itemOrientation(item, capacity);
+        return {
+          ...item,
+          quantity: item.quantity + picked.length,
+          horizontal:
+            c.horizontal +
+            picked.filter((p) => p.orientation === "horizontal").length,
+          vertical:
+            c.vertical +
+            picked.filter((p) => p.orientation === "vertical").length,
+        };
+      });
+      const result = appendToExistingLayout(
+        box,
+        capacity.items,
+        next,
+        products,
+      );
+      if (
+        !result ||
+        result.placements.length !== capacity.placements.length + group.length
+      ) {
+        setMessage(
+          "Seçili dilimlerin tümünü çoğaltmak için yeterli kapasite yok.",
+        );
+        return;
+      }
+      onPlacementChange(result.placements, result.items);
+      setSelection([]);
+      setSelected(null);
+      setMessage(`${group.length} dilim çoğaltıldı.`);
+      return;
+    }
     const p = capacity.placements[index],
       product = products.find((product) => product.id === p.productId),
       estimate = capacity.forProduct(product);
@@ -140,13 +219,14 @@ function LayoutGrid({
     setMessage("Dilim boş alana çoğaltıldı.");
   }
   function remove(index) {
-    if (capacity.placements.length <= 1) {
+    const group = active(index);
+    if (capacity.placements.length <= group.length) {
       setMessage("Varyantta en az bir dilim / adet bulunmalıdır.");
       return;
     }
     const indices = new Map();
     const placements = placementData(capacity)
-      .filter((_, i) => i !== index)
+      .filter((_, i) => !group.includes(i))
       .map((p) => {
         const n = indices.get(p.productId) || 0;
         indices.set(p.productId, n + 1);
@@ -167,9 +247,12 @@ function LayoutGrid({
       .filter((item) => item.quantity > 0);
     onPlacementChange(placements, items);
     setSelected(null);
+    setSelection([]);
     setMessage("Dilim silindi. Kalan ürünlerin yerleri korundu.");
   }
-  const drag = useRef(null);
+  const drag = useRef(null),
+    pointerFocus = useRef(false),
+    didDrag = useRef(false);
   const point = (e) => {
     const svg = e.currentTarget.ownerSVGElement;
     return new DOMPoint(e.clientX, e.clientY).matrixTransform(
@@ -177,6 +260,13 @@ function LayoutGrid({
     );
   };
   function apply(index, x, y, rotate = false, magnet = false) {
+    const group = active(index);
+    if (group.length > 1) {
+      const p = capacity.placements[index];
+      groupChange(group, x - p.x, y - p.y, rotate);
+      return;
+    }
+
     if (magnet) {
       const p = capacity.placements[index],
         others = capacity.placements
@@ -227,40 +317,26 @@ function LayoutGrid({
   return (
     <div className="variant-layout-drawing">
       <p>
+        Shift basılıyken tıklayarak seçime ekleyin / seçimden çıkarın. Seçili
+        dilimler birlikte taşınır, çevrilir, çoğaltılır veya silinir.
+      </p>
+      <p role="status" aria-label="Grid seçimi">
+        {selection.length || (selected === null ? 0 : 1)} dilim seçili
+      </p>
+      <Button
+        type="button"
+        onClick={() => {
+          setSelection([]);
+          setSelected(null);
+        }}
+      >
+        Seçimi temizle
+      </Button>
+      <p>
         Dilimi sürükleyerek taşıyın. Seçtiğiniz dilimi düğmeyle veya R tuşuyla
         çevirin. Taşırken gerekirse otomatik döndürülür; ok tuşlarıyla 1 mm
         taşıyın. Çift tıklayarak veya D tuşuyla çoğaltın.
       </p>
-      <Button
-        type="button"
-        disabled={
-          disabled || selected === null || !capacity.placements[selected]
-        }
-        onClick={() => {
-          const p = capacity.placements[selected];
-          apply(selected, p.x, p.y, true);
-        }}
-      >
-        Seçili dilimi yatay / dikey çevir
-      </Button>
-      <Button
-        type="button"
-        disabled={
-          disabled || selected === null || !capacity.placements[selected]
-        }
-        onClick={() => duplicate(selected)}
-      >
-        Seçili dilimi çoğalt (D)
-      </Button>
-      <Button
-        type="button"
-        disabled={
-          disabled || selected === null || !capacity.placements[selected]
-        }
-        onClick={() => remove(selected)}
-      >
-        Seçili dilimi sil (Delete)
-      </Button>
       <p role="status">{message}</p>
       <svg
         viewBox={`${-gap} ${-gap} ${width + gap * 2} ${length + gap * 2}`}
@@ -333,146 +409,192 @@ function LayoutGrid({
         {capacity.placements.map((p, i) => {
           const id = ids.indexOf(p.productId),
             name = products.find((product) => product.id === p.productId)?.name;
-          const label = Array.from(name || "Ürün");
-          const short =
-            label.length > 30
-              ? label.slice(0, 29).join("") + "…"
-              : label.join("");
-          const lines =
-            short.length > 16 ? [short.slice(0, 16), short.slice(16)] : [short];
-          const font = Math.min(
-            p.h * 0.18,
-            p.w / (Math.max(...lines.map((line) => line.length)) * 0.8),
-          );
+          const lines = wrapGridName(name, p.w),
+            font = GRID_NAME_FONT;
+          const textTop =
+            p.y + Math.max(1, (p.h - lines.length * font * 1.2) / 2);
           return (
-            <g
-              key={`${p.productId}-${p.pieceIndex}`}
-              tabIndex={disabled ? -1 : 0}
-              role="button"
-              aria-label={`${name} ${p.pieceIndex + 1}. dilimi taşı veya çevir`}
-              style={{
-                cursor: disabled ? "default" : "grab",
-                touchAction: "none",
-                outline:
-                  selected === i
+            <React.Fragment key={`${p.productId}-${p.pieceIndex}`}>
+              <defs>
+                <clipPath id={`${pattern}-name-${i}`}>
+                  <rect x={p.x} y={p.y} width={p.w} height={p.h} />
+                </clipPath>
+              </defs>
+              <g
+                tabIndex={disabled ? -1 : 0}
+                role="button"
+                aria-label={`${name} ${p.pieceIndex + 1}. dilimi taşı veya çevir`}
+                style={{
+                  cursor: disabled ? "default" : "grab",
+                  touchAction: "none",
+                  outline: (
+                    selection.length ? selection.includes(i) : selected === i
+                  )
                     ? "2px solid var(--sl-color-primary-600)"
                     : "none",
-              }}
-              onFocus={() => setSelected(i)}
-              onDoubleClick={() => {
-                if (!disabled) duplicate(i);
-              }}
-              onKeyDown={(e) => {
-                if (disabled || e.ctrlKey || e.metaKey || e.altKey) return;
-                const key = e.key.toLowerCase();
-                if (key === "delete" || key === "backspace") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!e.repeat) remove(i);
-                  return;
+                }}
+                data-grid-index={i}
+                aria-pressed={
+                  selection.length ? selection.includes(i) : selected === i
                 }
-                if (key === "d") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!e.repeat) duplicate(i);
-                  return;
-                }
-                if (
-                  [
-                    "r",
-                    "arrowleft",
-                    "arrowright",
-                    "arrowup",
-                    "arrowdown",
-                  ].includes(key)
-                ) {
-                  e.preventDefault();
+                onClick={(e) => {
+                  if (disabled) return;
+                  pointerFocus.current = false;
+                  if (didDrag.current) {
+                    didDrag.current = false;
+                    return;
+                  }
+                  if (e.shiftKey) {
+                    const base = selection.length
+                      ? selection
+                      : selected === null
+                        ? []
+                        : [selected];
+                    const next = base.includes(i)
+                      ? base.filter((n) => n !== i)
+                      : [...base, i];
+                    setSelection(next);
+                    setSelected(next.at(-1) ?? null);
+                  } else {
+                    setSelected(i);
+                    setSelection([i]);
+                  }
+                }}
+                onFocus={() => {
+                  if (pointerFocus.current) {
+                    pointerFocus.current = false;
+                    return;
+                  }
+                  if (!selection.length) setSelected(i);
+                }}
+                onDoubleClick={() => {
+                  if (!disabled) duplicate(i);
+                }}
+                onKeyDown={(e) => {
+                  if (disabled || e.ctrlKey || e.metaKey || e.altKey) return;
+                  const key = e.key.toLowerCase();
+                  if (key === "delete" || key === "backspace") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!e.repeat) remove(i);
+                    return;
+                  }
+                  if (key === "d") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!e.repeat) duplicate(i);
+                    return;
+                  }
+                  if (
+                    [
+                      "r",
+                      "arrowleft",
+                      "arrowright",
+                      "arrowup",
+                      "arrowdown",
+                    ].includes(key)
+                  ) {
+                    e.preventDefault();
+                    apply(
+                      i,
+                      p.x +
+                        (key === "arrowleft"
+                          ? -1
+                          : key === "arrowright"
+                            ? 1
+                            : 0),
+                      p.y +
+                        (key === "arrowup" ? -1 : key === "arrowdown" ? 1 : 0),
+                      key === "r",
+                    );
+                  }
+                }}
+                onPointerDown={(e) => {
+                  if (disabled) return;
+                  pointerFocus.current = true;
+                  didDrag.current = false;
+                  if (e.shiftKey) return;
+                  if (!selection.includes(i)) {
+                    setSelection([i]);
+                    setSelected(i);
+                  }
+                  drag.current = { point: point(e), i };
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (drag.current?.i !== i) return;
+                  const q = point(e);
+                  for (const node of e.currentTarget.ownerSVGElement.querySelectorAll(
+                    "g[data-grid-index]",
+                  ))
+                    if (active(i).includes(Number(node.dataset.gridIndex)))
+                      node.setAttribute(
+                        "transform",
+                        `translate(${q.x - drag.current.point.x} ${q.y - drag.current.point.y})`,
+                      );
+                }}
+                onPointerCancel={(e) => {
+                  drag.current = null;
+                  for (const node of e.currentTarget.ownerSVGElement.querySelectorAll(
+                    "g[data-grid-index]",
+                  ))
+                    node.removeAttribute("transform");
+                }}
+                onPointerUp={(e) => {
+                  if (drag.current?.i !== i) return;
+                  const q = point(e),
+                    start = drag.current.point;
+                  drag.current = null;
+                  for (const node of e.currentTarget.ownerSVGElement.querySelectorAll(
+                    "g[data-grid-index]",
+                  ))
+                    node.removeAttribute("transform");
+                  if (Math.hypot(q.x - start.x, q.y - start.y) < 0.1) return;
+                  didDrag.current = true;
                   apply(
                     i,
-                    p.x +
-                      (key === "arrowleft" ? -1 : key === "arrowright" ? 1 : 0),
-                    p.y +
-                      (key === "arrowup" ? -1 : key === "arrowdown" ? 1 : 0),
-                    key === "r",
+                    Math.round((p.x + q.x - start.x) * 10) / 10,
+                    Math.round((p.y + q.y - start.y) * 10) / 10,
+                    false,
+                    true,
                   );
-                }
-              }}
-              onPointerDown={(e) => {
-                if (disabled) return;
-                setSelected(i);
-                drag.current = { point: point(e), i };
-                e.currentTarget.setPointerCapture(e.pointerId);
-              }}
-              onPointerMove={(e) => {
-                if (drag.current?.i !== i) return;
-                const q = point(e);
-                e.currentTarget.setAttribute(
-                  "transform",
-                  `translate(${q.x - drag.current.point.x} ${q.y - drag.current.point.y})`,
-                );
-              }}
-              onPointerCancel={(e) => {
-                drag.current = null;
-                e.currentTarget.removeAttribute("transform");
-              }}
-              onPointerUp={(e) => {
-                if (drag.current?.i !== i) return;
-                const q = point(e),
-                  start = drag.current.point;
-                drag.current = null;
-                e.currentTarget.removeAttribute("transform");
-                if (Math.hypot(q.x - start.x, q.y - start.y) < 0.1) return;
-                apply(
-                  i,
-                  Math.round((p.x + q.x - start.x) * 10) / 10,
-                  Math.round((p.y + q.y - start.y) * 10) / 10,
-                  false,
-                  true,
-                );
-              }}
-            >
-              <title>
-                {name} · {p.orientation === "vertical" ? "Dikey" : "Yatay"} ·{" "}
-                {p.w} × {p.h} mm · x: {p.x}, y: {p.y}
-              </title>
-              <rect
-                x={p.x}
-                y={p.y}
-                width={p.w}
-                height={p.h}
-                fill={colors[id % colors.length]}
-                stroke="#475569"
-                strokeWidth={width / 500}
-              />
-              <text
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={font}
-                fill="#111827"
-                pointerEvents="none"
-                className="grid-product-name"
+                }}
               >
-                {lines.map((line, n) => (
-                  <tspan
-                    key={n}
-                    x={p.x + p.w / 2}
-                    y={
-                      p.y + p.h * (lines.length === 1 ? 0.38 : 0.28 + n * 0.24)
-                    }
-                  >
-                    {line}
-                  </tspan>
-                ))}
-                <tspan
-                  x={p.x + p.w / 2}
-                  y={p.y + p.h * 0.78}
-                  fontSize={Math.min(p.h * 0.15, p.w * 0.12)}
+                <title>
+                  {name} · {p.orientation === "vertical" ? "Dikey" : "Yatay"} ·{" "}
+                  {p.w} × {p.h} mm · x: {p.x}, y: {p.y}
+                </title>
+                <rect
+                  x={p.x}
+                  y={p.y}
+                  width={p.w}
+                  height={p.h}
+                  fill={colors[id % colors.length]}
+                  stroke="#475569"
+                  strokeWidth={width / 500}
+                />
+
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={font}
+                  fill="#111827"
+                  pointerEvents="none"
+                  className="grid-product-name"
+                  clipPath={`url(#${pattern}-name-${i})`}
                 >
-                  {id + 1}
-                  {p.orientation === "vertical" ? "D" : "Y"}
-                </tspan>
-              </text>
-            </g>
+                  {lines.map((line, n) => (
+                    <tspan
+                      key={n}
+                      x={p.x + p.w / 2}
+                      y={textTop + font * 0.5 + n * font * 1.2}
+                    >
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
+              </g>
+            </React.Fragment>
           );
         })}
         <text
@@ -493,11 +615,93 @@ function LayoutGrid({
           {length} mm
         </text>
       </svg>
+      <div
+        className="grid-action-buttons"
+        role="group"
+        aria-label="Seçili dilim işlemleri"
+      >
+        <Button
+          type="button"
+          disabled={
+            disabled || selected === null || !capacity.placements[selected]
+          }
+          onClick={() => {
+            const p = capacity.placements[selected];
+            apply(selected, p.x, p.y, true);
+          }}
+        >
+          Seçili dilimi yatay / dikey çevir
+        </Button>
+        <Button
+          type="button"
+          disabled={
+            disabled || selected === null || !capacity.placements[selected]
+          }
+          onClick={() => duplicate(selected)}
+        >
+          Seçili dilimi çoğalt (D)
+        </Button>
+        <Button
+          type="button"
+          disabled={
+            disabled || selected === null || !capacity.placements[selected]
+          }
+          onClick={() => remove(selected)}
+        >
+          Seçili dilimi sil (Delete)
+        </Button>
+      </div>
+      <section
+        className="grid-selection-alignment"
+        aria-label="Seçili dilimleri hizala"
+      >
+        <strong>Seçili dilimleri hizala</strong>
+        <small>
+          Hizalama seçili grubu kutuya göre taşır, grup içi konumları korur.
+          Eşit dağıtma dış boşlukları da eşitler; çakışan işlemler uygulanmaz.
+        </small>
+        <div className="grid-action-buttons">
+          {[
+            ["horizontal", "start", "Sola"],
+            ["horizontal", "center", "Yatay ortala"],
+            ["horizontal", "end", "Sağa"],
+            ["vertical", "start", "Yukarı"],
+            ["vertical", "center", "Dikey ortala"],
+            ["vertical", "end", "Aşağı"],
+            ["horizontal", "justify", "Yatay eşit dağıt"],
+            ["vertical", "justify", "Dikey eşit dağıt"],
+          ].map(([axis, mode, label]) => (
+            <Button
+              key={label}
+              type="button"
+              disabled={disabled || selected === null}
+              onClick={() => {
+                const result = alignGridSelection(
+                  capacity,
+                  box,
+                  products,
+                  active(selected),
+                  axis,
+                  mode,
+                );
+                if (result.reason) {
+                  setMessage(result.reason);
+                  return;
+                }
+                onPlacementChange(result.placements, result.items);
+                setMessage("Seçili dilimler hizalandı.");
+              }}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </section>
       <ul className="variant-layout-legend">
         {ids.map((id, index) => (
           <li key={id}>
             <span style={{ background: colors[index % colors.length] }} />
-            {index + 1} · {products.find((p) => p.id === id)?.name}
+            {products.find((p) => p.id === id)?.name}
           </li>
         ))}
       </ul>
@@ -562,49 +766,59 @@ export default function VariantLayoutEditor({
           )}
         </div>
         <div className="variant-layout-controls">
-          <SeparatorFields
-            box={box}
-            capacity={capacity}
-            onChange={onSeparatorsChange}
-            disabled={disabled}
-          />
+          <SlDetails summary="Separatör ayarları" open>
+            <SeparatorFields
+              box={box}
+              capacity={capacity}
+              onChange={onSeparatorsChange}
+              disabled={disabled}
+            />
+          </SlDetails>
 
           <Button type="button" onClick={onAutoArrange} disabled={disabled}>
             Yönleri otomatik düzenle
           </Button>
-          {items.map((item, i) => {
-            const p = products.find((p) => p.id === item.productId);
-            return (
-              <section className="variant-layout-product" key={item.productId}>
-                <div className="variant-layout-product-heading">
-                  <VariantProductImage product={p} />
-                  <h4>{p?.name}</h4>
-                </div>
-                <small>
-                  {p?.dimensions
-                    ? `${p.dimensions.length ?? "—"} × ${p.dimensions.width ?? "—"} × ${p.dimensions.height ?? "—"} mm`
-                    : "Ölçüler eksik"}
-                </small>
-                <OrientationFields
-                  item={item}
-                  product={p}
-                  capacity={capacity}
-                  disabled={disabled}
-                  onChange={(next) =>
-                    onChange(items.map((old, j) => (i === j ? next : old)))
-                  }
-                />
-                <Button
-                  type="button"
-                  disabled={disabled || items.length <= 1}
-                  aria-label={`${p?.name || "Ürün"} yerleşimden kaldır`}
-                  onClick={() => onChange(items.filter((_, j) => j !== i))}
+          <SlDetails
+            summary={`Ürün bilgileri · ${items.length} / 4 farklı ürün`}
+            open
+          >
+            {items.map((item, i) => {
+              const p = products.find((p) => p.id === item.productId);
+              return (
+                <section
+                  className="variant-layout-product"
+                  key={item.productId}
                 >
-                  Ürünü kaldır
-                </Button>
-              </section>
-            );
-          })}
+                  <div className="variant-layout-product-heading">
+                    <VariantProductImage product={p} />
+                    <h4>{p?.name}</h4>
+                  </div>
+                  <small>
+                    {p?.dimensions
+                      ? `${p.dimensions.length ?? "—"} × ${p.dimensions.width ?? "—"} × ${p.dimensions.height ?? "—"} mm`
+                      : "Ölçüler eksik"}
+                  </small>
+                  <OrientationFields
+                    item={item}
+                    product={p}
+                    capacity={capacity}
+                    disabled={disabled}
+                    onChange={(next) =>
+                      onChange(items.map((old, j) => (i === j ? next : old)))
+                    }
+                  />
+                  <Button
+                    type="button"
+                    disabled={disabled || items.length <= 1}
+                    aria-label={`${p?.name || "Ürün"} yerleşimden kaldır`}
+                    onClick={() => onChange(items.filter((_, j) => j !== i))}
+                  >
+                    Ürünü kaldır
+                  </Button>
+                </section>
+              );
+            })}
+          </SlDetails>
           {!!capacity.unplaced?.length && (
             <p role="alert">
               Sığmayan ürünler:{" "}
@@ -617,12 +831,16 @@ export default function VariantLayoutEditor({
             </p>
           )}
           <h4>Ürün ekle</h4>
+          <p role="status">
+            {items.length} / 4 farklı ürün · Aynı üründen birden fazla dilim
+            eklenebilir.
+          </p>
           <VariantProductPicker
             products={products}
             categories={categories}
             capacity={capacity}
             exclude={items.map((item) => item.productId)}
-            disabled={disabled || items.length >= 50}
+            disabled={disabled || items.length >= 4}
             isProductAllowed={(p) =>
               packagingAllowsProduct(box, p.id, products, categories)
             }

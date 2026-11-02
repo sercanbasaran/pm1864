@@ -114,3 +114,26 @@ test("moves try the current orientation first, then rotate only if the alternati
     undefined,
   );
 });
+
+test("boxes allow four distinct products or many pieces of one product, but reject a fifth product", () => {
+  const b = { length: 100, width: 100, height: 30, maxProductWeight: 1000 };
+  const products = Array.from({ length: 5 }, (_, i) => ({
+    ...product,
+    id: i + 1,
+    dimensions: { length: 20, width: 100, height: 20 },
+  }));
+  const items = products.map((p) => ({ productId: p.id, quantity: 1 }));
+  assert.match(boxLayout(b, items, products).reason, /4 farklı ürün/);
+  const single = boxLayout(b, [{ productId: 1, quantity: 5 }], [products[0]]);
+  assert.equal(single.valid, true);
+  const previous = items.slice(0, 4),
+    current = boxLayout(b, previous, products);
+  const result = capItemIncrease(
+    { ...b, placements: placementData(current) },
+    previous,
+    items,
+    products,
+  );
+  assert.equal(result.items.length, 4);
+  assert.match(result.notice, /4 farklı ürün/);
+});

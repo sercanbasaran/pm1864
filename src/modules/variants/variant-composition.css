@@ -145,3 +145,9 @@
 .variant-layout-product-heading h4 {min-width:0;overflow-wrap:anywhere;}
 .variant-layout-product-heading .product-image {width:72px;height:72px;flex:0 0 72px;overflow:hidden;border-radius:.375rem;}
 .variant-layout-product-heading .product-image img {width:100%;height:100%;object-fit:contain;object-position:center;}
+
+.grid-action-buttons { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }
+.grid-action-buttons sl-button { min-width:0; }
+@media(max-width:600px){ .grid-action-buttons sl-button { flex:1 1 100%;width:100%; } }
+
+.grid-selection-alignment {display:grid;gap:.5rem;margin:1rem 0;min-width:0;}
