@@ -75,6 +75,10 @@ const text = (v, max = 200) =>
 export function publicCatalog(doc, revision) {
   return {
     revision,
+    readOnly: doc.skuSchemaVersion === 3,
+    readOnlyReason: doc.skuSchemaVersion === 3
+      ? "Bu sürümde katalog görüntülenebilir. Veri kaybını önlemek için katalog değişiklikleri geçici olarak kapalı."
+      : "",
     categories: doc.categories.map((c) => ({
       ...c,
       salesAvailability: salesAvailability(
@@ -143,6 +147,12 @@ export function createCatalogService(db) {
           "REVISION_CONFLICT",
         );
       const doc = JSON.parse(row.document);
+      if (doc.skuSchemaVersion === 3)
+        throw new ApiError(
+          409,
+          "Bu sürüm mevcut katalog şemasını düzenleyemiyor. Veri kaybını önlemek için işlem durduruldu.",
+          "CATALOG_SCHEMA_READ_ONLY",
+        );
       await fn(doc, tx);
       upgradeHierarchy(doc);
       const document = JSON.stringify(doc);

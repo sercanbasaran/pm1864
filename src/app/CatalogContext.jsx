@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import { request } from "../api.js";
 const CatalogContext = createContext(null);
 export function CatalogProvider({ snapshot, notify, children }) {
@@ -35,6 +36,8 @@ export function CatalogProvider({ snapshot, notify, children }) {
     }
   }
   async function mutate(path, body, method = "POST") {
+    if (current.current.readOnly)
+      throw new Error(current.current.readOnlyReason);
     if (saving.current)
       throw new Error("Önceki kayıt işleminin tamamlanmasını bekleyin.");
     saving.current = true;
@@ -70,6 +73,11 @@ export function CatalogProvider({ snapshot, notify, children }) {
         notify,
       }}
     >
+      {catalog.readOnly && (
+        <SlAlert open variant="warning" role="status">
+          {catalog.readOnlyReason}
+        </SlAlert>
+      )}
       {children}
     </CatalogContext.Provider>
   );

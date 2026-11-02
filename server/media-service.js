@@ -54,7 +54,12 @@ export function createMediaService(db) {
           (tx.dialect === "postgres" ? " FOR UPDATE" : ""),
       )
     ).rows[0];
-    return { row, doc: JSON.parse(row.document) };
+    const doc = JSON.parse(row.document);
+    if (doc.skuSchemaVersion === 3)
+      throw new ApiError(409,
+        "Bu sürümde medya değişiklikleri geçici olarak kapalı.",
+        "CATALOG_SCHEMA_READ_ONLY");
+    return { row, doc };
   };
   async function record(tx, context, title, detail, actor) {
     audit(context.doc, title, detail, actor);

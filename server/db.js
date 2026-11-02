@@ -147,6 +147,9 @@ export async function migrate(db, seed) {
       )
     ).rows[0];
     const doc = JSON.parse(row.document);
+    // A rollback must never run old migrations against a newer catalog.
+    // Schema 3 can be read by this release, but catalog writes are guarded.
+    if (doc.skuSchemaVersion === 3) return;
     const hierarchyChanged = doc.schemaVersion !== 2;
     if (hierarchyChanged) upgradeHierarchy(doc);
     const typesChanged = upgradeVariantTypes(doc);
