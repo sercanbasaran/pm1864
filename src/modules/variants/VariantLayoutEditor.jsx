@@ -1,9 +1,5 @@
 import VariantProductImage from "./VariantProductImage.jsx";
-import {
-  boxLayout,
-  placementData,
-  layoutItemsWithAutoOrientation,
-} from "../packaging/box-layout.js";
+import { placementData, moveLayoutPiece } from "../packaging/box-layout.js";
 import SeparatorFields from "./SeparatorFields.jsx";
 import VariantProductPicker from "./VariantProductPicker.jsx";
 import { packagingAllowsProduct } from "../packaging/packaging-approval.js";
@@ -116,9 +112,63 @@ export function LayoutRecommendations({ suggestions, onApply, disabled }) {
     </section>
   );
 }
-function LayoutGrid({ capacity, products, box, onPlacementChange, disabled }) {
+function LayoutGrid({
+  capacity,
+  products,
+  box,
+  onPlacementChange,
+  onDuplicate,
+  disabled,
+}) {
   const [selected, setSelected] = useState(null),
     [message, setMessage] = useState("");
+  function duplicate(index) {
+    const p = capacity.placements[index],
+      product = products.find((product) => product.id === p.productId),
+      estimate = capacity.forProduct(product);
+    if (
+      !(p.orientation === "horizontal"
+        ? estimate.horizontalAdditional
+        : estimate.verticalAdditional)
+    ) {
+      setMessage(
+        "Bu yönde çoğaltmak için uygun boşluk veya kilogram kapasitesi yok.",
+      );
+      return;
+    }
+    onDuplicate(p);
+    setMessage("Dilim boş alana çoğaltıldı.");
+  }
+  function remove(index) {
+    if (capacity.placements.length <= 1) {
+      setMessage("Varyantta en az bir dilim / adet bulunmalıdır.");
+      return;
+    }
+    const indices = new Map();
+    const placements = placementData(capacity)
+      .filter((_, i) => i !== index)
+      .map((p) => {
+        const n = indices.get(p.productId) || 0;
+        indices.set(p.productId, n + 1);
+        return { ...p, pieceIndex: n };
+      });
+    const items = capacity.items
+      .map((item) => {
+        const h = placements.filter(
+            (p) =>
+              p.productId === item.productId && p.orientation === "horizontal",
+          ).length,
+          v = placements.filter(
+            (p) =>
+              p.productId === item.productId && p.orientation === "vertical",
+          ).length;
+        return { ...item, quantity: h + v, horizontal: h, vertical: v };
+      })
+      .filter((item) => item.quantity > 0);
+    onPlacementChange(placements, items);
+    setSelected(null);
+    setMessage("Dilim silindi. Kalan ürünlerin yerleri korundu.");
+  }
   const drag = useRef(null);
   const point = (e) => {
     const svg = e.currentTarget.ownerSVGElement;
@@ -151,30 +201,20 @@ function LayoutGrid({ capacity, products, box, onPlacementChange, disabled }) {
       ]);
     }
 
-    const placements = placementData(capacity).map((p, i) =>
-      i === index
-        ? {
-            ...p,
-            x,
-            y,
-            orientation: rotate
-              ? p.orientation === "horizontal"
-                ? "vertical"
-                : "horizontal"
-              : p.orientation,
-          }
-        : p,
-    );
-    const items = layoutItemsWithAutoOrientation(capacity.items, {
-      placements,
+    const result = moveLayoutPiece(capacity, box, products, index, x, y, {
+      rotate,
+      autoRotate: !rotate,
     });
-    const check = boxLayout({ ...box, placements }, items, products);
-    if (!check.ready || check.overCapacity) {
-      setMessage(check.reason || "Bu konum uygun değil.");
+    if (!result.placements) {
+      setMessage(result.reason);
       return;
     }
-    setMessage("Yerleşim güncellendi.");
-    onPlacementChange(placements, items);
+    setMessage(
+      result.rotated && !rotate
+        ? "Dilim bu alana sığması için otomatik döndürüldü."
+        : "Yerleşim güncellendi.",
+    );
+    onPlacementChange(result.placements, result.items);
   }
 
   const pattern = useId(),
@@ -188,7 +228,8 @@ function LayoutGrid({ capacity, products, box, onPlacementChange, disabled }) {
     <div className="variant-layout-drawing">
       <p>
         Dilimi sürükleyerek taşıyın. Seçtiğiniz dilimi düğmeyle veya R tuşuyla
-        çevirin; ok tuşlarıyla 1 mm taşıyın.
+        çevirin. Taşırken gerekirse otomatik döndürülür; ok tuşlarıyla 1 mm
+        taşıyın. Çift tıklayarak veya D tuşuyla çoğaltın.
       </p>
       <Button
         type="button"
@@ -201,6 +242,24 @@ function LayoutGrid({ capacity, products, box, onPlacementChange, disabled }) {
         }}
       >
         Seçili dilimi yatay / dikey çevir
+      </Button>
+      <Button
+        type="button"
+        disabled={
+          disabled || selected === null || !capacity.placements[selected]
+        }
+        onClick={() => duplicate(selected)}
+      >
+        Seçili dilimi çoğalt (D)
+      </Button>
+      <Button
+        type="button"
+        disabled={
+          disabled || selected === null || !capacity.placements[selected]
+        }
+        onClick={() => remove(selected)}
+      >
+        Seçili dilimi sil (Delete)
       </Button>
       <p role="status">{message}</p>
       <svg
@@ -300,9 +359,24 @@ function LayoutGrid({ capacity, products, box, onPlacementChange, disabled }) {
                     : "none",
               }}
               onFocus={() => setSelected(i)}
+              onDoubleClick={() => {
+                if (!disabled) duplicate(i);
+              }}
               onKeyDown={(e) => {
-                if (disabled) return;
+                if (disabled || e.ctrlKey || e.metaKey || e.altKey) return;
                 const key = e.key.toLowerCase();
+                if (key === "delete" || key === "backspace") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!e.repeat) remove(i);
+                  return;
+                }
+                if (key === "d") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!e.repeat) duplicate(i);
+                  return;
+                }
                 if (
                   [
                     "r",
@@ -347,6 +421,7 @@ function LayoutGrid({ capacity, products, box, onPlacementChange, disabled }) {
                   start = drag.current.point;
                 drag.current = null;
                 e.currentTarget.removeAttribute("transform");
+                if (Math.hypot(q.x - start.x, q.y - start.y) < 0.1) return;
                 apply(
                   i,
                   Math.round((p.x + q.x - start.x) * 10) / 10,
@@ -463,6 +538,23 @@ export default function VariantLayoutEditor({
               products={products}
               box={box}
               onPlacementChange={onPlacementChange}
+              onDuplicate={(piece) => {
+                const next = items.map((item) => {
+                  if (item.productId !== piece.productId) return item;
+                  const counts = itemOrientation(item, capacity);
+                  return {
+                    ...item,
+                    quantity: item.quantity + 1,
+                    horizontal:
+                      counts.horizontal +
+                      (piece.orientation === "horizontal" ? 1 : 0),
+                    vertical:
+                      counts.vertical +
+                      (piece.orientation === "vertical" ? 1 : 0),
+                  };
+                });
+                onChange(next);
+              }}
               disabled={disabled}
             />
           ) : (

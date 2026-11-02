@@ -42,3 +42,75 @@ test("manual positions are retained, and outside/colliding positions are rejecte
     false,
   );
 });
+
+test("additions preserve a manually positioned divider-like product and use only the actual free compartments", () => {
+  const b = {
+    length: 100,
+    width: 100,
+    height: 30,
+    maxProductWeight: 2000,
+    placements: [
+      { productId: 1, pieceIndex: 0, x: 40, y: 0, orientation: "horizontal" },
+    ],
+  };
+  const p = { ...product, dimensions: { length: 20, width: 100, height: 20 } },
+    q = {
+      ...product,
+      id: 2,
+      dimensions: { length: 40, width: 100, height: 20 },
+    };
+  const before = [{ productId: 1, quantity: 1, horizontal: 1, vertical: 0 }];
+  const r = capItemIncrease(
+    b,
+    before,
+    [...before, { productId: 2, quantity: 3 }],
+    [p, q],
+  );
+  assert.deepEqual(r.placements[0], b.placements[0]);
+  assert.equal(r.items[1].quantity, 2);
+  assert.equal(
+    boxLayout({ ...b, placements: r.placements }, r.items, [p, q]).valid,
+    true,
+  );
+  const blocked = capItemIncrease(
+    b,
+    before,
+    [...before, { productId: 2, quantity: 1 }],
+    [p, { ...q, dimensions: { length: 50, width: 100, height: 20 } }],
+  );
+  assert.equal(blocked.items.length, 1);
+  assert.deepEqual(blocked.placements, b.placements);
+});
+
+import { moveLayoutPiece } from "../src/modules/packaging/box-layout.js";
+test("moves try the current orientation first, then rotate only if the alternative fits", () => {
+  const p = { ...product, dimensions: { length: 30, width: 10, height: 20 } },
+    b = { length: 100, width: 60, height: 30, maxProductWeight: 200 };
+  const items = [{ productId: 1, quantity: 1, horizontal: 1, vertical: 0 }],
+    c = boxLayout(b, items, [p]);
+  const turned = moveLayoutPiece(c, b, [p], 0, 85, 10);
+  assert.equal(turned.rotated, true);
+  assert.equal(turned.placements[0].orientation, "vertical");
+  assert.equal(turned.items[0].vertical, 1);
+  const vertical = boxLayout(
+    { ...b, placements: turned.placements },
+    turned.items,
+    [p],
+  );
+  const horizontal = moveLayoutPiece(vertical, b, [p], 0, 10, 50);
+  assert.equal(horizontal.rotated, true);
+  assert.equal(horizontal.placements[0].orientation, "horizontal");
+  assert.equal(moveLayoutPiece(c, b, [p], 0, 10, 10).rotated, false);
+  const before = JSON.stringify(c.placements);
+  assert.equal(moveLayoutPiece(c, b, [p], 0, 99, 59).placements, undefined);
+  assert.equal(JSON.stringify(c.placements), before);
+  const divided = {
+      ...b,
+      separators: [{ orientation: "vertical", position: 90, width: 5 }],
+    },
+    dc = boxLayout(divided, items, [p]);
+  assert.equal(
+    moveLayoutPiece(dc, divided, [p], 0, 85, 10).placements,
+    undefined,
+  );
+});

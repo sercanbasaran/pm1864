@@ -165,7 +165,7 @@ export default function VariantCompositionFields({
     setError("");
     update({
       items: bounded.items,
-      placements: null,
+      placements: bounded.placements ?? null,
       sourceProductId: bounded.items[0]?.productId,
       quantity: bounded.items[0]?.quantity,
     });
@@ -297,7 +297,12 @@ export default function VariantCompositionFields({
           suggestions={suggestions}
           onChange={updateItems}
           onPlacementChange={(placements, nextItems) =>
-            update({ placements, items: nextItems })
+            update({
+              placements,
+              items: nextItems,
+              sourceProductId: nextItems[0]?.productId,
+              quantity: nextItems[0]?.quantity,
+            })
           }
           disabled={disabled}
           onClose={() => setLayoutOpen(false)}

@@ -311,3 +311,70 @@ test("fill with separators preserves product positions and updates usable base o
   expect(dialog.textContent).toContain("Dikey eşit dağıt");
   expect(dialog.textContent).toContain("Yatay eşit dağıt");
 });
+
+test("adding another product preserves all manually adjusted coordinates", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog");
+  let nodes = [...dialog.querySelectorAll('svg g[role="button"]')];
+  fireEvent.keyDown(nodes.at(-1), { key: "ArrowRight" });
+  await settle();
+  const coords = () =>
+    [...dialog.querySelectorAll('svg g[role="button"] rect')].map((r) => [
+      r.getAttribute("x"),
+      r.getAttribute("y"),
+    ]);
+  const before = coords();
+  fireEvent.click(dialog.querySelector('sl-button[aria-label="Cevizli seç"]'));
+  await settle();
+  expect(coords().slice(0, before.length)).toEqual(before);
+  expect(coords()).toHaveLength(before.length + 1);
+});
+
+test("double click and D duplicate a piece without moving the existing grid", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog");
+  const nodes = () => [...dialog.querySelectorAll('svg g[role="button"]')];
+  const coords = () =>
+    nodes().map((n) => [
+      n.querySelector("rect").getAttribute("x"),
+      n.querySelector("rect").getAttribute("y"),
+    ]);
+  const before = coords();
+  fireEvent.doubleClick(nodes()[0]);
+  await settle();
+  expect(nodes()).toHaveLength(before.length + 1);
+  expect(coords().slice(0, before.length)).toEqual(before);
+  fireEvent.keyDown(nodes()[0], { key: "d" });
+  await settle();
+  expect(nodes()).toHaveLength(before.length + 2);
+  expect(coords().slice(0, before.length)).toEqual(before);
+});
+
+test("Delete removes a selected piece without moving the others and cannot remove the last piece", async () => {
+  render(<Harness snapshot={snapshot} />);
+  await settle();
+  await clickText("Kutu yerleşimini aç");
+  const dialog = document.querySelector("sl-dialog"),
+    nodes = () => [...dialog.querySelectorAll('svg g[role="button"]')];
+  const coords = () =>
+    nodes().map((n) => [
+      n.querySelector("rect").getAttribute("x"),
+      n.querySelector("rect").getAttribute("y"),
+    ]);
+  const before = coords();
+  fireEvent.keyDown(nodes()[0], { key: "Delete" });
+  await settle();
+  expect(coords()).toEqual(before.slice(1));
+  while (nodes().length > 1) {
+    fireEvent.keyDown(nodes()[0], { key: "Backspace" });
+    await settle();
+  }
+  fireEvent.keyDown(nodes()[0], { key: "Delete" });
+  await settle();
+  expect(nodes()).toHaveLength(1);
+  expect(dialog.textContent).toContain("en az bir dilim");
+});
