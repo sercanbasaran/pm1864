@@ -85,6 +85,12 @@ export async function createApp({ env = process.env, database } = {}) {
         method = request.method.toUpperCase();
       if (route === "/api/health" && method === "GET")
         return json({ ok: true, service: "pm1864", database: db.dialect });
+      const exportImageRoute = route.match(/^\/api\/media\/([a-zA-Z0-9-]+)\/content$/);
+      if (exportImageRoute && method === "GET" && env.PUBLIC_EXPORT_IMAGES !== "false" && await service.publicExportImage(exportImageRoute[1])) {
+        const response = await media.content(exportImageRoute[1], url.searchParams.get("size") || "", request);
+        response.headers.set("Cache-Control", "no-store");
+        return response;
+      }
       const satietyIconRoute = route.match(/^\/api\/satiety-icons\/([a-zA-Z0-9-]+)$/);
       if (satietyIconRoute && method === "GET") {
         const catalog = await service.read();

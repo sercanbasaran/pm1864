@@ -1,3 +1,4 @@
+import { exportMediaAllowed } from "./export-media.js";
 import {validateProductDimensions, normalizeProductDimensions} from "../src/product-dimensions.js";
 import {validatePortion, variantPortionCount} from "../src/portions.js";
 import {bootstrapStores} from "./imports/bootstrap-stores.js";
@@ -143,6 +144,12 @@ export function publicCatalog(doc, revision) {
   };
 }
 export function createCatalogService(db) {
+  async function publicExportImage(id) {
+    return db.transaction(async tx => {
+      const row = (await tx.query("SELECT document FROM app_catalog WHERE id=1")).rows[0];
+      return !!row && exportMediaAllowed(JSON.parse(row.document), id);
+    });
+  }
   async function read() {
     return db.transaction(async (tx) => {
       const row = (
@@ -1346,6 +1353,7 @@ export function createCatalogService(db) {
   }
   return {
     managePackagingMethod,
+    publicExportImage,
     read,
     mutate,
     saveRegionalDefinition,
