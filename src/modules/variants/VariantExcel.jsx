@@ -1,3 +1,4 @@
+import { variantExportRecord } from "./variant-export.js";
 import {
   packagingMethodName,
   packagingMethodOptions,
@@ -48,31 +49,10 @@ const n = (value) =>
       .trim()
       .replace(",", "."),
   );
-export async function exportVariants(rows, types, products, boxes, format) {
-  const data = rows.map(({ p, v }) => [
-    p.productCode,
-    v.size,
-    types.find((t) => t.id === v.typeId)?.name || "",
-    (
-      v.items || [
-        { productId: v.sourceProductId ?? p.id, quantity: v.quantity ?? 1 },
-      ]
-    )
-      .map(
-        (item) =>
-          `${products.find((product) => product.id === item.productId)?.productCode || ""}:${item.quantity}`,
-      )
-      .join(";"),
-    v.packaging || "",
-    boxes.find((box) => box.id === v.packagingId)?.name || "",
-    v.price,
-    v.active !== false ? "Aktif" : "Pasif",
-    v.sku || "",
-    ...productInformationFields.map(
-      (field) => v.information?.[field.key] || "",
-    ),
-  ]);
-  await downloadTransfer(columns, data, format, "varyantlar", "Varyantlar");
+export async function exportVariants(rows, types, products, boxes, format, options = {}) {
+  const records = rows.map(({p,v}) => variantExportRecord(p,v,types,products,boxes,options));
+  const exportColumns = [...new Set(records.flatMap(record => Object.keys(record)))];
+  await downloadTransfer(exportColumns, records.map(record => exportColumns.map(key => record[key] ?? "")), format, "varyantlar", "Varyantlar");
 }
 export default function VariantExcel({
   onClose,

@@ -60,7 +60,7 @@ export default function VariantManager({
   onCreate,
   relatedProducts,
 }) {
-  const { variantTypes = [], packagingItems = defaultPackagingItems(), mutate, notify, busy } = useCatalog();
+  const { variantTypes = [], packagingItems = defaultPackagingItems(), consumables, satietyProducts, mutate, notify, busy } = useCatalog();
   const [selected, setSelected] = useState([]);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [channel, setChannel] = useState("");
@@ -194,7 +194,7 @@ export default function VariantManager({
                 {selectable && <Button type="button" disabled={!selected.length || busy} onClick={() => setBulkOpen(true)}>Toplu varyant işlemleri ({selected.length})</Button>}
                 {addAction}
                 {canWrite && <FormatMenu direction="import" onSelect={setImportOpen} />}
-                <FormatMenu direction="export" disabled={!rows.length} onSelect={format => exportVariants(rows, variantTypes, sources, packagingItems, format).catch(() => notify("Dışa aktarma dosyası hazırlanamadı."))} />
+                <FormatMenu direction="export" disabled={!rows.length} onSelect={format => exportVariants(rows, variantTypes, sources, packagingItems, format, {categories, consumables, satietyProducts}).catch(() => notify("Dışa aktarma dosyası hazırlanamadı."))} />
               </div>
             </div>
             <div className="variant-list-toolbar">
