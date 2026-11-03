@@ -105,7 +105,7 @@ test("all current product fields parse and export without losing portions, dimen
     { ingredientId: "banana", level: 2 },
   ]);
   assert.equal(p.images.length, 2);
-  assert.equal(p.salesAvailability.online, false);
+  assert.equal("salesAvailability" in p, false);
   assert.ok(p.nutrition.includes("Tuz 0 g"));
   const exported = Object.fromEntries(
     productTransferColumns.map((column, i) => [
@@ -122,7 +122,6 @@ test("all current product fields parse and export without losing portions, dimen
     "unitPricing",
     "images",
     "nutrition",
-    "salesAvailability",
   ])
     assert.deepEqual(again.product[key], p[key]);
   assert.equal(
@@ -190,7 +189,6 @@ test("invalid per-row data is reviewable and empty templates never create placeh
     { "1 kişilik porsiyon miktarı": "1,5" },
     { "Yağ (g/100 g)": "abc" },
     { "Uzunluk (mm)": "0" },
-    { Mağaza: "evet" },
   ])
     assert.ok(
       parseProductTransferRows([{ ...complete(), ...patch }], context)[0].issue,

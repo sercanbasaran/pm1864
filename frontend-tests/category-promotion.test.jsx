@@ -8,7 +8,7 @@ afterEach(cleanup);
 const root = {
   id: "r",
   name: "Baklava",
-  code: "0100",
+  code: "10",
   slug: "baklava",
   active: true,
   salesAvailability: { store: true, online: false, foodDelivery: true },
@@ -17,7 +17,7 @@ const child = {
   id: "c",
   parentId: "r",
   name: "Fıstıklı",
-  code: "101",
+  code: "10",
   slug: "fistikli",
   active: true,
 };
@@ -45,7 +45,7 @@ test("child editor previews promotion and submits the shown code/revision only a
   await settle();
   expect(onPromote).not.toHaveBeenCalled();
   expect(document.querySelector("sl-dialog").textContent).toContain(
-    "101 → 0200",
+    "10 → 11",
   );
   expect(document.querySelector("sl-dialog").textContent).toContain(
     "Bağlı ürün1",
@@ -53,7 +53,7 @@ test("child editor previews promotion and submits the shown code/revision only a
   fireEvent.click(find("Dönüştürmeyi onayla"));
   await waitFor(() =>
     expect(onPromote).toHaveBeenCalledWith("c", {
-      code: "0200",
+      code: "11",
       previewRevision: 7,
     }),
   );

@@ -45,7 +45,6 @@ export function productCardData(
     description: product.description || "",
     ...(productDimensionsLabel(product.dimensions) ? { dimensions: normalizeProductDimensions(product.dimensions) } : {}),
     ...(hasPortion(product) ? { portion: { ...product.portion } } : {}),
-    salesAvailability: effectiveSales(product, undefined, categories),
     unitPricing: hasUnitPricing(product.unitPricing)
       ? normalizeUnitPricing(product.unitPricing)
       : null,

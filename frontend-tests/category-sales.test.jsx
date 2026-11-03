@@ -8,7 +8,7 @@ const root = {
   id: "r",
   name: "Baklava",
   slug: "baklava",
-  code: "100",
+  code: "10",
   active: true,
   parentId: "",
   salesAvailability: { ...all, online: false },
@@ -17,7 +17,7 @@ const child = {
   id: "c",
   name: "Fistikli",
   slug: "fistikli",
-  code: "101",
+  code: "10",
   active: true,
   parentId: "r",
   salesAvailability: all,
@@ -112,25 +112,8 @@ test("category editor opens and saves only the selected field and cancels drafts
   description.value = "Kaydedilmeyen açıklama";
   fireEvent(description, new CustomEvent("sl-input", { bubbles: true }));
   await settle();
-  await clickEdit("Satış kanalları");
-  expect(findControl("Açıklama")).toBeUndefined();
-  const controls = [...document.querySelectorAll("sl-switch")];
-  const online = controls.find(
-    (c) => c.getAttribute("aria-label") === "E-Mağaza",
-  );
-  expect(online.disabled).toBe(true);
-  expect(online.checked).toBe(false);
-  const store = controls.find((c) => c.getAttribute("aria-label") === "Mağaza");
-  expect(store.disabled).toBe(false);
-  store.checked = false;
-  fireEvent(store, new CustomEvent("sl-change", { bubbles: true }));
-  await settle();
-  await clickAction("Kaydet");
-  expect(onSave.mock.calls[1][0]).toEqual({
-    ...child,
-    salesAvailability: { ...all, store: false },
-  });
-  expect(onClose).not.toHaveBeenCalled();
+  await clickAction("Vazgeç");
+  expect(document.querySelector('[aria-label="Satış kanalları düzenle"]')).toBeNull();
   await clickEdit("Kategori adı");
   const nextName = findControl("Kategori adı");
   nextName.value = "Vazgeçilecek";
@@ -145,9 +128,9 @@ test("category editor opens and saves only the selected field and cancels drafts
     [...document.querySelectorAll("dd")].map((c) => c.textContent),
   ).toContain(child.name);
   expect(findControl("Kategori adı")).toBeUndefined();
-  expect(onSave).toHaveBeenCalledTimes(2);
+  expect(onSave).toHaveBeenCalledTimes(1);
 });
-test("category list shows channel status and read-only mode has no editing switches", async () => {
+test("category list and editor have no channel settings", async () => {
   render(
     <CategoryManagement
       categories={[root, child]}
@@ -159,8 +142,8 @@ test("category list shows channel status and read-only mode has no editing switc
   );
   await settle();
   expect(document.querySelectorAll("sl-switch")).toHaveLength(0);
-  expect(document.querySelector("table").textContent).toContain(
+  expect(document.querySelector("table").textContent).not.toContain(
     "Satış kanalları",
   );
-  expect(document.querySelector("table").textContent).toContain("E-Mağaza");
+  expect(document.querySelector("table").textContent).not.toContain("E-Mağaza");
 });

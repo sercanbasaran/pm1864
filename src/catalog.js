@@ -41,8 +41,6 @@ export function nextSubcategoryCode(categories, parentId) {
   return next <= 99 ? String(next) : "";
 }
 export function validateCategory(draft, categories) {
-  const salesError = validateSalesAvailability(draft.salesAvailability);
-  if (salesError) return salesError;
   if (!draft.name.trim()) return "Kategori adı gerekli.";
   if (!/^[1-9]\d$/.test(draft.code)) return "Kategori kodu 10–99 arasında iki rakam olmalı.";
   if (!slugify(draft.slug)) return "Geçerli bir kategori bağlantısı gerekli.";
@@ -104,7 +102,6 @@ export function validateProduct(
   const portionError = validatePortion(product.portion, product.unitPricing);
   if (portionError) return {tab:"Genel bilgiler",message:portionError};
   const salesError =
-    validateSalesAvailability(product.salesAvailability) ||
     product.variants
       .map((v) => validateSalesAvailability(v.salesAvailability))
       .find(Boolean);

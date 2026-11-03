@@ -1,3 +1,4 @@
+import { SalesChannelSwitches } from "../../components/ui/SalesChannels.jsx";
 import {
   packagingMethodName,
   packagingMethodOptions,
@@ -593,6 +594,8 @@ export default function VariantCompositionFields({
       {step === 5 && (
         <section className="variant-wizard-section">
           <h3>Varyantı tamamla</h3>
+          <Input label="Varyant aktif" type="checkbox" checked={v.active !== false} disabled={disabled} onChange={e => update({active:e.target.checked})} />
+          <SalesChannelSwitches variant={v} disabled={disabled} onChange={salesAvailability => update({salesAvailability})} />
           <p>
             Varyanta peçete, mendil veya diğer sarf malzemeleri
             ekleyebilirsiniz. Bu alan isteğe bağlıdır.

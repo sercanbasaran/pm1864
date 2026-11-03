@@ -25,49 +25,16 @@ export function salesAvailability(value, previous, variant = false) {
     ]),
   );
 }
-// Missing preferences on existing categories keep all channels available.
-export function categorySalesAvailability(category, categories) {
-  const values = salesAvailability(undefined, undefined, true);
-  const seen = new Set();
-  let current = category;
-  if (!current) return salesAvailability();
-  while (current) {
-    if (seen.has(current.id)) return salesAvailability();
-    seen.add(current.id);
-    const preferences = salesAvailability(
-      current.salesAvailability,
-      undefined,
-      true,
-    );
-    for (const { key } of salesChannels)
-      values[key] = values[key] && current.active !== false && preferences[key];
-    if (!current.parentId) return values;
-    current = categories.find((c) => c.id === current.parentId);
-    if (!current) return salesAvailability();
-  }
-  return values;
-}
-export function effectiveSales(product, variant, categories) {
-  const parent = salesAvailability(product.salesAvailability),
-    child = salesAvailability(variant?.salesAvailability, undefined, true),
-    category = categories
-      ? categorySalesAvailability(
-          categories.find((c) =>
-            product.categoryId
-              ? c.id === product.categoryId
-              : c.name === product.category,
-          ),
-          categories,
-        )
-      : salesAvailability(undefined, undefined, true);
+export function effectiveSales(product, variant) {
+  const variants = variant ? [variant] : product.variants || [];
   return Object.fromEntries(
     salesChannels.map(({ key }) => [
       key,
-      product.status === "Aktif" &&
-        (!variant || variant.active !== false) &&
-        category[key] &&
-        parent[key] &&
-        (!variant || child[key]),
+      variants.some(
+        (v) =>
+          v.active !== false &&
+          salesAvailability(v.salesAvailability, undefined, true)[key],
+      ),
     ]),
   );
 }

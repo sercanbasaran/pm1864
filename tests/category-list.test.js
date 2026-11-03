@@ -45,16 +45,9 @@ const products = [
   { id: 1, categoryId: "b" },
   { id: 2, categoryId: "a" },
 ];
-test("channel counts include active ancestors and respect independent channel preferences", () => {
+test("category summaries contain quality counts without channel settings", () => {
   const summary = categorySummary(categories, products);
-  assert.deepEqual(
-    summary.channels.map((c) => [c.key, c.main, c.children]),
-    [
-      ["store", 1, 1],
-      ["online", 1, 0],
-      ["foodDelivery", 1, 1],
-    ],
-  );
+  assert.equal("channels" in summary, false);
   assert.deepEqual(summary.quality, { description: 4, identity: 0, empty: 3 });
 });
 test("combined filters select exact types, parent, effective status, channel and missing information", () => {
@@ -89,8 +82,8 @@ test("sorts use Turkish text, numeric codes and aggregate product counts without
   assert.equal(rows("count", "desc")[0], "a");
   assert.equal(JSON.stringify(categories), before);
 });
-test("missing identity information is reported, and legacy channel preferences stay enabled", () => {
+test("missing identity information is reported without channel counts", () => {
   const list = [{ id: "x", name: "", code: "", active: true }];
   assert.equal(categorySummary(list, []).quality.identity, 1);
-  assert.equal(categorySummary(list, []).channels[0].main, 1);
+  assert.equal("channels" in categorySummary(list, []), false);
 });

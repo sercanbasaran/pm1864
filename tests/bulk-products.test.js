@@ -22,11 +22,11 @@ test('bulk product changes validate all selected products and commit atomically'
     let result = await call('/products/bulk', 'POST', { expectedRevision: catalog.revision, ids, changes: { unit: 'Adet', weight: 0, price: 20 } });
     assert.equal(result.status, 422);
     assert.equal((await call('/catalog')).catalog.products[0].unitPricing.price, 10);
-    result = await call('/products/bulk', 'POST', { expectedRevision: catalog.revision, ids, changes: { unit: 'Adet', weight: 50, price: 20, channels: { store: true } } });
+    result = await call('/products/bulk', 'POST', { expectedRevision: catalog.revision, ids, changes: { unit: 'Adet', weight: 50, price: 20 } });
     assert.equal(result.status, 200);
     for (const product of result.catalog.products.filter(p => ids.includes(p.id))) {
       assert.deepEqual(product.unitPricing, { unit: 'Adet', price: 20, weight: 50 });
-      assert.equal(product.salesAvailability.store, true);
+      assert.equal("salesAvailability" in product, false);
     }
     assert.equal((await call('/products/bulk', 'POST', { expectedRevision: catalog.revision, ids, changes: { price: 25 } })).status, 409);
   } finally { await app.close(); }

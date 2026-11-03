@@ -142,4 +142,12 @@ Ana kategori kodu dört, alt kategori kodu üç rakam olmalıdır. Yeni kategori
 
 `code`, önizlemede gösterilen `nextCategoryCode(categories)` değeri; `previewRevision`, önizlemenin oluşturulduğu katalog revision değeridir. Sunucu aynı transaction içinde güncel revision, kod, kategori türü ve isim çakışmasını doğrular. Eski önizleme veya kod uyuşmazlığı 409; geçersiz dönüşüm / boş kod kalmaması 422; kayıt bulunamaması 404 döndürür.
 
-İşlem kategori ID’si, slug, görseller, erişim tercihi ve ürün bağlantılarını korur. Yeni ana kategoriye ilk boş dört haneli kod atanır ve `parentId` boşaltılır. Üst kategoriden miras alınan pasiflik ve satış kanalı kısıtları yeni ana kategoriye uygulanır. Mevcut ürün/varyant kodları, URL’ler, QR adresleri ve sıra sayaçları değiştirilmez; sonraki yeni ürünler yeni ana kategori koduyla numaralanır. İşlem geçmişinde eski üst kategori/kod ve yeni kod kaydedilir.
+İşlem kategori ID’si, slug, görseller, erişim tercihi ve ürün bağlantılarını korur. Yeni ana kategoriye ilk boş dört haneli kod atanır ve `parentId` boşaltılır. Üst kategoriden miras alınan pasiflik yeni ana kategoriye uygulanır. Satış kanalları yalnızca varyantlardan yönetilir. Mevcut ürün/varyant kodları, URL’ler, QR adresleri ve sıra sayaçları değiştirilmez; sonraki yeni ürünler yeni ana kategori koduyla numaralanır. İşlem geçmişinde eski üst kategori/kod ve yeni kod kaydedilir.
+
+### Toplu varyant güncelleme
+
+`POST /api/variants/bulk` için `{ expectedRevision, ids: [variantId], changes }` gönderilir. Seçim 1–2000 benzersiz varyant içermelidir. `changes.channels` kısmi boolean alanları (`store`, `online`, `foodDelivery`), `changes.active` boolean ve `changes.price` `{mode: "fixed" | "increase" | "decrease", value: number}` kabul eder. Sabit fiyat TL; artış/azalış yüzde değeridir. Boş bırakılan alanlar korunur. Fiyatlar 0,01–100.000.000 TL aralığında, iki ondalıktır; yüzdelik azalış 100’den küçük olmalıdır. Yeni fiyat, bileşimli varyantlarda manuel fiyat düzeltmesi olarak saklanır.
+
+Kanal/durum değişikliği `products.write`, fiyat değişikliği `prices.write` gerektirir. Karma istek her iki yetkiyi de gerektirir. Revizyon veya herhangi bir satır hatası tüm işlemi iptal eder; ürün sürümleri ve işlem geçmişi güncellenir.
+
+Ürün ve kategori `salesAvailability`/`effectiveSales` alanları artık API yanıtında sunulmaz ve satış uygunluğunu etkilemez. Eski kayıtlar yerinde korunur; bu alanlara gelen değerler yok sayılır. Ürün toplu işlem ve Excel aktarımı kanal ayarı kabul etmez. Varyant kanal tercihleri korunur; tercihi bulunmayan kanallar mevcut davranışla açık kabul edilir. Varyant pasifken etkin kanallar kapalıdır. Ürünün Taslak durumu ve kategori aktifliği kanal tercihlerine müdahale etmez; public kart yayınlama koşulları ayrıca geçerlidir.

@@ -10,7 +10,6 @@ import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
 import { Check } from "@phosphor-icons/react";
 import BackToListButton from "../../components/ui/BackToListButton.jsx";
 import EditableField from "../../components/ui/EditableField.jsx";
-import { SalesChannelSwitches } from "../../components/ui/SalesChannels.jsx";
 import {
   Button,
   Input,
@@ -19,7 +18,6 @@ import {
 } from "../../components/ui/Controls.jsx";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { validateProduct } from "../../catalog.js";
-import { effectiveSales, salesChannels } from "../../sales-availability.js";
 import { productCardPath } from "../../product-card.js";
 import NutritionTable from "./NutritionTable.jsx";
 import ProductSatiety from "./ProductSatiety.jsx";
@@ -345,34 +343,6 @@ export default function ProductEditor({
                       setDraft({ ...draft, description: e.target.value })
                     }
                   />,
-                )}
-                {field(
-                  "salesAvailability",
-                  "Satış kanalları",
-                  <div className="sales-summary">
-                    {salesChannels
-                      .filter(
-                        ({ key }) =>
-                          effectiveSales(draft, undefined, categories)[key],
-                      )
-                      .map(({ key, label }) => (
-                        <SlBadge key={key} variant="success">
-                          {label}
-                        </SlBadge>
-                      ))}
-                  </div>,
-                  <SalesChannelSwitches
-                    categories={categories}
-                    disabled={busy || readOnly}
-                    product={draft}
-                    onChange={(salesAvailability) =>
-                      setDraft({ ...draft, salesAvailability })
-                    }
-                  />,
-                  !salesChannels.some(
-                    ({ key }) =>
-                      effectiveSales(draft, undefined, categories)[key],
-                  ),
                 )}
                 <EditableField
                   label="Ürün bağlantısı"

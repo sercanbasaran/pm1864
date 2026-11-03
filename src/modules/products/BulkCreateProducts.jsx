@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import Modal from "../../components/ui/Modal.jsx";
 import { Button, Input, Select } from "../../components/ui/Controls.jsx";
-import { SalesChannelSwitches } from "../../components/ui/SalesChannels.jsx";
 import { useCatalog } from "../../app/CatalogContext.jsx";
 import { selectable } from "../../hierarchy.js";
 import { validateProduct } from "../../catalog.js";
 import UnitPricing from "./UnitPricing.jsx";
 import "./bulk-products.css";
 
-const emptyRow = () => ({ name: "", rootId: "", childId: "", unitPricing: null, salesAvailability: { store: false, online: false, foodDelivery: false } });
+const emptyRow = () => ({ name: "", rootId: "", childId: "", unitPricing: null });
 export default function BulkCreateProducts({ onClose }) {
   const { categories, products, variantTypes, mutate, notify } = useCatalog();
   const [rows, setRows] = useState([emptyRow()]);
@@ -23,7 +22,7 @@ export default function BulkCreateProducts({ onClose }) {
     for (const [index, row] of rows.entries()) {
       const categoryId = row.childId || row.rootId;
       const category = active.find(c => c.id === categoryId);
-      const product = { isNew: true, name: row.name.trim(), categoryId, category: category?.name || "", status: "Taslak", variants: [], unitPricing: row.unitPricing, salesAvailability: row.salesAvailability };
+      const product = { isNew: true, name: row.name.trim(), categoryId, category: category?.name || "", status: "Taslak", variants: [], unitPricing: row.unitPricing };
       const issue = validateProduct(product, categories, variantTypes);
       if (issue) { setError(`${index + 1}. ürün: ${issue.message}`); return; }
       const key = product.name.toLocaleLowerCase("tr-TR");
@@ -39,7 +38,7 @@ export default function BulkCreateProducts({ onClose }) {
     notify(`${count} ürün oluşturuldu.`); onClose();
   }
   return <Modal title="Çoklu ürün ekle" onClose={onClose} busy={saving} wide className="bulk-products-dialog"><div className="bulk-products bulk-create-products">
-    <p>Ürünler taslak olarak oluşturulur. Birim fiyatı ve satış kanallarını şimdi veya daha sonra düzenleyebilirsiniz.</p>
+    <p>Ürünler taslak olarak oluşturulur. Birim fiyatını şimdi veya daha sonra düzenleyebilirsiniz.</p>
     {rows.map((row, index) => <section className="bulk-create-card" key={index}>
       <div className="bulk-create-header"><h3>Ürün {index + 1}</h3><Button type="button" size="small" disabled={saving || rows.length === 1} onClick={() => setRows(rows.filter((_, i) => i !== index))}>Ürünü kaldır</Button></div>
       <div className="bulk-create-identity">
@@ -48,7 +47,7 @@ export default function BulkCreateProducts({ onClose }) {
         <Select label="Alt kategori" aria-label={`${index + 1}. ürün alt kategorisi`} value={row.childId} disabled={saving || !row.rootId} onChange={e => update(index, { childId: e.target.value })}><option value="">Alt kategori seçin (isteğe bağlı)</option>{active.filter(c => c.parentId === row.rootId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>
       </div>
       <div className="bulk-create-details"><section><h4>Birim fiyatı</h4><UnitPricing value={row.unitPricing} editing onChange={unitPricing => update(index, { unitPricing })} /></section>
-        <section><SalesChannelSwitches product={{ categoryId: row.childId || row.rootId, status: "Taslak", salesAvailability: row.salesAvailability }} categories={categories} disabled={saving} onChange={salesAvailability => update(index, { salesAvailability })} /></section></div>
+      </div>
     </section>)}
     {error && <p role="alert">{error}</p>}{result && <p role="status">{result}</p>}
     <div className="bulk-products-actions"><Button type="button" disabled={saving || rows.length >= 50} onClick={() => setRows([...rows, emptyRow()])}>Ürün ekle</Button><Button type="button" variant="primary" disabled={saving} onClick={save}>Ürünleri oluştur</Button></div>

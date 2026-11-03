@@ -122,7 +122,7 @@ export default function ProductDetails({ product: source, localizationUrl, navig
             )}
             {hasPortion(product) && <p><strong>Porsiyon bilgisi:</strong> {portionDefinition(product)}</p>}
             {product.isVariantCard && <p><strong>Porsiyon bilgisi:</strong> {portionCountLabel(product.portionCount)}</p>}
-            {product.salesAvailability && (
+            {product.isVariantCard && product.salesAvailability && (
               <>
                 <hr className="product-summary-divider" />
                 <section

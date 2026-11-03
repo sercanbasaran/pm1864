@@ -342,6 +342,7 @@ export default function VariantExcel({
             ...newVariant(),
             ...(sourceVariant
               ? {
+                  salesAvailability: sourceVariant.salesAvailability,
                   images: sourceVariant.images || [],
                   consumables: sourceVariant.consumables || [],
                 }

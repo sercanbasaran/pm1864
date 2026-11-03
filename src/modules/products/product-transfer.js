@@ -71,9 +71,6 @@ export const productTransferFields = [
     "Görsel kimlikleri",
     "Kütüphanedeki görsel kimliklerini ; ile ayırın (en fazla 30). İlk görsel kapaktır. Dosyaları önce Kütüphane’ye yükleyin.",
   ],
-  ["Mağaza", "Açık / Kapalı; boş mevcut kayıtları değiştirmez."],
-  ["E-Mağaza", "Açık / Kapalı; boş mevcut kayıtları değiştirmez."],
-  ["Sipariş Platformları", "Açık / Kapalı; boş mevcut kayıtları değiştirmez."],
 ];
 export const productTransferColumns = productTransferFields.map(
   ([column]) => column,
@@ -309,21 +306,6 @@ export function parseProductTransferRows(
         if (imageIds.length) product.images = imageIds.map((id) => ({ id }));
         if (url) product.customImage = url;
       }
-      const channels = [
-        ["Mağaza", "store"],
-        ["E-Mağaza", "online"],
-        ["Sipariş Platformları", "foodDelivery"],
-      ].filter(([label]) => text(row[label]));
-      if (
-        channels.some(
-          ([label]) => !["Açık", "Kapalı"].includes(text(row[label])),
-        )
-      )
-        throw Error("Satış kanalı Açık veya Kapalı olmalıdır.");
-      if (channels.length)
-        product.salesAvailability = Object.fromEntries(
-          channels.map(([label, key]) => [key, text(row[label]) === "Açık"]),
-        );
       if (existing) {
         const { isNew, variants, ...incoming } = product;
         product = fillMissing(existing, incoming);
@@ -398,12 +380,6 @@ export function productTransferRow(p, categories, satietyProducts = []) {
   nutrientColumns.forEach(
     (column, i) => (values[column] = nutrition.values[nutritionRows[i].key]),
   );
-  for (const [label, key] of [
-    ["Mağaza", "store"],
-    ["E-Mağaza", "online"],
-    ["Sipariş Platformları", "foodDelivery"],
-  ])
-    values[label] = p.salesAvailability?.[key] ? "Açık" : "Kapalı";
   return productTransferColumns.map((column) => values[column] ?? "");
 }
 export function productReferenceSheets(categories, definitions, assets = []) {

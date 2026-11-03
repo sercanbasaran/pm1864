@@ -234,3 +234,7 @@ sl-dialog.variant-bulk-dialog { --width: calc(100vw - 2rem); }
 .variant-card-actions .control-content { gap: .3rem; }
 
 .variant-module .variant-mobile-cards.variant-view-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,280px),1fr)); }
+
+.variant-selection-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:.75rem; margin:1rem 0; }
+.variant-module .sales-summary { display:flex; flex-wrap:wrap; gap:.35rem; }
+.variant-desktop-table .sales-summary { max-width:16rem; }

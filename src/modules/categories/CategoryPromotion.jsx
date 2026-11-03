@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import SlAlert from "@shoelace-style/shoelace/dist/react/alert/index.js";
 import Modal from "../../components/ui/Modal.jsx";
 import { Button } from "../../components/ui/Controls.jsx";
-import { salesChannels } from "../../sales-availability.js";
 import { categoryPromotion } from "./category-promotion.js";
 
 export default function CategoryPromotion({
@@ -74,30 +73,6 @@ export default function CategoryPromotion({
             kategori bağlantısı ve QR adresleri korunur. Yeni ürünlerin kodları
             yeni ana kategori koduyla oluşturulur.
           </p>
-          <p>
-            Üst kategoriden gelen aktiflik ve satış kanalı kısıtlamaları
-            korunur. Daha sonra kategori ayarlarından değiştirebilirsiniz.
-          </p>
-          <div className="table-scroll">
-            <table aria-label="Dönüştürme sonrası satış kanalları">
-              <thead>
-                <tr>
-                  <th>Satış kanalı</th>
-                  <th>Şimdi</th>
-                  <th>Dönüşüm sonrası</th>
-                </tr>
-              </thead>
-              <tbody>
-                {salesChannels.map(({ key, label }) => (
-                  <tr key={key}>
-                    <th scope="row">{label}</th>
-                    <td>{plan.channels[key] ? "Etkin" : "Kapalı"}</td>
-                    <td>{plan.channels[key] ? "Etkin" : "Kapalı"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </>
       )}
       {(error || snapshot.error || stale) && (

@@ -30,7 +30,7 @@ const categories = [
   },
 ];
 afterEach(cleanup);
-test("category roots are highlighted and small channel tags show only consistent names with disabled state", async () => {
+test("category roots are highlighted without channel settings", async () => {
   render(
     <CategoryManagement
       categories={categories}
@@ -44,16 +44,7 @@ test("category roots are highlighted and small channel tags show only consistent
   const rows = [...document.querySelectorAll("tbody tr")];
   expect(rows[0].classList.contains("category-main-row")).toBe(true);
   expect(rows[1].classList.contains("category-main-row")).toBe(false);
-  for (const row of rows) {
-    const tags = [...row.querySelectorAll("sl-tag")];
-    expect(tags.map((t) => t.textContent.trim())).toEqual(labels);
-    expect(tags.every((t) => t.size === "small")).toBe(true);
-    expect(tags[0].variant).toBe("success");
-    expect(tags[1].variant).toBe("neutral");
-    expect(tags[1].getAttribute("aria-disabled")).toBe("true");
-    expect(tags[1].classList.contains("is-disabled")).toBe(true);
-    expect(tags[0].getAttribute("aria-disabled")).toBe("false");
-  }
+  for (const row of rows) expect(row.querySelector('.sales-summary')).toBeNull();
   expect(document.querySelector("table").textContent).not.toMatch(
     /Açık|Kapalı/,
   );
@@ -65,12 +56,12 @@ test("product and variant channel summaries share labels and disabled styling; s
     salesAvailability: { store: true, online: true, foodDelivery: false },
   };
   const view = render(
-    <SalesChannelSummary product={product} categories={categories} />,
+    <SalesChannelSummary product={product} variant={{salesAvailability:product.salesAvailability}} categories={categories} />,
   );
   await settle();
   let tags = [...document.querySelectorAll("sl-tag")];
   expect(tags.map((t) => t.textContent.trim())).toEqual(labels);
-  expect(tags.map((t) => t.variant)).toEqual(["success", "neutral", "neutral"]);
+  expect(tags.map((t) => t.variant)).toEqual(["success", "success", "neutral"]);
   view.rerender(
     <SalesChannelSummary
       product={product}

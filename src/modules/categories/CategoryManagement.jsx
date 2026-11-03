@@ -7,15 +7,6 @@ import BackToListButton from "../../components/ui/BackToListButton.jsx";
 import SlSwitch from "@shoelace-style/shoelace/dist/react/switch/index.js";
 import CategoryGallery from "./CategoryGallery.jsx";
 import { categoryPageUrl } from "./category-page.js";
-import {
-  CategoryChannelSwitches,
-} from "../../components/ui/SalesChannels.jsx";
-import {
-  salesChannels,
-  categorySalesAvailability,
-  salesAvailability,
-} from "../../sales-availability.js";
-import CategorySummary from "./CategorySummary.jsx";
 import CategoryTotals from "./CategoryTotals.jsx";
 import CategoryQualitySummary from "./CategoryQualitySummary.jsx";
 import CategoryFilters from "./CategoryFilters.jsx";
@@ -85,7 +76,7 @@ export default function CategoryManager({
   const [editingField, setEditingField] = useState(null);
   const [promotionOpen, setPromotionOpen] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
-  useEffect(() => { if (filters.query || filters.status || filters.parent.length || filters.type.length || filters.channel.length || filters.quality.length) setFiltersOpen(true); }, []);
+  useEffect(() => { if (filters.query || filters.status || filters.parent.length || filters.type.length || filters.quality.length) setFiltersOpen(true); }, []);
   const main = roots(categories);
   const suggestedSlug = (name, parentId) =>
     slugify(
@@ -129,11 +120,6 @@ export default function CategoryManager({
       category
         ? {
             ...category,
-            salesAvailability: salesAvailability(
-              category.salesAvailability,
-              undefined,
-              true,
-            ),
             visibility: category.visibility || "private",
             images: category.images || [],
             isNew: false,
@@ -148,7 +134,6 @@ export default function CategoryManager({
             description: "",
             parentId,
             active: true,
-            salesAvailability: salesAvailability(undefined, undefined, true),
             visibility: "private",
             images: [],
             isNew: true,
@@ -160,11 +145,6 @@ export default function CategoryManager({
     if (original)
       setDraft({
         ...original,
-        salesAvailability: salesAvailability(
-          original.salesAvailability,
-          undefined,
-          true,
-        ),
         isNew: false,
       });
     setEditingField(null);
@@ -250,19 +230,6 @@ export default function CategoryManager({
         </SlBadge>
       ),
       visibility: draft.visibility === "public" ? "Herkese açık" : "Özel",
-      salesAvailability: (
-        <div className="sales-summary">
-          {salesChannels
-            .filter(
-              ({ key }) => categorySalesAvailability(draft, categories)[key],
-            )
-            .map(({ key, label }) => (
-              <SlBadge key={key} variant="success">
-                {label}
-              </SlBadge>
-            ))}
-        </div>
-      ),
     };
     return {
       label,
@@ -272,11 +239,7 @@ export default function CategoryManager({
       empty:
         field === "visibility"
           ? false
-          : field === "salesAvailability"
-            ? !salesChannels.some(
-                ({ key }) => categorySalesAvailability(draft, categories)[key],
-              )
-            : !draft[field],
+          : !draft[field],
       editing: editingField === field,
       busy: saving,
       onEdit: () => {
@@ -344,10 +307,6 @@ export default function CategoryManager({
       {!route.split("?")[0].includes("/") && (
         <section className="category-module">
           <CategoryTotals categories={categories} action={addAction} />
-          <CategorySummary
-            categories={categories}
-            products={products}
-          />
           <CategoryQualitySummary
             categories={categories}
             products={products}
@@ -500,7 +459,6 @@ export default function CategoryManager({
                           <p>
                             {Object.entries(filters).some(
                               ([key, value]) =>
-                                key !== "channelState" &&
                                 (Array.isArray(value)
                                   ? value.length > 0
                                   : !!value),
@@ -700,21 +658,6 @@ export default function CategoryManager({
                     value={draft.description}
                     onChange={(e) =>
                       setDraft({ ...draft, description: e.target.value })
-                    }
-                  />
-                </EditableField>
-                <EditableField
-                  {...fieldProps("salesAvailability", "Satış kanalları")}
-                >
-                  <CategoryChannelSwitches
-                    category={draft}
-                    categories={categories}
-                    disabled={
-                      saving ||
-                      (!draft.isNew && editingField !== "salesAvailability")
-                    }
-                    onChange={(salesAvailability) =>
-                      setDraft({ ...draft, salesAvailability })
                     }
                   />
                 </EditableField>

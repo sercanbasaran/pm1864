@@ -41,7 +41,8 @@ Object.assign(row, {
   "Tuz (g/100 g)": "0",
 });
 test("expanded product schema survives JSON XML CSV and real XLS parsing", () => {
-  expect(productTransferColumns.length).toBeGreaterThan(32);
+  expect(productTransferColumns.length).toBeGreaterThan(29);
+  for (const label of ["Mağaza", "E-Mağaza", "Sipariş Platformları"]) expect(productTransferColumns).not.toContain(label);
   for (const format of ["json", "xml", "csv", "xls"]) {
     const values = productTransferColumns.map((column) => row[column]);
     let parsed;

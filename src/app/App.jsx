@@ -308,6 +308,7 @@ function Workspace({ user, onLogout, onUserUpdated }) {
         products={products}
         categories={categories}
         canWrite={can(user, "products.write")}
+        canEditPrices={can(user, "prices.write")}
         onEdit={(p, append, variantId, typeId) => open(p, true, append, variantId, typeId)}
         onDuplicate={duplicateVariantForProduct}
         onCreate={() => navigate("variants/new")}

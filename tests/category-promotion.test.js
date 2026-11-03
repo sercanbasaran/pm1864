@@ -101,11 +101,7 @@ test("promotion is atomic, preserves identity/products/counters/URLs and allocat
     assert.equal(promoted.code, code);
     assert.equal(promoted.slug, f.child.slug);
     assert.equal(promoted.visibility, "public");
-    assert.deepEqual(promoted.effectiveSales, {
-      store: true,
-      online: false,
-      foodDelivery: true,
-    });
+    assert.equal("effectiveSales" in promoted, false);
     assert.deepEqual(c.products, old.products);
     assert.equal(c.revision, old.revision + 1);
     const raw = JSON.parse(
@@ -239,11 +235,7 @@ test("preview preserves inherited inactivity and rejects exhausted code range", 
   };
   const plan = categoryPromotion(child, [root, child]);
   assert.equal(plan.category.active, false);
-  assert.deepEqual(plan.channels, {
-    store: false,
-    online: false,
-    foodDelivery: false,
-  });
+  assert.equal("channels" in plan, false);
   const roots = Array.from({ length: 99 }, (_, i) => ({
     ...root,
     id: "r" + i,

@@ -1,16 +1,10 @@
 import { categoryMatches, roots } from "../../hierarchy.js";
-import {
-  categorySalesAvailability,
-  salesChannels,
-} from "../../sales-availability.js";
 
 export const emptyCategoryFilters = {
   query: "",
   parent: [],
   type: [],
   status: "",
-  channel: [],
-  channelState: "enabled",
   quality: [],
 };
 export function categoryProductCount(category, categories, products) {
@@ -41,16 +35,6 @@ export function categoryQuality(category, categories, products) {
 }
 export function categorySummary(categories, products) {
   return {
-    channels: salesChannels.map((channel) => {
-      const enabled = categories.filter(
-        (c) => categorySalesAvailability(c, categories)[channel.key],
-      );
-      return {
-        ...channel,
-        main: enabled.filter((c) => !c.parentId).length,
-        children: enabled.filter((c) => c.parentId).length,
-      };
-    }),
     quality: Object.fromEntries(
       ["description", "identity", "empty"].map((key) => [
         key,
@@ -80,12 +64,6 @@ export function categoryRows(
       (!f.status ||
         categoryActive(c, categories) === (f.status === "active")) &&
       any(
-        f.channel,
-        (channel) =>
-          categorySalesAvailability(c, categories)[channel] ===
-          (f.channelState === "enabled"),
-      ) &&
-      any(
         f.quality,
         (quality) => categoryQuality(c, categories, products)[quality],
       )
@@ -99,10 +77,6 @@ export function categoryRows(
         return Number(categoryActive(c, categories));
       case "type":
         return Number(!!c.parentId);
-      case "channels":
-        return Object.values(categorySalesAvailability(c, categories)).filter(
-          Boolean,
-        ).length;
       default:
         return c[sort.key] || "";
     }

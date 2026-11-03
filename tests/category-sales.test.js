@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../server/app.js';
 import { hashPassword } from '../server/security.js';
-import { categorySalesAvailability, effectiveSales } from '../src/sales-availability.js';
+import { effectiveSales } from '../src/sales-availability.js';
 const all = { store:true, online:true, foodDelivery:true };
 const hash = await hashPassword('Category-sales-test-1864');
 async function fixture(role='admin') {
@@ -21,46 +21,16 @@ async function fixture(role='admin') {
   }
   return {app,call,save};
 }
-test('category channels inherit safely, preserve legacy behavior and reject missing/cyclic parents',()=>{
-  const root={id:'r',active:true},child={id:'c',parentId:'r',active:true};
-  assert.deepEqual(categorySalesAvailability(child,[root,child]),all);
-  root.salesAvailability={online:false};
-  const p={categoryId:'c',status:'Aktif',salesAvailability:all};
-  assert.deepEqual(effectiveSales(p,{active:true,salesAvailability:all},[root,child]),{...all,online:false});
-  child.salesAvailability={store:false};
-  assert.deepEqual(categorySalesAvailability(child,[root,child]),{store:false,online:false,foodDelivery:true});
-  root.active=false;
-  assert.deepEqual(categorySalesAvailability(child,[root,child]),{store:false,online:false,foodDelivery:false});
-  assert.equal(categorySalesAvailability(child,[child]).online,false);
-  root.parentId='c';root.active=true;
-  assert.equal(categorySalesAvailability(child,[root,child]).foodDelivery,false);
-});
-test('category flags persist; parent changes govern product/variant sales without changing preferences or codes',async()=>{
-  const f=await fixture();try{
-    let catalog=(await f.call('/catalog')).catalog;
-    let root=catalog.categories[0];
-    let r=await f.save({...root,salesAvailability:{...all,online:false}});assert.equal(r.status,200);
-    r=await f.save({name:'Test alt',slug:'test-alt',code:'10',parentId:root.id,active:true,salesAvailability:all},true);assert.equal(r.status,200);
-    const child=r.catalog.categories.find(c=>c.slug==='test-alt');
-    assert.equal(child.effectiveSales.online,false);
-    r=await f.call('/products','POST',{expectedRevision:r.catalog.revision,product:{name:'Test product',categoryId:child.id,status:'Aktif',salesAvailability:all,variants:[{size:'S',typeId:'type-item',weight:500,price:100,salesAvailability:all}]}});
-    assert.equal(r.status,200);const p=r.catalog.products[0];assert.equal(p.effectiveSales.online,false);assert.equal(p.variants[0].effectiveSales.online,false);
-    assert.equal(p.salesAvailability.online,true);assert.equal(p.variants[0].salesAvailability.online,true);
-    root=r.catalog.categories.find(c=>c.id===root.id);
-    r=await f.save({...root,salesAvailability:all});assert.equal(r.catalog.products[0].effectiveSales.online,true);
-    assert.equal(r.catalog.products[0].sku,p.sku);assert.equal(r.catalog.products[0].version,p.version);
-    const updated=r.catalog.categories.find(c=>c.id===child.id);delete updated.salesAvailability;
-    r=await f.save(updated);assert.deepEqual(r.catalog.categories.find(c=>c.id===child.id).salesAvailability,all);
-    const stored=JSON.parse((await f.app.db.query('SELECT document FROM app_catalog WHERE id=1')).rows[0].document);
-    assert.deepEqual(stored.categories.find(c=>c.id===root.id).salesAvailability,all);
-  }finally{await f.app.close()}
-});
-test('invalid channel flags and stale revisions fail atomically; viewer cannot change category channels',async()=>{
-  const f=await fixture();try{
-    const before=(await f.call('/catalog')).catalog,root=before.categories[0];
-    for(const salesAvailability of [null,[],{online:'yes'},{unknown:true}]) assert.equal((await f.save({...root,salesAvailability})).status,422);
-    assert.deepEqual((await f.call('/catalog')).catalog,before);
-    assert.equal((await f.save({...root,salesAvailability:all},false,before.revision+1)).status,409);
-  }finally{await f.app.close()}
-  const viewer=await fixture('viewer');try{const c=(await viewer.call('/catalog')).catalog;assert.equal((await viewer.save({...c.categories[0],salesAvailability:all})).status,403)}finally{await viewer.app.close()}
+test('category flags are ignored and omitted; category writes do not alter variant availability',async()=>{
+ const f=await fixture();try {
+  let c=(await f.call('/catalog')).catalog;
+  const root=c.categories[0];
+  let r=await f.save({...root,salesAvailability:{...all,online:false}});assert.equal(r.status,200);
+  assert.equal('salesAvailability' in r.catalog.categories[0],false);
+  r=await f.call('/products','POST',{expectedRevision:r.catalog.revision,product:{name:'Bağımsız ürün',categoryId:root.id,status:'Aktif',salesAvailability:{online:false},variants:[{size:'S',typeId:'type-item',weight:500,price:100,salesAvailability:all}]}});
+  assert.equal(r.status,200);const p=r.catalog.products[0];assert.equal('salesAvailability' in p,false);assert.deepEqual(p.variants[0].effectiveSales,all);
+  r=await f.save({...root,active:false,salesAvailability:{store:false}});assert.equal(r.status,200);assert.deepEqual(r.catalog.products[0].variants,p.variants);
+  assert.equal((await f.save(root,false,c.revision)).status,409);
+ }finally{await f.app.close();}
+ const viewer=await fixture('viewer');try{const c=(await viewer.call('/catalog')).catalog;assert.equal((await viewer.save(c.categories[0])).status,403);}finally{await viewer.app.close();}
 });

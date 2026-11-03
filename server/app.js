@@ -386,8 +386,13 @@ export async function createApp({ env = process.env, database } = {}) {
           decodeURIComponent(match[1]),
           user.email,
         );
+      } else if (route === "/api/variants/bulk" && method === "POST") {
+        requirePermission("catalog.read");
+        if (body.changes?.channels !== undefined || body.changes?.active !== undefined) requirePermission("products.write");
+        if (body.changes?.price !== undefined) requirePermission("prices.write");
+        catalog = await service.bulkVariants(body, user.email);
       } else if (route === "/api/products/bulk" && method === "POST") {
-        if (body.changes?.channels !== undefined || body.changes?.unit !== undefined) requirePermission("products.write");
+        if (body.changes?.unit !== undefined || body.changes?.weight !== undefined) requirePermission("products.write");
         if (body.changes?.price !== undefined) requirePermission("prices.write");
         catalog = await service.bulkProducts(body, user.email);
       } else if (route === "/api/products" && method === "POST") {

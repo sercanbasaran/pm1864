@@ -48,49 +48,17 @@ async function choose(label, value) {
   fireEvent(s, new CustomEvent("sl-change", { bubbles: true }));
   await settle();
 }
-test("summary shows per-channel counts and can be collapsed with its Shoelace header", async () => {
-  await setup();
-  const cards = [
-    ...document.querySelectorAll(
-      ".category-summary-channels .category-channel-summary",
-    ),
-  ];
-  expect(cards.map((c) => c.querySelector("h3").textContent)).toEqual([
-    "Mağaza",
-    "E-Mağaza",
-    "Sipariş Platformları",
-  ]);
-  expect(
-    cards.map((c) => [...c.querySelectorAll("dd")].map((n) => n.textContent)),
-  ).toEqual([
-    ["1", "1"],
-    ["0", "0"],
-    ["1", "1"],
-  ]);
-  const filters = document.querySelector(".category-filter-accordion");
-  expect(filters.hidden).toBe(true);
-  expect(
-    document
-      .querySelector('sl-input[aria-label="Kategori ara"]')
-      .closest("sl-details"),
-  ).toBeNull();
-  fireEvent.click(button("Filtreleri Aç"));
-  await settle();
-  expect(filters.hidden).toBe(false);
-  const details = document.querySelector(".category-summary-accordion");
-  expect(details.open).toBe(false);
-  details.shadowRoot.querySelector(".details__header").click();
-  await settle();
-  expect(details.open).toBe(true);
+test("category summary and filters do not expose channels", async () => {
+ await setup();
+ expect(document.querySelector('.category-summary-channels')).toBeNull();
+ expect([...document.querySelectorAll('sl-select')].some(s => s.label === 'Satış kanalı')).toBe(false);
+ const filters=document.querySelector('.category-filter-accordion'); expect(filters.hidden).toBe(true);
+ fireEvent.click(button('Filtreleri Aç')); await settle(); expect(filters.hidden).toBe(false);
 });
 test("filters combine, quality links filter records and clearing restores the complete table", async () => {
   await setup();
   await choose("Kategori türü", "child");
   expect(rows()).toHaveLength(1);
-  await choose("Satış kanalı", "online");
-  expect(document.querySelector("tbody").textContent).toContain(
-    "Kategori bulunamadı",
-  );
   fireEvent.click(button("Filtreleri temizle"));
   await settle();
   expect(rows()).toHaveLength(3);
@@ -129,7 +97,6 @@ test("category filters support multiple selections and show hierarchical categor
   for (const label of [
     "Kategori türü",
     "Kategori",
-    "Satış kanalı",
     "Tamamlanacak kayıtlar",
   ]) {
     expect(selects.find((s) => s.label === label).multiple).toBe(true);
@@ -147,22 +114,20 @@ test("category filters support multiple selections and show hierarchical categor
   expect(rows()).toHaveLength(2);
   fireEvent.click(button("Filtreleri temizle"));
   await settle();
-  await choose("Satış kanalı", ["store", "online"]);
-  expect(rows()).toHaveLength(2);
   await choose("Tamamlanacak kayıtlar", ["description", "empty"]);
-  expect(rows()).toHaveLength(1);
+  expect(rows()).toHaveLength(2);
 });
 test("tamamlanacak kayıtlar özete bağlı olmayan kapalı bir akordiyondur", async () => {
   await setup();
   const summary = document.querySelector(".category-summary-accordion");
   const quality = document.querySelector(".category-summary-quality");
-  expect(summary.contains(quality)).toBe(false);
+  expect(summary).toBeNull();
   expect(quality.open).toBe(false);
   expect(quality.summary).toBe("Tamamlanacak kategori kayıtları · 2 kategori");
   quality.shadowRoot.querySelector(".details__header").click();
   await settle();
   expect(quality.open).toBe(true);
-  expect(summary.open).toBe(false);
+
   fireEvent.click(button("Açıklaması olmayan kategoriler"));
   await settle();
   expect(rows()).toHaveLength(2);
@@ -173,7 +138,7 @@ test("aktif kategori sayıları ürün özetindeki gibi ayrı büyük kartlarda 
   const stats = [...document.querySelectorAll('.management-summary-stat')];
   expect(stats.map((stat) => stat.querySelector('span').textContent)).toEqual(['Aktif ana kategori', 'Aktif alt kategori']);
   expect(stats.map((stat) => stat.querySelector('strong').textContent)).toEqual(['1', '1']);
-  expect(document.querySelectorAll('.category-channel-summary')).toHaveLength(3);
+  expect(document.querySelectorAll('.category-channel-summary')).toHaveLength(0);
 });
 test("kategori oluşturma işlemi özet kartında gösterilir", async () => {
   render(<CategoryManagement categories={categories} products={[]} onNavigate={vi.fn()} />);

@@ -1,7 +1,6 @@
 import React from "react";
 import { Button, Select } from "../../components/ui/Controls.jsx";
 import { categoryRows } from "./category-list.js";
-import { salesChannels } from "../../sales-availability.js";
 import { emptyCategoryFilters } from "./category-list.js";
 
 export default function CategoryFilters({ categories, filters, onChange, open }) {
@@ -57,21 +56,6 @@ export default function CategoryFilters({ categories, filters, onChange, open })
               <span className="category-filter-code">{c.code}</span>
             </option>
           ))}
-        </Select>
-        {field("channel", "Satış kanalı", [
-          ["", "Tüm kanallar"],
-          ...salesChannels.map((c) => [c.key, c.label]),
-        ])}
-        <Select
-          label="Kanal durumu"
-          value={filters.channelState}
-          disabled={!filters.channel?.length}
-          onChange={(e) =>
-            onChange({ ...filters, channelState: e.target.value })
-          }
-        >
-          <option value="enabled">Etkin</option>
-          <option value="disabled">Devre dışı</option>
         </Select>
         {field("quality", "Tamamlanacak kayıtlar", [
           ["", "Tüm kayıtlar"],

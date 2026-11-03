@@ -1,3 +1,6 @@
+import BulkVariants from "./BulkVariants.jsx";
+import { SalesChannelSummary } from "../../components/ui/SalesChannels.jsx";
+import { salesChannels, effectiveSales } from "../../sales-availability.js";
 import ProductMeasurements from "../products/ProductMeasurements.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
 import {portionCountLabel, variantPortionCount} from "../../portions.js";
@@ -50,6 +53,7 @@ export default function VariantManager({
   products,
   categories,
   canWrite,
+  canEditPrices = canWrite,
   onEdit,
   onDuplicate,
   onCard,
@@ -57,6 +61,15 @@ export default function VariantManager({
   relatedProducts,
 }) {
   const { variantTypes = [], packagingItems = defaultPackagingItems(), mutate, notify, busy } = useCatalog();
+  const [selected, setSelected] = useState([]);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [channel, setChannel] = useState("");
+  const selectable = canWrite || canEditPrices;
+  const toggle = id => setSelected(prev => prev.includes(id) ? prev.filter(value => value !== id) : [...prev, id]);
+  useEffect(() => {
+    const valid = new Set(products.flatMap(p => p.variants.map(v => v.id)));
+    setSelected(prev => prev.filter(id => valid.has(id)));
+  }, [products]);
   const [importOpen, setImportOpen] = useState("");
   const [duplicateTarget, setDuplicateTarget] = useState(null), [multiDuplicate, setMultiDuplicate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null), [deleteError, setDeleteError] = useState("");
@@ -83,6 +96,7 @@ export default function VariantManager({
     setSub("");
     setProductId("");
     setStatus("");
+    setChannel("");
     setTypeId("");
     setBoxId("");
     setQuality("");
@@ -110,6 +124,7 @@ export default function VariantManager({
       ({ p, v, members }) =>
         (!quality || missingVariantInformation(v, quality, sources, variantTypes, p)) &&
         (!typeId || v.typeId === typeId) &&
+        (!channel || effectiveSales(p, v)[channel]) &&
         (!boxSelected || !boxId || v.packagingId === boxId) &&
         (!(root || sub || productId) || members.some((item) => {
           const c = categoryOf(item, categories);
@@ -121,7 +136,7 @@ export default function VariantManager({
           .includes(query.toLocaleLowerCase("tr")),
     )
     .sort((a, b) => sort === "name" ? String(a.v.size).localeCompare(String(b.v.size), "tr") : sort === "price-asc" ? a.v.price - b.v.price : sort === "price-desc" ? b.v.price - a.v.price : (new Date(b.v.updated || b.p.updated || 0) - new Date(a.v.updated || a.p.updated || 0)));
-  const hasFilters = !!(query || root || sub || productId || status || typeId || (boxSelected && boxId) || quality);
+  const hasFilters = !!(channel || query || root || sub || productId || status || typeId || (boxSelected && boxId) || quality);
   const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     current = Math.min(page, pages),
     shown = rows.slice((current - 1) * pageSize, current * pageSize);
@@ -137,6 +152,7 @@ export default function VariantManager({
   ) : null;
   return (
     <section className="variant-module">
+      {bulkOpen && <BulkVariants ids={selected} canWrite={canWrite} canEditPrices={canEditPrices} onClose={() => setBulkOpen(false)} onDone={() => {setBulkOpen(false); setSelected([]);}} />}
       <ManagementSummary
         label="Varyant özeti"
         items={[
@@ -175,6 +191,7 @@ export default function VariantManager({
                 </p>
               </div>
               <div className="variant-header-actions">
+                {selectable && <Button type="button" disabled={!selected.length || busy} onClick={() => setBulkOpen(true)}>Toplu varyant işlemleri ({selected.length})</Button>}
                 {addAction}
                 {canWrite && <FormatMenu direction="import" onSelect={setImportOpen} />}
                 <FormatMenu direction="export" disabled={!rows.length} onSelect={format => exportVariants(rows, variantTypes, sources, packagingItems, format).catch(() => notify("Dışa aktarma dosyası hazırlanamadı."))} />
@@ -190,6 +207,7 @@ export default function VariantManager({
             </div>
             <div id="variant-filter-panel" className="variant-filters" hidden={!filtersOpen}>
               <div className="variant-filter-grid">
+                <Select label="Satış kanalı" value={channel} onChange={e => {setChannel(e.target.value); setPage(1);}}><option value="">Tüm kanallar</option>{salesChannels.map(({key,label}) => <option key={key} value={key}>{label}</option>)}</Select>
                 <Select
                   label="İçerikteki ana kategori"
                   aria-label="İçerikteki ana kategori"
@@ -276,6 +294,12 @@ export default function VariantManager({
                 Filtreleri temizle
               </Button>
             </div>
+            {selectable && <div className="variant-selection-toolbar">
+              <Input type="checkbox" label="Bu sayfadaki varyantları seç" aria-label="Bu sayfadaki varyantları seç" checked={shown.length > 0 && shown.every(({v}) => selected.includes(v.id))} onChange={e => setSelected(prev => e.target.checked ? [...new Set([...prev, ...shown.map(({v}) => v.id)])] : prev.filter(id => !shown.some(({v}) => v.id === id)))} />
+              <span>{selected.length} varyant seçildi</span>
+              <Button type="button" size="small" disabled={!rows.length || rows.length > 2000} onClick={() => setSelected(rows.map(({v}) => v.id))}>Filtrelenen tümünü seç ({rows.length})</Button>
+              {!!selected.length && <Button type="button" size="small" onClick={() => setSelected([])}>Seçimi temizle</Button>}
+            </div>}
             <div className="variant-results" role="status">
               <span>{rows.length} varyant listeleniyor · {products.reduce((n, p) => n + p.variants.length, 0)} kayıtlı varyant</span>
               {hasFilters && <Button type="button" size="small" onClick={clearFilters}>Filtreleri temizle</Button>}
@@ -290,10 +314,12 @@ export default function VariantManager({
               <Table aria-label="Varyantlar">
                 <TableHead>
                   <TableRow>
+                    {selectable && <TableHeading>SEÇ</TableHeading>}
                     <TableHeading>VARYANT</TableHeading>
                     <TableHeading>GRAMAJ / DİLİM</TableHeading>
                     <TableHeading>MİKTAR / SERVİS</TableHeading>
                     <TableHeading>SATIŞ FİYATI</TableHeading>
+                    <TableHeading>SATIŞ KANALLARI</TableHeading>
                     <TableHeading>DURUM</TableHeading>
                     <TableHeading>İŞLEMLER</TableHeading>
                   </TableRow>
@@ -301,6 +327,7 @@ export default function VariantManager({
                 <TableBody>
                   {shown.map(({ p, v, members }) => (
                     <TableRow key={v.id}>
+                      {selectable && <TableCell><Input type="checkbox" aria-label={`${v.size} seç`} checked={selected.includes(v.id)} onChange={() => toggle(v.id)} /></TableCell>}
                       <TableCell>
                         <SlTooltip placement="top" content={[v.size, `Tür: ${variantTypeName(v, variantTypes)}`, members.length ? `Ürünler: ${members.map(item => item.name).join(", ")}` : "", v.weight ? `≈ ${v.weight} g` : "", `Fiyat: ${money(v.price)}`, v.active !== false ? "Aktif" : "Pasif"].filter(Boolean).join(" · ")}>
                         <ProductIdentity product={{name:v.size,customImage:selectedVariantImage(v)}} className="variant-identity" textClassName="variant-cell-main" aria-label={v.size + (canWrite ? " düzenle" : " görüntüle")} onClick={() => onEdit(p, false, v.id)}>
@@ -321,6 +348,7 @@ export default function VariantManager({
                         </div>
                       </TableCell>
                       <TableCell><div className="variant-price-cell"><strong>{money(v.price)}</strong><small>Hesaplanan: {Number.isFinite(v.calculatedPrice) ? money(v.calculatedPrice) : "—"}</small></div></TableCell>
+                      <TableCell><SalesChannelSummary product={p} variant={v} /></TableCell>
                       <TableCell>
                         <SlBadge
                           variant={v.active !== false ? "success" : "neutral"}
@@ -352,6 +380,7 @@ export default function VariantManager({
             <div className={"variant-mobile-cards " + (view === "grid" ? "variant-view-grid" : "")}>
               {shown.map(({ p, v, members }) => (
                 <article className="variant-summary-card" key={v.id}>
+                  {selectable && <Input type="checkbox" label="Seç" aria-label={`${v.size} seç`} checked={selected.includes(v.id)} onChange={() => toggle(v.id)} />}
                   <button type="button" className="variant-card-image-link" aria-label={v.size + " detayını aç"} onClick={() => onEdit(p, false, v.id)}>
                     <ProductImage product={{name:v.size,customImage:selectedVariantImage(v)}} size="tile" />
                   </button>
@@ -368,6 +397,7 @@ export default function VariantManager({
                     <div className="variant-card-packaging"><dt>Ambalaj / servis</dt><dd>{v.packagingName || v.packaging || "—"}</dd></div>
                   </dl>
                   <ProductMeasurements products={members} showNames />
+                  <SalesChannelSummary product={p} variant={v} />
                   <div className="variant-card-price"><small>Satış fiyatı</small><strong>{money(v.price)}</strong><small>Hesaplanan fiyat: {money(v.calculatedPrice ?? v.price)}</small></div>
                   <div className="variant-card-actions">
                     {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => setDuplicateTarget({p,v})}><Copy size={16} />Çoğalt</Button>}

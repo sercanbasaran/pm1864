@@ -42,7 +42,6 @@ import { defaultVariantTypes } from "../src/variant-types.js";
 import {
   salesAvailability,
   effectiveSales,
-  categorySalesAvailability,
   validateSalesAvailability,
 } from "../src/sales-availability.js";
 import {
@@ -118,22 +117,12 @@ export function publicCatalog(doc, revision) {
     consumables: doc.consumables ?? defaultConsumables(),
     packagingItems: doc.packagingItems ?? defaultPackagingItems(),
     packagingMethods: doc.packagingMethods ?? defaultPackagingMethods(),
-    categories: doc.categories.map((c) => ({
-      ...c,
-      salesAvailability: salesAvailability(
-        c.salesAvailability,
-        undefined,
-        true,
-      ),
-      effectiveSales: categorySalesAvailability(c, doc.categories),
-    })),
+    categories: doc.categories.map(({salesAvailability, effectiveSales, ...category}) => category),
     variantTypes: doc.variantTypes,
     products: doc.products.map(
-      ({ channels, channelVersions, dirty, ...p }) => ({
+      ({ channels, channelVersions, dirty, salesAvailability: legacyChannels, effectiveSales: legacySales, ...p }) => ({
         ...p,
         sku: displaySku(p.sku),
-        salesAvailability: salesAvailability(p.salesAvailability),
-        effectiveSales: effectiveSales(p, undefined, doc.categories),
         variants: p.variants.map((v) => ({
           ...v,
           portionCount: variantPortionCount(v, doc.products, p),
@@ -207,11 +196,7 @@ export function createCatalogService(db) {
           active: input.active !== false,
           visibility: input.visibility ?? old?.visibility ?? "private",
           images: input.images ?? old?.images ?? [],
-          salesAvailability: salesAvailability(
-            input.salesAvailability,
-            old?.salesAvailability,
-            true,
-          ),
+          ...(old?.salesAvailability !== undefined ? {salesAvailability: old.salesAvailability} : {}),
         };
       if (!["private", "public"].includes(c.visibility))
         throw new ApiError(
@@ -241,7 +226,6 @@ export function createCatalogService(db) {
           "Ana/alt kategori türü kayıt sonrası değiştirilemez.",
         );
       const error =
-        validateSalesAvailability(input.salesAvailability) ||
         validateCategory(c, doc.categories);
       if (error) throw new ApiError(422, error);
       if (old) {
@@ -600,7 +584,7 @@ export function createCatalogService(db) {
             input.satiety === undefined
               ? (old?.satiety ?? null)
               : input.satiety,
-          salesAvailability: input.salesAvailability,
+          ...(old?.salesAvailability !== undefined ? {salesAvailability: old.salesAvailability} : {}),
           status: input.status === "Aktif" ? "Aktif" : "Taslak",
           customImage: text(
             input.customImage === undefined
@@ -799,10 +783,6 @@ export function createCatalogService(db) {
       }
       const error = validateProduct(p, doc.categories, doc.variantTypes);
       if (error) throw new ApiError(422, error.message);
-      p.salesAvailability = salesAvailability(
-        p.salesAvailability,
-        old?.salesAvailability,
-      );
       p.variants = p.variants.map((v) => ({
         ...v,
         salesAvailability: salesAvailability(
@@ -890,14 +870,107 @@ export function createCatalogService(db) {
       );
     });
   }
+  async function bulkVariants(body, actor) {
+    return mutate(body.expectedRevision, actor, (doc) => {
+      const { ids, changes } = body;
+      if (
+        !Array.isArray(ids) ||
+        !ids.length ||
+        ids.length > 2000 ||
+        ids.some((id) => typeof id !== "string") ||
+        new Set(ids).size !== ids.length ||
+        !changes ||
+        typeof changes !== "object" ||
+        Array.isArray(changes) ||
+        !Object.keys(changes).length ||
+        Object.keys(changes).some(
+          (key) => !["channels", "price", "active"].includes(key),
+        )
+      )
+        throw new ApiError(422, "Geçersiz toplu varyant güncellemesi.");
+      const selectedIds = new Set(ids);
+      const entries = doc.products.flatMap((p) =>
+        p.variants.filter((v) => selectedIds.has(v.id)).map((v) => ({ p, v })),
+      );
+      if (entries.length !== ids.length)
+        throw new ApiError(422, "Seçili varyantların bir kısmı bulunamadı.");
+      if (
+        changes.channels !== undefined &&
+        (!changes.channels ||
+          !Object.keys(changes.channels).length ||
+          validateSalesAvailability(changes.channels))
+      )
+        throw new ApiError(422, "Satış kanallarını kontrol edin.");
+      if (changes.active !== undefined && typeof changes.active !== "boolean")
+        throw new ApiError(422, "Geçerli bir durum seçin.");
+      const price = changes.price;
+      if (
+        price !== undefined &&
+        (!price ||
+          typeof price !== "object" ||
+          Array.isArray(price) ||
+          Object.keys(price).some((k) => !["mode", "value"].includes(k)) ||
+          !["fixed", "increase", "decrease"].includes(price.mode) ||
+          !Number.isFinite(price.value) ||
+          price.value <= 0 ||
+          (price.mode === "fixed" &&
+            (price.value > 1e8 ||
+              Math.abs(price.value * 100 - Math.round(price.value * 100)) >
+                0.00001)) ||
+          (price.mode !== "fixed" && price.value > 1000) ||
+          (price.mode === "decrease" && price.value >= 100))
+      )
+        throw new ApiError(422, "Fiyat veya yüzde değerini kontrol edin.");
+      const nextPrice = (v) =>
+        price.mode === "fixed"
+          ? price.value
+          : bulkPrice(v.price, price.value, price.mode);
+      if (
+        price &&
+        entries.some(
+          ({ v }) =>
+            !Number.isFinite(nextPrice(v)) ||
+            nextPrice(v) <= 0 ||
+            nextPrice(v) > 1e8,
+        )
+      )
+        throw new ApiError(
+          422,
+          "Güncellenen fiyat izin verilen sınırları aşıyor.",
+        );
+      const now = new Date().toISOString();
+      for (const { v } of entries) {
+        if (changes.channels)
+          v.salesAvailability = {
+            ...salesAvailability(v.salesAvailability, undefined, true),
+            ...changes.channels,
+          };
+        if (changes.active !== undefined) v.active = changes.active;
+        if (price) {
+          v.price = nextPrice(v);
+          if (v.sourceProductId !== undefined) v.priceOverride = v.price;
+        }
+        v.updated = now;
+      }
+      for (const p of new Set(entries.map(({ p }) => p))) {
+        p.version = (p.version || 0) + 1;
+        p.updated = now;
+      }
+      audit(
+        doc,
+        "Toplu varyant güncellemesi",
+        `${entries.length} varyant · ${Object.keys(changes).join(", ")}`,
+        actor,
+      );
+    });
+  }
   async function bulkProducts(body, actor) {
     return mutate(body.expectedRevision, actor, (doc) => {
       const { ids, changes } = body;
-      if (!Array.isArray(ids) || !ids.length || ids.length > 2000 || new Set(ids).size !== ids.length || !changes || typeof changes !== "object" || Array.isArray(changes) || Object.keys(changes).some(k => !["price", "unit", "weight", "channels"].includes(k)) || !Object.keys(changes).length)
+      if (!Array.isArray(ids) || !ids.length || ids.length > 2000 || new Set(ids).size !== ids.length || !changes || typeof changes !== "object" || Array.isArray(changes) || Object.keys(changes).some(k => !["price", "unit", "weight"].includes(k)) || !Object.keys(changes).length)
         throw new ApiError(422, "Geçersiz toplu ürün güncellemesi.");
       const selected = doc.products.filter(p => ids.includes(p.id));
       if (selected.length !== ids.length) throw new ApiError(422, "Seçili ürünlerin bir kısmı bulunamadı.");
-      if (changes.channels !== undefined && (!changes.channels || typeof changes.channels !== "object" || !Object.keys(changes.channels).length || validateSalesAvailability(changes.channels))) throw new ApiError(422, "Satış kanallarını kontrol edin.");
       if (changes.weight !== undefined && changes.unit === undefined) throw new ApiError(422, "Gramaj için birim türünü de seçin.");
       for (const p of selected) {
         if (changes.price !== undefined || changes.unit !== undefined) {
@@ -909,7 +982,6 @@ export function createCatalogService(db) {
           p.unitPricing = normalizeUnitPricing(value);
           if (p.portion && p.portion.unit !== unit) p.portion = null;
         }
-        if (changes.channels) p.salesAvailability = { ...salesAvailability(p.salesAvailability), ...changes.channels };
         p.version = (p.version || 0) + 1;
         p.updated = new Date().toISOString();
       }
@@ -1289,6 +1361,7 @@ export function createCatalogService(db) {
     saveProduct,
     bulk,
     bulkProducts,
+    bulkVariants,
     settings,
     prices,
     categoryPage,
