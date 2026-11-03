@@ -70,10 +70,13 @@ export function catalogSummary(products, categories) {
     drafts: products.filter((p) => p.status === "Taslak"),
     withoutImages: products.filter((p) => !p.customImage),
     withoutDescriptions: products.filter((p) => !p.description?.trim()),
-    groups: roots(categories).map((c) => ({
-      ...c,
-      count: products.filter((p) => categoryMatches(p, c.id, categories))
-        .length,
-    })),
+    groups: roots(categories).map((c) => {
+      const members = products.filter((p) => categoryMatches(p, c.id, categories));
+      return {
+        ...c,
+        count: members.length,
+        variants: members.reduce((count, p) => count + p.variants.length, 0),
+      };
+    }),
   };
 }

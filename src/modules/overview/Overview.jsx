@@ -90,7 +90,7 @@ export default function Overview({
       <Card className="panel">
         <div className="panel-title">
           <h2>Kategori dağılımı</h2>
-          <span className="muted">Ürün adedi</span>
+          <span className="muted">Ürün ve varyant adedi</span>
         </div>
         {data.groups.map((c) => (
           <div className="category-distribution" key={c.id}>
@@ -99,7 +99,7 @@ export default function Overview({
                 {c.name}
                 {!c.active && " (Pasif)"}
               </span>
-              <strong>{c.count}</strong>
+              <strong>{c.count} ürün · {c.variants} varyant</strong>
             </Button>
             <SlProgressBar
               aria-label={c.name + " ürün oranı"}
