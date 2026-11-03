@@ -97,5 +97,5 @@ test("cards display product portions and variant portion counts", () => {
       }}
     />,
   );
-  expect(document.body.textContent).toContain("≈ 2,5 kişilik");
+  expect(document.body.textContent).toContain("≈ 3 kişilik");
 });

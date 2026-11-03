@@ -52,7 +52,7 @@ export function variantPortionCount(variant, products, owner) {
 }
 export const portionCountLabel = (count) =>
   Number.isFinite(count) && count > 0
-    ? count < 0.01
-      ? "0,01 kişilik porsiyondan az"
-      : `≈ ${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(count)} kişilik`
+    ? Math.round(count) < 1
+      ? "1 kişilik porsiyondan az"
+      : `≈ ${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(count)} kişilik`
     : "Porsiyon hesaplanamadı";

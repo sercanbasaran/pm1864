@@ -94,7 +94,7 @@ test("portion counts handle slices, grams, kilos, mixed composition and missing 
     ),
     null,
   );
-  assert.equal(portionCountLabel(2.5), "≈ 2,5 kişilik");
+  assert.equal(portionCountLabel(2.5), "≈ 3 kişilik");
   const variant = {
     items: [{ productId: 1, quantity: 12 }],
     packaging: "Tabakta servis",
