@@ -1,3 +1,4 @@
+import ProductMeasurements from "../products/ProductMeasurements.jsx";
 import ProductImage from "../../components/ui/ProductImage.jsx";
 import {portionCountLabel, variantPortionCount} from "../../portions.js";
 import {selectedVariantImage} from "./variant-image.js";
@@ -306,6 +307,7 @@ export default function VariantManager({
                           <strong><TableText value={v.size} /></strong><small><TableText value={`${v.sku || "—"} · ${variantTypeName(v, variantTypes)}`} /></small>
                         </ProductIdentity>
                         </SlTooltip>
+                        <ProductMeasurements products={members} showNames />
                       </TableCell>
                       <TableCell>
                         ≈ {v.weight} g{v.slices > 0 ? ` / ${v.slices} dilim` : ""}
@@ -365,6 +367,7 @@ export default function VariantManager({
                     <div><dt>Porsiyon bilgisi</dt><dd>{portionCountLabel(variantPortionCount(v,products,p))}</dd></div>
                     <div className="variant-card-packaging"><dt>Ambalaj / servis</dt><dd>{v.packagingName || v.packaging || "—"}</dd></div>
                   </dl>
+                  <ProductMeasurements products={members} showNames />
                   <div className="variant-card-price"><small>Satış fiyatı</small><strong>{money(v.price)}</strong><small>Hesaplanan fiyat: {money(v.calculatedPrice ?? v.price)}</small></div>
                   <div className="variant-card-actions">
                     {canWrite && <Button type="button" aria-label={p.name + " " + v.size + " varyantını çoğalt"} disabled={p.variants.length >= 50} onClick={() => setDuplicateTarget({p,v})}><Copy size={16} />Çoğalt</Button>}

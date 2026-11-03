@@ -1,3 +1,4 @@
+import { normalizeProductDimensions, productDimensionsLabel } from "./product-dimensions.js";
 import { effectiveSales } from "./sales-availability.js";
 import { hasUnitPricing, normalizeUnitPricing } from "./unit-pricing.js";
 import { displaySku } from "./sku.js";
@@ -42,6 +43,7 @@ export function productCardData(
     name: product.name,
     category: categoryPath(categoryOf(product, categories), categories),
     description: product.description || "",
+    ...(productDimensionsLabel(product.dimensions) ? { dimensions: normalizeProductDimensions(product.dimensions) } : {}),
     ...(hasPortion(product) ? { portion: { ...product.portion } } : {}),
     salesAvailability: effectiveSales(product, undefined, categories),
     unitPricing: hasUnitPricing(product.unitPricing)
@@ -113,6 +115,7 @@ export function variantCardData(
       name: source?.name || "Ürün",
       quantity: item.quantity,
       unit: source?.unitPricing?.unit || "Adet",
+      ...(productDimensionsLabel(source?.dimensions) ? { dimensions: normalizeProductDimensions(source.dimensions) } : {}),
     };
   });
   return {

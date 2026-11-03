@@ -1,3 +1,5 @@
+import "./product-measurements.css";
+import ProductDimensions from "./ProductDimensions.jsx";
 import CardNavigation from "./CardNavigation.jsx";
 import {hasPortion, portionDefinition, portionCountLabel} from "../../portions.js";
 import { salesChannels } from "../../sales-availability.js";
@@ -113,6 +115,11 @@ export default function ProductDetails({ product: source, localizationUrl, navig
                 <div><dt>Net gramaj</dt><dd>≈ {new Intl.NumberFormat("tr-TR").format(product.variantPricing.weight)} g</dd></div>
               </dl>
             )}
+            {!product.isVariantCard && (
+              <dl className="product-card-measurements">
+                <div><dt>Ürün ölçüleri</dt><dd><ProductDimensions value={product.dimensions} /></dd></div>
+              </dl>
+            )}
             {hasPortion(product) && <p><strong>Porsiyon bilgisi:</strong> {portionDefinition(product)}</p>}
             {product.isVariantCard && <p><strong>Porsiyon bilgisi:</strong> {portionCountLabel(product.portionCount)}</p>}
             {product.salesAvailability && (
@@ -144,7 +151,10 @@ export default function ProductDetails({ product: source, localizationUrl, navig
       {product.variantContents?.length > 0 && (
         <Card className="product-detail-card product-detail-information">
           <h3>Varyant içeriği</h3>
-          <ul>{product.variantContents.map((item, index) => <li key={index}>{item.name} · {item.quantity} {item.unit}</li>)}</ul>
+          <ul>{product.variantContents.map((item, index) => <li key={index}>
+            {item.name} · {item.quantity} {item.unit}
+            <div className="product-card-measurements"><strong>Tek ürün ölçüleri: </strong><ProductDimensions value={item.dimensions} /></div>
+          </li>)}</ul>
           {product.variantPricing?.packaging && <p>Ambalaj / servis: {product.variantPricing.packaging}</p>}
         </Card>
       )}

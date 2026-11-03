@@ -1,0 +1,17 @@
+.product-card-measurements {
+  min-width: 0;
+  max-width: 100%;
+  margin-block: 0.75rem;
+  font-size: var(--sl-font-size-small);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.product-card-measurements > strong,
+.product-card-measurements dt {
+  display: block;
+  font-weight: 600;
+}
+.product-card-measurements dd {
+  margin: 0;
+}

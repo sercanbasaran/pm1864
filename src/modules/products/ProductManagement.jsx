@@ -1,3 +1,4 @@
+import ProductMeasurements from "./ProductMeasurements.jsx";
 import ProductIdentity from "../../components/ui/ProductIdentity.jsx";
 import useSessionFilter from "../../hooks/useSessionFilter.js";
 import SlTooltip from "@shoelace-style/shoelace/dist/react/tooltip/index.js";
@@ -424,6 +425,7 @@ export default function ProductManagement({
                         <small>{p.productCode} · {p.variants.length} varyant</small>
                       </ProductIdentity>
                       </SlTooltip>
+                      <ProductMeasurements products={[p]} />
                     </TableCell>
                     <TableCell>
                       <SlTag size="small">
@@ -488,6 +490,7 @@ export default function ProductManagement({
                 <div className="product-summary-category"><SlTag size="small">{categoryPath(categoryOf(p, categories), categories)}</SlTag></div>
                 <h3 title={p.name}>{p.name}</h3>
                 <UnitPricing value={p.unitPricing} compact />
+                <ProductMeasurements products={[p]} />
                 <div className="product-summary-actions">
                   {write && (
                     <Button
